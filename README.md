@@ -1,9 +1,9 @@
-# 📎 꽃 보러 갈래?(팀명: 아름답조)
+# 📎 꽃 보러 갈래?(팀명: 꿰뚫어View)
 ![image](https://user-images.githubusercontent.com/25995055/178401309-2a2ffc86-ef45-439b-bfd8-6978312100bc.png)
 
 
 ## 👀 서비스 소개
-* 서비스명:  꽃 개화 시기별 우리 지역 근처 데이트/드라이브 추천 장소 및 꽃 축제 추천 
+* 서비스명:  AI 기반 고객 리뷰 분석 및 제품 개선 인사이트 도출 시스템
 * 서비스설명: 
 <br>
 
@@ -115,11 +115,12 @@
     <td align="center"><img src="https://pbs.twimg.com/media/B-n6uPYUUAAZSUx.png" width="100" height="100"/></td>
   </tr>
   <tr>
-    <td align="center"><strong>홍O동</strong></td>
-    <td align="center"><strong>홍O동</strong></td>
-    <td align="center"><strong>홍O동</strong></td>
-    <td align="center"><strong>홍O동</strong></td>
-    <td align="center"><strong>홍O동</strong></td>
+    <td align="center"><strong>김용필</strong></td>
+    <td align="center"><strong>이은상</strong></td>
+    <td align="center"><strong>장원희</strong></td>
+    <td align="center"><strong>이현서</strong></td>
+    <td align="center"><strong>한동민</strong></td>
+    <td align="center"><strong>박준환</strong></td>
   </tr>
   <tr>
     <td align="center"><b>Frontend</b></td>

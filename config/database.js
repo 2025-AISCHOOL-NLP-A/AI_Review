@@ -5,8 +5,8 @@ const dbConfig = {
     host: 'project-db-campus.smhrd.com',
     port: 3312,
     user: 'Insa6_aiNLP_p3_1',
-    password: 'aischool1',
-    database: 'Insa6_aiNLP_p3_1',
+    password: 'password',
+    database: 'database',
     charset: 'utf8mb4',
     connectionLimit: 10
 };

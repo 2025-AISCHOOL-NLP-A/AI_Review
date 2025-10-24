@@ -89,7 +89,9 @@
                 <label for="confirmPassword" class="form-label">비밀번호 확인</label>
                 <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
             </div>
-            <button type="submit" class="btn btn-primary btn-register">회원가입</button>
+            <!-- <button type="submit" class="btn btn-primary btn-register">회원가입</button> -->
+                 <button type="submit" class="btn btn-primary btn-register" onclick="showAlert()">회원가입</button>
+
         </form>
         
         <div class="mt-4 text-center">
@@ -100,3 +102,9 @@
     </div>
 </body>
 </html>
+<script>
+    // JavaScript로 버튼 클릭 이벤트 추가
+    function showAlert() {
+        alert("test 기능입니다");
+    }
+</script>

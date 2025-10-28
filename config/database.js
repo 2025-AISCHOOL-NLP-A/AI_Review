@@ -1,12 +1,15 @@
 const mysql = require('mysql2/promise');
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // 데이터베이스 연결 설정
 // const dbConfig = {
-//     host: 'project-db-campus.smhrd.com',
+//     host: process.env.DB_HOST,
 //     port: 3312,
-//     user: 'Insa6_aiNLP_p3_1',
-//     password: 'password',
-//     database: 'database',
+//     user: 'DB_USER',
+//     password: 'DB_PASS',
+//     database: 'DB_DATABASE',
 //     charset: 'utf8mb4',
 //     connectionLimit: 10
 // };

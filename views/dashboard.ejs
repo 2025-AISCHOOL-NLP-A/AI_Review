@@ -149,6 +149,222 @@
                 <i class="fas fa-chart-bar me-2"></i>분석 시작하기
             </a>
         </div>
+
+        <!-- 워드클라우드 테스트 섹션 -->
+        <div class="stats-card">
+            <h5><i class="fas fa-cloud me-2"></i>워드클라우드 미리보기</h5>
+            <p class="text-muted">리뷰 텍스트를 입력하여 워드클라우드를 생성해보세요.</p>
+            
+            <div class="mb-3">
+                <textarea id="wordcloudText" class="form-control" rows="3" 
+                          placeholder="분석할 리뷰 텍스트를 입력하세요...">이 카페는 정말 좋아요. 커피도 맛있고 직원들도 친절해요. 분위기가 좋고 가격도 합리적입니다. 다시 방문하고 싶어요.</textarea>
+            </div>
+            
+            <div class="d-flex gap-2 mb-3">
+                <button id="generateWordcloud" class="btn btn-outline-primary">
+                    <i class="fas fa-cloud me-1"></i>워드클라우드 생성
+                </button>
+                <button id="analyzeSentiment" class="btn btn-outline-success">
+                    <i class="fas fa-heart me-1"></i>감정 분석
+                </button>
+            </div>
+            
+            <!-- 로딩 스피너 -->
+            <div id="loadingSpinner" class="text-center d-none">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">분석 중...</span>
+                </div>
+                <p class="mt-2 text-muted">AI가 분석 중입니다...</p>
+            </div>
+            
+            <!-- 워드클라우드 결과 -->
+            <div id="wordcloudResult" class="d-none">
+                <h6>워드클라우드</h6>
+                <div class="text-center">
+                    <img id="wordcloudImage" src="" alt="워드클라우드" class="img-fluid rounded" style="max-height: 300px;">
+                </div>
+                <div class="mt-3">
+                    <h6>주요 키워드</h6>
+                    <div id="keywordsList"></div>
+                </div>
+            </div>
+            
+            <!-- 감정 분석 결과 -->
+            <div id="sentimentResult" class="d-none">
+                <h6>감정 분석 결과</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="sentiment-bar mb-2" style="height: 20px; border-radius: 10px; overflow: hidden; background-color: #e9ecef;">
+                            <div id="positiveBar" style="height: 100%; float: left; background-color: #4caf50;"></div>
+                            <div id="neutralBar" style="height: 100%; float: left; background-color: #ff9800;"></div>
+                            <div id="negativeBar" style="height: 100%; float: left; background-color: #f44336;"></div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <small id="positiveText">긍정 0%</small>
+                            <small id="neutralText">중립 0%</small>
+                            <small id="negativeText">부정 0%</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-center">
+                            <h4 id="sentimentLabel" class="mb-1">-</h4>
+                            <small id="confidenceText" class="text-muted">신뢰도: 0%</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 에러 메시지 -->
+            <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
+        </div>
     </div>
+
+    <script>
+        // 워드클라우드 생성
+        document.getElementById('generateWordcloud').addEventListener('click', async function() {
+            const text = document.getElementById('wordcloudText').value.trim();
+            
+            if (!text) {
+                alert('텍스트를 입력해주세요.');
+                return;
+            }
+            
+            showLoading();
+            hideResults();
+            
+            try {
+                const response = await fetch('/dashboard/api/wordcloud', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.status === 'success') {
+                    showWordcloudResult(result);
+                } else {
+                    showError(result.error || '워드클라우드 생성에 실패했습니다.');
+                }
+                
+            } catch (error) {
+                console.error('워드클라우드 생성 오류:', error);
+                showError('서버 연결에 실패했습니다. Python AI 서버가 실행 중인지 확인해주세요.');
+            } finally {
+                hideLoading();
+            }
+        });
+        
+        // 감정 분석
+        document.getElementById('analyzeSentiment').addEventListener('click', async function() {
+            const text = document.getElementById('wordcloudText').value.trim();
+            
+            if (!text) {
+                alert('텍스트를 입력해주세요.');
+                return;
+            }
+            
+            showLoading();
+            hideResults();
+            
+            try {
+                const response = await fetch('/dashboard/api/sentiment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showSentimentResult(result);
+                } else {
+                    showError(result.error || '감정 분석에 실패했습니다.');
+                }
+                
+            } catch (error) {
+                console.error('감정 분석 오류:', error);
+                showError('서버 연결에 실패했습니다. Python AI 서버가 실행 중인지 확인해주세요.');
+            } finally {
+                hideLoading();
+            }
+        });
+        
+        function showLoading() {
+            document.getElementById('loadingSpinner').classList.remove('d-none');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingSpinner').classList.add('d-none');
+        }
+        
+        function hideResults() {
+            document.getElementById('wordcloudResult').classList.add('d-none');
+            document.getElementById('sentimentResult').classList.add('d-none');
+            document.getElementById('errorMessage').classList.add('d-none');
+        }
+        
+        function showWordcloudResult(result) {
+            const wordcloudDiv = document.getElementById('wordcloudResult');
+            const imageElement = document.getElementById('wordcloudImage');
+            const keywordsDiv = document.getElementById('keywordsList');
+            
+            // 이미지 표시
+            imageElement.src = 'data:image/png;base64,' + result.image_base64;
+            
+            // 키워드 표시
+            keywordsDiv.innerHTML = '';
+            result.keywords.slice(0, 10).forEach(keyword => {
+                const span = document.createElement('span');
+                span.className = 'badge bg-primary me-1 mb-1';
+                span.textContent = `${keyword.word} (${keyword.frequency})`;
+                keywordsDiv.appendChild(span);
+            });
+            
+            wordcloudDiv.classList.remove('d-none');
+        }
+        
+        function showSentimentResult(result) {
+            const sentimentDiv = document.getElementById('sentimentResult');
+            
+            // 감정 바 업데이트
+            document.getElementById('positiveBar').style.width = result.positive + '%';
+            document.getElementById('neutralBar').style.width = result.neutral + '%';
+            document.getElementById('negativeBar').style.width = result.negative + '%';
+            
+            // 텍스트 업데이트
+            document.getElementById('positiveText').textContent = `긍정 ${result.positive}%`;
+            document.getElementById('neutralText').textContent = `중립 ${result.neutral}%`;
+            document.getElementById('negativeText').textContent = `부정 ${result.negative}%`;
+            
+            // 주요 감정 표시
+            const sentimentLabel = document.getElementById('sentimentLabel');
+            sentimentLabel.textContent = result.sentiment;
+            sentimentLabel.className = 'mb-1';
+            
+            if (result.sentiment === '긍정') {
+                sentimentLabel.classList.add('text-success');
+            } else if (result.sentiment === '부정') {
+                sentimentLabel.classList.add('text-danger');
+            } else {
+                sentimentLabel.classList.add('text-warning');
+            }
+            
+            document.getElementById('confidenceText').textContent = 
+                `신뢰도: ${(result.confidence * 100).toFixed(1)}%`;
+            
+            sentimentDiv.classList.remove('d-none');
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('d-none');
+        }
+    </script>
 </body>
 </html>

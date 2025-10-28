@@ -1,39 +1,51 @@
 # 리뷰 분석 서비스
 
-Node.js Express 기반의 리뷰 분석 서비스입니다. GPT 스타일의 인터페이스로 리뷰 데이터를 분석하고 인사이트를 제공합니다.
+Node.js Express + Python FastAPI 기반의 AI 리뷰 분석 서비스입니다. GPT 스타일의 인터페이스로 리뷰 데이터를 분석하고 인사이트를 제공합니다.
+
+## 아키텍처
+
+- **Frontend Service**: Node.js Express (포트 3000)
+- **AI Analysis Service**: Python FastAPI (포트 8000)
+- **Database**: MySQL (리모트 서버)
 
 ## 주요 기능
 
-- **로그인 페이지**: 사용자 인증
-- **대시보드**: 분석 현황 및 통계 확인
+- **로그인 페이지**: MySQL 기반 사용자 인증
+- **대시보드**: 분석 현황, 통계, 워드클라우드 미리보기
 - **리포트 페이지**: GPT 스타일 인터페이스로 리뷰 분석
+- **AI 분석**: 워드클라우드 생성, 감정 분석, 인사이트 제공
 
 ## 설치 및 실행
 
-1. 의존성 설치
+### 방법 1: 자동 실행 (Windows)
 ```bash
-npm install
+# 모든 서비스를 한 번에 시작
+start-services.bat
 ```
 
-2. 데이터베이스 설정
-- MySQL 서버: project-db-campus.smhrd.com:3312
-- 데이터베이스: Insa6_aiNLP_p3_1
-- 사용자 테이블이 자동으로 생성됩니다.
+### 방법 2: 수동 실행
 
-3. 서버 실행
+1. **Node.js 서비스 설치 및 실행**
 ```bash
+npm install
 npm start
 ```
 
-또는 개발 모드로 실행 (nodemon 사용)
+2. **Python AI 서비스 설치 및 실행**
 ```bash
-npm run dev
+cd ai-analysis-service
+pip install -r requirements.txt
+python main.py
 ```
 
-4. 브라우저에서 접속
-```
-http://localhost:3000
-```
+3. **브라우저에서 접속**
+- 웹 서비스: http://localhost:3000
+- AI API 문서: http://localhost:8000/docs
+
+### 데이터베이스 설정
+- MySQL 서버: project-db-campus.smhrd.com:3312
+- 데이터베이스: Insa6_aiNLP_p3_1
+- 사용자 테이블이 자동으로 생성됩니다.
 
 ## 테스트 계정
 

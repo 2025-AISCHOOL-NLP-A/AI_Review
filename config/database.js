@@ -1,14 +1,24 @@
 const mysql = require('mysql2/promise');
 
 // 데이터베이스 연결 설정
+// const dbConfig = {
+//     host: 'project-db-campus.smhrd.com',
+//     port: 3312,
+//     user: 'Insa6_aiNLP_p3_1',
+//     password: 'password',
+//     database: 'database',
+//     charset: 'utf8mb4',
+//     connectionLimit: 10
+// };
+
 const dbConfig = {
-    host: 'project-db-campus.smhrd.com',
-    port: 3312,
-    user: 'Insa6_aiNLP_p3_1',
-    password: 'password',
-    database: 'database',
-    charset: 'utf8mb4',
-    connectionLimit: 10
+    host: 'localhost',       // or the IP/domain of your DB server
+    port: 3306,              // default MariaDB/MySQL port
+    user: 'root',            // your database username
+    password: '1234',        // your password
+    database: 'testdb',      // the DB you want to use
+    charset: 'utf8mb4',      // recommended for full Unicode support
+    connectionLimit: 10      // number of pooled connections
 };
 
 // 연결 풀 생성

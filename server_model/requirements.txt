@@ -1,0 +1,22 @@
+# === FastAPI & 서버 ===
+fastapi==0.115.0
+uvicorn==0.31.0
+
+# === AI 모델 로딩 ===
+torch==2.4.0
+transformers==4.45.1
+numpy==1.26.4
+
+# === DB 연결 ===
+pymysql==1.1.1
+
+# === OpenAI API ===
+openai==1.44.0
+
+# === 환경변수 관리 ===
+python-dotenv==1.0.1
+
+# === (옵션) JSON 처리 안정성 ===
+orjson==3.10.0
+
+

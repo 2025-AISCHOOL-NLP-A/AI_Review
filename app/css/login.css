@@ -12,7 +12,7 @@ body:not(.main-page) {
 /* 왼쪽 섹션 */
 .left-section {
   width: 50%;
-  background: #F0F0F0;
+  background: #f0f0f0;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -21,17 +21,7 @@ body:not(.main-page) {
   overflow: hidden;
 }
 
-/* 오른쪽 섹션 (로그인 폼) */
-.right-section {
-  width: 50%;
-  background: linear-gradient(225deg, #C8E3FF 0%, #F0F4FF 100%);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 40px;
-}
-
+/*로그인 컨테이너*/
 .login-container {
   width: 100%;
   max-width: 400px;
@@ -66,7 +56,6 @@ body:not(.main-page) {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
-  background: linear-gradient(225deg, #C8E3FF 0%, #F0F4FF 100%);
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -87,7 +76,7 @@ body:not(.main-page) {
   border-radius: 12px;
   background: white;
   font-size: 1rem;
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
   outline: none;
   transition: box-shadow 0.2s ease;
 }
@@ -99,7 +88,7 @@ body:not(.main-page) {
 .login-button {
   width: 100%;
   padding: 14px;
-  background: #C8E3FF;
+  background: #c8e3ff;
   border: none;
   border-radius: 12px;
   font-size: 1.1rem;
@@ -108,11 +97,11 @@ body:not(.main-page) {
   cursor: pointer;
   margin-top: 8px;
   transition: background 0.2s ease, transform 0.1s ease;
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
 }
 
 .login-button:hover {
-  background: #A0D2FF;
+  background: #a0d2ff;
   transform: translateY(-1px);
 }
 
@@ -139,3 +128,42 @@ body:not(.main-page) {
   opacity: 0.7;
 }
 
+/* 오른쪽 섹션 (로그인 폼) */
+.right-section {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  position: relative; /* 자식 absolute 기준 */
+  overflow: hidden; /* 화면 밖 잘림 */
+}
+
+/* 회전 직사각형 */
+/* 로그인폼 뒤의 기울어진 사각형 */
+/* 직사각형 데코: 로그인 폼 뒤에 */
+.right-section::before {
+  content: "";
+  position: absolute;
+  width: 800px;
+  height: 1200px;
+  /* 지정된 그라데이션 */
+  background: linear-gradient(225deg, #c8e3ff 0%, #f0f4ff 100%);
+  border-radius: 24px; /* 필요 없으면 제거 */
+  top: 50%;
+  left: 65%; /* 위치는 취향대로 조정 */
+  transform: translate(-50%, -50%) rotate(11.047deg);
+  z-index: 0; /* 뒤로 */
+  opacity: 0.8; /* 살짝 투명하게 */
+}
+
+/* 폼은 위로 */
+.login-container {
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.7); /* 폼 배경을 반투명 화이트로 */
+  backdrop-filter: blur(8px); /* 유리 느낌 */
+  border-radius: 20px;
+  padding: 40px;
+}

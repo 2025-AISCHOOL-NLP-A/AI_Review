@@ -4,7 +4,6 @@
 
 /* 페이지 배경 */
 body {
-  background: linear-gradient(225deg, #C8E3FF 0%, #F0F4FF 100%);
   background-attachment: fixed;
   min-height: 100vh;
   display: flex;
@@ -36,7 +35,7 @@ body {
   background: white;
   border-radius: 16px;
   padding: 32px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   margin-bottom: 0;
 }
 
@@ -60,7 +59,7 @@ body {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
-  background: linear-gradient(225deg, #C8E3FF 0%, #F0F4FF 100%);
+  background: linear-gradient(225deg, #c8e3ff 0%, #f0f4ff 100%);
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -81,7 +80,7 @@ body {
   border-radius: 12px;
   background: #f9fafb;
   font-size: 1rem;
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
   outline: none;
   transition: box-shadow 0.2s ease, background 0.2s ease;
 }
@@ -104,7 +103,7 @@ body {
   cursor: pointer;
   margin-top: 8px;
   transition: background 0.2s ease, transform 0.1s ease;
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
 }
 
 .find-button:hover {
@@ -141,4 +140,3 @@ body {
   text-decoration: underline;
   opacity: 0.7;
 }
-

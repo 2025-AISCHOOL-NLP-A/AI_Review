@@ -4,7 +4,6 @@
 
 /* 페이지 배경 */
 body {
-  background: linear-gradient(225deg, #C8E3FF 0%, #F0F4FF 100%);
   background-attachment: fixed;
   min-height: 100vh;
   display: flex;
@@ -16,6 +15,23 @@ body {
 .join-container {
   width: 100%;
   max-width: 600px;
+  position: relative; /* ★ 추가 */
+  overflow: hidden; /* ★ 추가: 사각형 하단을 컨테이너에서 잘라냄 */
+}
+
+/* 오른쪽 배치된 기울어진 사각형 */
+.join-container::before {
+  content: "";
+  position: absolute;
+  width: 800px;
+  height: 1300px;
+  background: linear-gradient(225deg, #c8e3ff 100%, #f0f4ff 0%);
+  border-radius: 24px;
+  top: 55%;
+  left: 110%; /* 오른쪽으로 이동 */
+  transform: translate(-50%, -50%) rotate(11deg);
+  z-index: 0;
+  opacity: 0.85;
 }
 
 /* 로고 */
@@ -31,12 +47,14 @@ body {
   object-fit: contain;
 }
 
-/* 회원가입 카드 */
+/* 회원가입 카드 위로 */
 .join-card {
-  background: white;
-  border-radius: 16px;
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.8); /* 반투명 유리 느낌 */
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
   padding: 40px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 /* 폼 그룹 */
@@ -58,7 +76,7 @@ body {
 
 .input-with-icon:focus-within {
   background: white;
-  border-color: #C8E3FF;
+  border-color: #c8e3ff;
   box-shadow: 0 0 0 3px rgba(200, 227, 255, 0.2);
 }
 
@@ -66,7 +84,6 @@ body {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
-  background: linear-gradient(225deg, #C8E3FF 0%, #F0F4FF 100%);
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -89,7 +106,7 @@ body {
   border-radius: 8px;
   background: transparent;
   font-size: 1rem;
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
   outline: none;
 }
 
@@ -119,7 +136,7 @@ body {
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.2s ease;
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
 }
 
 .check-button:hover {
@@ -159,7 +176,7 @@ body {
   border-radius: 8px;
   background: #f9fafb;
   font-size: 1rem;
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
   outline: none;
   cursor: pointer;
   transition: box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
@@ -167,7 +184,7 @@ body {
 
 .form-select:focus {
   background: white;
-  border-color: #C8E3FF;
+  border-color: #c8e3ff;
   box-shadow: 0 0 0 3px rgba(200, 227, 255, 0.2);
 }
 
@@ -182,7 +199,7 @@ body {
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.2s ease;
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
 }
 
 .verify-button:hover {
@@ -244,7 +261,7 @@ body {
   border-radius: 8px;
   background: #f9fafb;
   font-size: 0.85rem;
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
   resize: vertical;
   overflow-y: auto;
   color: #6b7280;
@@ -264,7 +281,7 @@ body {
   cursor: pointer;
   margin-top: 8px;
   transition: background 0.2s ease, transform 0.1s ease;
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
 }
 
 .join-button:hover {
@@ -275,4 +292,3 @@ body {
 .join-button:active {
   transform: translateY(0);
 }
-

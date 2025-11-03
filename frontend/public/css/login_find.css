@@ -1,0 +1,142 @@
+/* ========================================
+   아이디/비밀번호 찾기 페이지 스타일
+   ======================================== */
+
+/* 페이지 배경 */
+body {
+  background-attachment: fixed;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+.find-container {
+  width: 100%;
+  max-width: 500px;
+}
+
+/* 로고 */
+.logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+
+.logo img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+/* 찾기 카드 */
+.find-card {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 0;
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 24px;
+  color: #111;
+}
+
+/* 폼 그룹 */
+.form-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.form-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  background: linear-gradient(225deg, #c8e3ff 0%, #f0f4ff 100%);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+}
+
+.form-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.form-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 12px;
+  background: #f9fafb;
+  font-size: 1rem;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
+  outline: none;
+  transition: box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.form-input:focus {
+  background: white;
+  box-shadow: 0 0 0 3px rgba(200, 227, 255, 0.3);
+}
+
+/* 찾기 버튼 */
+.find-button {
+  width: 100%;
+  padding: 14px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.2s ease, transform 0.1s ease;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
+}
+
+.find-button:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.find-button:active {
+  transform: translateY(0);
+}
+
+/* 구분선 */
+.divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 24px 0;
+}
+
+/* 하단 링크 */
+.form-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.form-footer a {
+  color: #111;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: text-decoration 0.2s ease, opacity 0.2s ease;
+}
+
+.form-footer a:hover {
+  text-decoration: underline;
+  opacity: 0.7;
+}

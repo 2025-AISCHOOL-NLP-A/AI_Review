@@ -12,9 +12,36 @@ body {
   padding: 40px 20px;
 }
 
+/* ====== 컨테이너: 배경 사각형 기준/클리핑/스택 분리 ====== */
 .find-container {
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
+  position: relative; /* ::before 기준 */
+  overflow: hidden; /* 화면(컨테이너) 밖으로 삐져나온 부분 숨김 */
+  isolation: isolate; /* 자체 스택 컨텍스트 생성 -> ::before를 확실히 뒤로 */
+}
+
+/* ====== 오른쪽에 배치된 기울어진 사각형(맨 뒤) ====== */
+.find-container::before {
+  content: "";
+  position: absolute;
+  width: 780px;
+  height: 1200px;
+  background: linear-gradient(200deg, #ffffff 10%, #d7e8ff 45%, #bcd6ff 85%);
+  border-radius: 24px;
+  top: 55%;
+  left: 85%; /* 더 오른쪽으로 보내고 싶으면 88~92% */
+  transform: translate(-50%, -50%) rotate(11deg);
+  z-index: 0; /* 맨 뒤 */
+  opacity: 0.85;
+}
+
+/* ====== 실제 카드/푸터는 위로 띄우기 ====== */
+.find-card,
+.form-footer,
+.logo {
+  position: relative;
+  z-index: 1; /* ::before(0) 위 */
 }
 
 /* 로고 */
@@ -32,7 +59,7 @@ body {
 
 /* 찾기 카드 */
 .find-card {
-  background: white;
+  background: rgba(255, 255, 255, 0.8); /* 반투명 유리 느낌 */
   border-radius: 16px;
   padding: 32px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -59,7 +86,6 @@ body {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
-  background: linear-gradient(225deg, #c8e3ff 0%, #f0f4ff 100%);
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -131,6 +157,7 @@ body {
 
 .form-footer a {
   color: #111;
+  margin: 16px;
   text-decoration: none;
   font-size: 0.9rem;
   transition: text-decoration 0.2s ease, opacity 0.2s ease;
@@ -139,4 +166,17 @@ body {
 .form-footer a:hover {
   text-decoration: underline;
   opacity: 0.7;
+}
+
+/* ====== 작은 화면 대응: 스크롤은 막되 요소가 눌리지 않게 간격만 살짝 조정 ====== */
+@media (max-width: 420px) {
+  body {
+    padding: 24px 16px;
+  }
+  .logo {
+    margin-bottom: 24px;
+  }
+  .find-card {
+    padding: 24px;
+  }
 }

@@ -149,7 +149,7 @@ body:not(.main-page) {
   width: 800px;
   height: 1200px;
   /* 지정된 그라데이션 */
-  background: linear-gradient(225deg, #c8e3ff 0%, #f0f4ff 100%);
+  background: linear-gradient(200deg, #ffffff 10%, #d7e8ff 45%, #bcd6ff 85%);
   border-radius: 24px; /* 필요 없으면 제거 */
   top: 50%;
   left: 65%; /* 위치는 취향대로 조정 */

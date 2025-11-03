@@ -1,7 +1,9 @@
-* { margin: 0; padding: 0; box-sizing: border-box; }
+/* ========================================
+   로그인 페이지 스타일 (Login Page Styles)
+   ======================================== */
 
-body {
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+/* 로그인 페이지용 body */
+body:not(.main-page) {
   display: flex;
   height: 100vh;
   overflow: hidden;
@@ -19,7 +21,6 @@ body {
   overflow: hidden;
 }
 
-
 /* 오른쪽 섹션 (로그인 폼) */
 .right-section {
   width: 50%;
@@ -36,7 +37,7 @@ body {
   max-width: 400px;
 }
 
-/* 로고 */
+/* 로그인 페이지 로고 */
 .logo {
   display: flex;
   justify-content: center;
@@ -119,7 +120,7 @@ body {
   transform: translateY(0);
 }
 
-/* 하단 링크 */
+/* 로그인 페이지 하단 링크 */
 .form-footer {
   display: flex;
   justify-content: space-between;

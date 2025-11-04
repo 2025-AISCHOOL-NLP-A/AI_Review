@@ -1,0 +1,92 @@
+/* Dashboard Custom Styles */
+:root {
+  --bg-color: #F9FAFB;
+  --card-bg: #FFFFFF;
+  --border-color: #E5E7EB;
+  --main-color: #5B8EFF;
+  --font-color: #333333;
+  --positive-highlight: #10B981;
+  --negative-highlight: #EF4444;
+  --neutral-color: #CBD5E1;
+  --card-radius: 12px;
+  --card-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.dashboard-page {
+  font-family: 'Inter', 'Noto Sans KR', sans-serif;
+  background-color: var(--bg-color);
+  color: var(--font-color);
+  min-height: 100vh;
+  padding: 0;
+}
+
+.dashboard-content {
+  padding: 24px;
+  background-color: var(--bg-color);
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.dashboard-content .card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 24px;
+}
+
+.dashboard-content .text-main { 
+  color: var(--main-color); 
+}
+
+.dashboard-content .bg-main { 
+  background-color: var(--main-color); 
+}
+
+.dashboard-content .text-neutral { 
+  color: var(--neutral-color); 
+}
+
+.dashboard-content .bg-neutral { 
+  background-color: var(--neutral-color); 
+}
+
+.dashboard-content .text-pos { 
+  color: var(--positive-highlight); 
+}
+
+.dashboard-content .bg-pos-light { 
+  background-color: #D1FAE5; 
+}
+
+.dashboard-content .text-neg { 
+  color: var(--negative-highlight); 
+}
+
+.dashboard-content .bg-neg-light { 
+  background-color: #FEE2E2; 
+}
+
+.dashboard-content .kpi-change-up { 
+  color: var(--positive-highlight); 
+}
+
+.dashboard-content .kpi-change-down { 
+  color: var(--negative-highlight); 
+}
+
+/* Responsive font sizes */
+.dashboard-content h1 { 
+  font-size: 1.875rem; 
+  font-weight: 700; 
+}
+
+.dashboard-content h2 { 
+  font-size: 1.5rem; 
+  font-weight: 600; 
+}
+
+.dashboard-content h3 { 
+  font-size: 1.125rem; 
+  font-weight: 600; 
+}

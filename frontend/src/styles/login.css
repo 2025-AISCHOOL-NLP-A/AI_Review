@@ -81,6 +81,48 @@
   box-shadow: 0 0 0 3px rgba(200, 227, 255, 0.3);
 }
 
+/* 비밀번호 입력 래퍼 */
+.password-input-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .form-input {
+  padding-right: 45px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  transition: color 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+  color: #111;
+}
+
+.password-toggle-btn:focus {
+  outline: none;
+  color: #111;
+}
+
+.password-toggle-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
 .login-button {
   width: 100%;
   padding: 14px;

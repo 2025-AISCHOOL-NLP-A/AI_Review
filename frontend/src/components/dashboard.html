@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>리뷰 분석 대시보드</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Inter + Noto Sans KR) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Noto+Sans+KR:wght@100..900&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <!-- html2pdf.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" xintegrity="sha512-Z59GU/RABaeYpUN5yV/7G/Xk+g14h0oT/6jHwQvYQJ/S6C/x5/g2g/oFq7J5E8Yn8p0lB4i1wz7l6/4A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        /* Custom Styles based on Design System */
+        :root {
+            --bg-color: #F9FAFB;
+            --card-bg: #FFFFFF;
+            --border-color: #E5E7EB;
+            --main-color: #5B8EFF;
+            --font-color: #333333;
+            --positive-highlight: #10B981; /* Green for 🟩 */
+            --negative-highlight: #EF4444; /* Red for 🟥 */
+            --neutral-color: #CBD5E1; /* Grey for 😟/Neutral */
+            --card-radius: 12px;
+            --card-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        body {
+            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--font-color);
+            min-height: 100vh;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--card-radius);
+            box-shadow: var(--card-shadow);
+            padding: 24px;
+        }
+        .text-main { color: var(--main-color); }
+        .bg-main { background-color: var(--main-color); }
+        .text-neutral { color: var(--neutral-color); }
+        .bg-neutral { background-color: var(--neutral-color); }
+        .text-pos { color: var(--positive-highlight); }
+        .bg-pos-light { background-color: #D1FAE5; } /* Light Green for tag background */
+        .text-neg { color: var(--negative-highlight); }
+        .bg-neg-light { background-color: #FEE2E2; } /* Light Red for tag background */
+        .kpi-change-up { color: var(--positive-highlight); }
+        .kpi-change-down { color: var(--negative-highlight); }
+
+        /* Ensure responsive font sizes for readability */
+        h1 { font-size: 1.875rem; font-weight: 700; } /* 3xl */
+        h2 { font-size: 1.5rem; font-weight: 600; } /* 2xl */
+        h3 { font-size: 1.125rem; font-weight: 600; } /* lg */
+
+        /* Utility for PDF generation */
+        #dashboard-content {
+            padding: 24px;
+            background-color: var(--bg-color);
+        }
+    </style>
+</head>
+<body>
+
+<div id="dashboard-content" class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Header & Filter Section -->
+    <header class="pt-6 pb-4">
+        <h1 class="text-3xl font-extrabold text-gray-800">리뷰 분석 대시보드</h1>
+        <div class="mt-4 p-4 border-b border-gray-200 flex flex-col md:flex-row md:items-center justify-between bg-white rounded-xl shadow-sm">
+            <div class="mb-3 md:mb-0">
+                <span class="text-xs font-semibold uppercase text-gray-500 mr-2">분석 대상</span>
+                <span class="text-2xl font-bold text-gray-900">에어팟 프로 3</span>
+            </div>
+            <div class="flex items-center space-x-3 text-sm">
+                <span class="text-gray-600">필터 기간: 2025.01.15 ~ 2025.02.07</span>
+                <button class="bg-main text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition shadow-md flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    🔍 적용하기
+                </button>
+                <button class="bg-gray-200 text-gray-800 px-3 py-2 rounded-lg font-medium hover:bg-gray-300 transition flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 1. KPI Summary Cards (4 Columns) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Card 1: 총 리뷰 수 -->
+        <div class="card">
+            <h3 class="text-sm font-medium text-gray-500">💬 총 리뷰 수</h3>
+            <div class="mt-1 flex items-end justify-between">
+                <p class="text-3xl font-extrabold text-gray-900" id="kpi-total">1,235건</p>
+                <span class="kpi-change-up text-sm font-semibold">+12%</span>
+            </div>
+            <p class="mt-2 text-xs text-gray-400">분석 대상 전체 리뷰 수</p>
+        </div>
+        <!-- Card 2: 긍정 비율 -->
+        <div class="card">
+            <h3 class="text-sm font-medium text-gray-500">😀 긍정 비율</h3>
+            <div class="mt-1 flex items-end justify-between">
+                <p class="text-3xl font-extrabold text-gray-900" id="kpi-pos">78%</p>
+                <span class="kpi-change-up text-sm font-semibold flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.47 10.74a.75.75 0 010-1.06l3.75-3.75a.75.75 0 011.06 0l3.75 3.75a.75.75 0 01-1.06 1.06L10 7.31l-3.22 3.22a.75.75 0 01-1.06 0z" clip-rule="evenodd" /></svg>+3%</span>
+            </div>
+            <p class="mt-2 text-xs text-gray-400">긍정 평가 비중</p>
+        </div>
+        <!-- Card 3: 부정 비율 -->
+        <div class="card">
+            <h3 class="text-sm font-medium text-gray-500">😟 부정 비율</h3>
+            <div class="mt-1 flex items-end justify-between">
+                <p class="text-3xl font-extrabold text-gray-900" id="kpi-neg">12%</p>
+                <span class="kpi-change-down text-sm font-semibold flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M14.53 9.26a.75.75 0 010 1.06l-3.75 3.75a.75.75 0 01-1.06 0l-3.75-3.75a.75.75 0 011.06-1.06L10 12.69l3.22-3.22a.75.75 0 011.06 0z" clip-rule="evenodd" /></svg>-2%</span>
+            </div>
+            <p class="mt-2 text-xs text-gray-400">부정 평가 비중</p>
+        </div>
+        <!-- Card 4: 종합 스코어 -->
+        <div class="card">
+            <h3 class="text-sm font-medium text-gray-500">⭐ 종합 스코어</h3>
+            <div class="mt-1 flex items-end justify-between">
+                <p class="text-3xl font-extrabold text-gray-900" id="kpi-score">4.5 / 5.0</p>
+                <span class="kpi-change-up text-sm font-semibold">+0.2</span>
+            </div>
+            <p class="mt-2 text-xs text-gray-400">전체 감정 점수 기반 산출</p>
+        </div>
+    </div>
+
+    <!-- Main Chart Section (2 Columns) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- 2. 일자별 긍·부정 포함 리뷰 비율 (Cumulative Bar + Line) -->
+        <div class="card lg:col-span-2">
+            <h2 class="text-xl font-semibold mb-4">📊 일자별 긍·부정 포함 리뷰 비율</h2>
+            <div class="relative h-96">
+                <canvas id="dailyTrendChart"></canvas>
+            </div>
+            <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
+                <h4 class="font-bold text-gray-700 mb-1">📈 결과 요약:</h4>
+                <p>긍정 언급 62% → 78%로 상승, 부정 언급 38% → 22%로 감소. 해당일 리뷰 수: 120건 → 310건. 펌웨어 업데이트 이후 “노이즈 캔슬링” 관련 긍정 리뷰 급증.</p>
+            </div>
+        </div>
+
+        <!-- 3. 속성별 감정 밸런스 (Radar Chart) -->
+        <div class="card lg:col-span-1">
+            <h2 class="text-xl font-semibold mb-4">🕸️ 속성별 감정 밸런스</h2>
+            <div class="relative h-96">
+                <canvas id="radarChart"></canvas>
+            </div>
+            <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
+                <h4 class="font-bold text-gray-700 mb-1">📈 해석:</h4>
+                <p>“디자인”, “브랜드 신뢰도”는 긍정 비중 높음. “배터리”, “전원 효율”은 부정 피드백 상대적으로 많음.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Analysis Section (Grid) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- 4. 속성별 긍·부정 분기형 막대 그래프 (Custom Chart.js) -->
+        <div class="card lg:col-span-2">
+            <h2 class="text-xl font-semibold mb-4">📊 속성별 긍·부정 분기형 막대 그래프</h2>
+            <div class="relative h-96">
+                <canvas id="splitBarChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 5. 속성 상관관계 히트맵 (Custom HTML Grid) -->
+        <div class="card lg:col-span-1">
+            <h2 class="text-xl font-semibold mb-4">🔥 속성 상관관계 히트맵</h2>
+            <div class="grid grid-cols-6 text-center text-sm font-semibold border-b border-gray-200 pb-2">
+                <div class="text-gray-500"></div>
+                <div class="text-gray-600">디자인</div>
+                <div class="text-gray-600">가격</div>
+                <div class="text-gray-600">품질</div>
+                <div class="text-gray-600">배터리</div>
+                <div class="text-gray-600">착용감</div>
+            </div>
+            <div id="heatmap-grid" class="mt-2 text-xs">
+                <!-- Data will be populated by JS -->
+            </div>
+            <p class="mt-4 text-xs text-gray-500">
+                <span class="text-main font-bold">🔵</span> 진할수록 함께 언급되는 빈도가 높음.<br>
+                예: 디자인–가격(0.82) → “디자인 만족도”가 “가격 인식”에 영향
+            </p>
+        </div>
+    </div>
+
+    <!-- Word Cloud & Review Sample (2 Columns) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- 6. 감정 워드클라우드 (Custom HTML) -->
+        <div class="card">
+            <h2 class="text-xl font-semibold mb-4">🌈 감정 워드클라우드</h2>
+            <div class="flex flex-wrap gap-3" id="wordcloud-pos">
+                <!-- Positive Keywords -->
+                <span style="font-size: 36px; color: var(--main-color);" class="font-bold">만족</span>
+                <span style="font-size: 30px; color: var(--main-color);">디자인</span>
+                <span style="font-size: 28px; color: var(--main-color);">음질</span>
+                <span style="font-size: 24px; color: var(--main-color);">편안</span>
+                <span style="font-size: 22px; color: var(--main-color);">착용감</span>
+                <span style="font-size: 20px; color: var(--main-color);">노캔좋음</span>
+            </div>
+            <div class="border-t border-gray-100 my-4"></div>
+            <div class="flex flex-wrap gap-3" id="wordcloud-neg">
+                <!-- Negative Keywords -->
+                <span style="font-size: 36px; color: var(--neutral-color);" class="font-bold">비싸다</span>
+                <span style="font-size: 30px; color: var(--neutral-color);">배터리</span>
+                <span style="font-size: 26px; color: var(--neutral-color);">무겁다</span>
+                <span style="font-size: 22px; color: var(--neutral-color);">끊김</span>
+                <span style="font-size: 20px; color: var(--neutral-color);">발열</span>
+            </div>
+        </div>
+
+        <!-- 7. 리뷰 원문 샘플 (Table) -->
+        <div class="card">
+            <h2 class="text-xl font-semibold mb-4">💬 리뷰 원문 샘플</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr class="text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                            <th class="px-3 py-3 text-left">날짜</th>
+                            <th class="px-3 py-3 text-left">리뷰 내용</th>
+                            <th class="px-3 py-3 text-left">감정 요약</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200 text-sm" id="review-table-body">
+                        <!-- Data will be populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insights and AI Report Section (3 Columns + 1) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- 8. 인사이트 카드 섹션 -->
+        <div class="card">
+            <h2 class="text-lg font-semibold mb-3">A. 핵심 인사이트</h2>
+            <p class="whitespace-pre-wrap text-sm text-gray-700">👍 전체 긍정률 78%로 상승 중
+‘디자인·착용감·음질’ 주요 강점</p>
+        </div>
+        <div class="card">
+            <h2 class="text-lg font-semibold mb-3">B. 개선 제안</h2>
+            <p class="whitespace-pre-wrap text-sm text-gray-700">⚙️ 배터리 지속시간 관련 부정 리뷰 40%↑
+전원 효율 개선 필요</p>
+        </div>
+        <div class="card">
+            <h2 class="text-lg font-semibold mb-3">C. 리뷰 샘플</h2>
+            <p class="whitespace-pre-wrap text-sm text-gray-700">💬 “디자인은 예쁜데 가격이 비싸요.”
+💬 “소음이 거의 없어 만족합니다.”
+💬 “배터리 빨리 닳아요.”</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6">
+        <!-- 9. AI 인사이트 리포트 (LLM 자동 생성) -->
+        <div class="card">
+            <h2 class="text-xl font-semibold mb-4">🤖 AI 인사이트 리포트</h2>
+            <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm whitespace-pre-wrap text-gray-800">
+                🔍 AI 자동 분석 요약
+- 긍정 요인: 디자인, 착용감, 음질 (전체 리뷰의 70% 이상)
+- 부정 요인: 배터리 지속시간, 가격
+- 인사이트: 신규 리뷰 유입과 함께 긍정률 상승. 펌웨어 업데이트 영향 가능성 높음.
+            </div>
+        </div>
+    </div>
+
+    <!-- 10. 리포트 다운로드 버튼 -->
+    <div class="pt-4 pb-12 flex justify-center">
+        <button id="download-pdf-btn" class="bg-main text-white px-8 py-3 rounded-xl font-bold text-lg hover:opacity-90 transition shadow-lg flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            📥 [ 리포트 PDF 다운로드 ]
+        </button>
+    </div>
+
+</div>
+
+<script type="module">
+    // --- Firebase Initialization (Required for Canvas Environment) ---
+    // NOTE: This app does not use Firestore for persistent data storage, 
+    // but the environment requires Firebase initialization/auth setup.
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    
+    // Global variables (set by Canvas environment)
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    let auth;
+
+    window.onload = async () => {
+        try {
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            
+            if (initialAuthToken) {
+                await signInWithCustomToken(auth, initialAuthToken);
+            } else {
+                await signInAnonymously(auth);
+            }
+        } catch (error) {
+            console.error("Firebase Auth Error:", error);
+        }
+
+        // Initialize all components after window load
+        initializeDashboard();
+    };
+
+    // --- Static Data (As requested in the prompt) ---
+    const primaryColor = '#5B8EFF';
+    const neutralColor = '#CBD5E1';
+    const newReviewColor = '#111827';
+    const positiveHighlight = '#10B981'; // Green for 🟩
+    const negativeHighlight = '#EF4444'; // Red for 🟥
+    const fontColor = '#333333';
+
+    const dailyTrendData = {
+        dates: ['1/15', '1/18', '1/21', '1/24', '1/27', '1/30', '2/02', '2/07'],
+        // Positive ratio (78%) and Negative ratio (12%) sum to 90%, leaving 10% Neutral/Unspecified.
+        // I will use Pos and Neutral/Unspecified for the stacked bar and plot Negative ratio separately to match the prompt's visualization concept (Cumulative Bar for Pos/Neg, Line for New Reviews)
+        // Since the prompt shows a simple two-bar stack (Positive/Negative), I will normalize them for the stack, assuming the prompt meant 78% Positive and 12% *of the remaining* or just use 78% and 12% and let Chart.js stack the smaller one on top of a base. A better approach for the *cumulative* bar is to track Positive, Negative, and Neutral so they sum to 100%. I'll derive Neutral.
+        positive: [62, 65, 68, 70, 72, 75, 77, 78], // %
+        negative: [38, 35, 32, 30, 28, 25, 23, 22], // % (Used the inverse of positive trend for simplification)
+        newReviews: [120, 150, 200, 250, 280, 300, 305, 310] // counts
+    };
+
+    const radarData = {
+        labels: ['디자인', '착용감', '음질', '배터리', '전원 효율', '브랜드 신뢰도'],
+        positive: [90, 82, 75, 60, 55, 88], // %
+        negative: [10, 18, 25, 40, 45, 12], // %
+    };
+
+    const splitBarRawData = [
+        { label: '가격', negRatio: 80, negCount: 100, posRatio: 20, posCount: 25 },
+        { label: '디자인', negRatio: 10, negCount: 15, posRatio: 90, posCount: 150 },
+        { label: '음질', negRatio: 25, negCount: 30, posRatio: 75, posCount: 90 },
+        { label: '배터리', negRatio: 40, negCount: 50, posRatio: 60, posCount: 70 },
+        { label: '착용감', negRatio: 18, negCount: 20, posRatio: 82, posCount: 95 },
+    ];
+    
+    const correlationLabels = ['디자인', '가격', '품질', '배터리', '착용감'];
+    const correlationMatrix = {
+        '디자인': { '가격': 0.82, '품질': 0.45, '배터리': 0.22, '착용감': 0.35 },
+        '가격': { '품질': 0.78, '배터리': 0.32, '착용감': 0.18 },
+        '품질': { '배터리': 0.41, '착용감': 0.33 },
+        '배터리': { '착용감': 0.27 }
+    };
+
+    const reviewSamples = [
+        { date: '2/02', content: '디자인은 예쁘고 착용감도 좋아요', summary: [{ text: '디자인', type: 'pos' }, { text: '착용감', type: 'pos' }] },
+        { date: '2/05', content: '배터리가 너무 빨리 닳아요', summary: [{ text: '배터리', type: 'neg' }] },
+        { date: '2/06', content: '노이즈 캔슬링이 대박이에요', summary: [{ text: '음질', type: 'pos' }, { text: '기능', type: 'pos' }] },
+        { date: '2/07', content: '가격이 좀 비싸지만 만족해요', summary: [{ text: '가격', type: 'neg' }, { text: '만족', type: 'pos' }] },
+    ];
+
+
+    // --- Core Functions ---
+
+    function initializeDashboard() {
+        renderReviewTable();
+        renderHeatmap();
+        initializeDailyTrendChart();
+        initializeRadarChart();
+        initializeSplitBarChart();
+        setupPDFDownload();
+    }
+
+    // 1. Daily Trend Chart (Bar + Line)
+    function initializeDailyTrendChart() {
+        const ctx = document.getElementById('dailyTrendChart').getContext('2d');
+        const neutralData = dailyTrendData.positive.map((pos, i) => 100 - pos); // Simplified neutral/unspecified
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: dailyTrendData.dates,
+                datasets: [{
+                    label: '긍정 비율 (%)',
+                    data: dailyTrendData.positive,
+                    backgroundColor: primaryColor,
+                    yAxisID: 'y',
+                    stack: 'Stack 0',
+                }, {
+                    label: '부정 비율 및 기타 (%)',
+                    data: dailyTrendData.negative,
+                    backgroundColor: neutralColor,
+                    yAxisID: 'y',
+                    stack: 'Stack 0',
+                }, {
+                    type: 'line',
+                    label: '해당일 신규 리뷰 수 (건수)',
+                    data: dailyTrendData.newReviews,
+                    borderColor: newReviewColor,
+                    borderWidth: 2,
+                    pointBackgroundColor: newReviewColor,
+                    yAxisID: 'y1',
+                    fill: false,
+                    tension: 0.3,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: fontColor
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        grid: { display: false }
+                    },
+                    y: {
+                        stacked: true,
+                        position: 'left',
+                        title: { display: true, text: '비율 (%)', color: primaryColor },
+                        max: 100,
+                        ticks: { color: primaryColor }
+                    },
+                    y1: {
+                        position: 'right',
+                        title: { display: true, text: '신규 리뷰 수 (건수)', color: newReviewColor },
+                        grid: { drawOnChartArea: false },
+                        ticks: { color: newReviewColor }
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Radar Chart
+    function initializeRadarChart() {
+        const ctx = document.getElementById('radarChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: radarData.labels,
+                datasets: [{
+                    label: '긍정 비율',
+                    data: radarData.positive,
+                    backgroundColor: 'rgba(91, 142, 255, 0.4)', // Light Blue
+                    borderColor: primaryColor,
+                    pointBackgroundColor: primaryColor,
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: primaryColor
+                }, {
+                    label: '부정 비율',
+                    data: radarData.negative,
+                    backgroundColor: 'rgba(203, 213, 225, 0.4)', // Light Gray
+                    borderColor: neutralColor,
+                    pointBackgroundColor: neutralColor,
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: neutralColor
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { color: fontColor }
+                    }
+                },
+                scales: {
+                    r: {
+                        angleLines: { color: '#E5E7EB' },
+                        grid: { color: '#E5E7EB' },
+                        pointLabels: { color: fontColor, font: { size: 14 } },
+                        suggestedMin: 0,
+                        suggestedMax: 100,
+                        ticks: {
+                            stepSize: 20,
+                            backdropColor: 'rgba(255, 255, 255, 0.7)',
+                            color: fontColor
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 3. Split Bar Chart (Horizontal Bar with Labels)
+    function initializeSplitBarChart() {
+        // Chart.js UMD 버전에서는 코어 컴포넌트들이 기본 등록되므로, 중복 등록을 제거하여 TypeError를 해결합니다.
+        // Chart.register(Chart.elements.Rectangle);
+        // Chart.register(Chart.Tooltip, Chart.Legend, Chart.controllers.bar);
+        // Chart.register(Chart.plugins.Plugin, Chart.plugins.Tooltip, Chart.plugins.Legend);
+        // (datalabels 플러그인은 옵션에서 사용되지 않아 등록 로직을 생략합니다.)
+
+        const labels = splitBarRawData.map(d => d.label);
+        const negData = splitBarRawData.map(d => -d.negRatio); // Negative values for left side
+        const posData = splitBarRawData.map(d => d.posRatio);  // Positive values for right side
+
+        const ctx = document.getElementById('splitBarChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '부정 비율 (왼쪽)',
+                    data: negData,
+                    backgroundColor: neutralColor,
+                    barPercentage: 0.7
+                }, {
+                    label: '긍정 비율 (오른쪽)',
+                    data: posData,
+                    backgroundColor: primaryColor,
+                    barPercentage: 0.7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: fontColor
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const rawValue = Math.abs(context.raw);
+                                const count = context.datasetIndex === 0 ? splitBarRawData[context.dataIndex].negCount : splitBarRawData[context.dataIndex].posCount;
+                                return `${context.dataset.label}: ${rawValue}% (${count}개)`;
+                            }
+                        }
+                    },
+                    datalabels: {
+                         // Data labels are tricky in split bars. I'll rely on tooltips/hover for clean design.
+                         // Custom rendering for ratio/count at bar ends is possible but complex for a single file demo.
+                         display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        min: -100,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return Math.abs(value) + '%';
+                            },
+                            color: fontColor
+                        },
+                        title: {
+                            display: true,
+                            text: '감정 비율'
+                        },
+                        grid: {
+                            color: (context) => (context.tick.value === 0 ? '#000' : '#E5E7EB') // Center line darker
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                        grid: { display: false },
+                        ticks: { color: fontColor }
+                    }
+                }
+            }
+        });
+    }
+
+
+    // 4. Heatmap Rendering (Custom HTML)
+    function renderHeatmap() {
+        const gridContainer = document.getElementById('heatmap-grid');
+        let html = '';
+
+        correlationLabels.forEach((rowLabel, rowIndex) => {
+            html += `<div class="grid grid-cols-6 items-center border-b border-gray-100 py-2">`;
+            
+            // Row Label
+            html += `<div class="text-xs font-semibold text-gray-600">${rowLabel}</div>`;
+
+            correlationLabels.forEach((colLabel, colIndex) => {
+                let cellContent = '';
+                let bgColor = 'bg-white';
+                let value = null;
+
+                if (rowIndex === colIndex) {
+                    // Diagonal (Self-correlation)
+                    cellContent = '-';
+                    bgColor = 'bg-gray-100';
+                } else if (rowIndex > colIndex) {
+                    // Mirrored side, fetch from upper-right triangle
+                    value = correlationMatrix[colLabel] ? correlationMatrix[colLabel][rowLabel] : null;
+                } else {
+                    // Upper-right triangle
+                    value = correlationMatrix[rowLabel] ? correlationMatrix[rowLabel][colLabel] : null;
+                }
+
+                if (value !== null) {
+                    // Calculate color intensity (0.18 min, 0.82 max)
+                    const normalized = (value - 0.18) / (0.82 - 0.18);
+                    const intensity = Math.round(normalized * 5); // Scale from 0 to 5
+                    
+                    let icon = '⚪';
+                    if (value >= 0.7) icon = '🔵';
+                    else if (value >= 0.4) icon = '🟢';
+                    else if (value >= 0.2) icon = '⚪';
+
+                    bgColor = `bg-blue-${100 + intensity * 100}`;
+                    cellContent = `<span class="text-lg">${icon}</span> <span class="font-medium">${value.toFixed(2)}</span>`;
+                }
+
+                html += `<div class="p-1 h-full flex flex-col justify-center items-center ${bgColor} rounded-sm">${cellContent}</div>`;
+            });
+
+            html += `</div>`;
+        });
+
+        gridContainer.innerHTML = html;
+    }
+
+
+    // 5. Review Table Rendering
+    function renderReviewTable() {
+        const tbody = document.getElementById('review-table-body');
+        let html = '';
+
+        reviewSamples.forEach(review => {
+            const summaryTags = review.summary.map(item => {
+                const tagClass = item.type === 'pos' ? 'bg-pos-light text-pos' : 'bg-neg-light text-neg';
+                const tagIcon = item.type === 'pos' ? '🟩' : '🟥';
+                return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${tagClass}">${tagIcon} ${item.text}</span>`;
+            }).join(' ');
+
+            html += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-3 py-2 whitespace-nowrap text-gray-500">${review.date}</td>
+                    <td class="px-3 py-2 text-gray-900">${review.content}</td>
+                    <td class="px-3 py-2 whitespace-nowrap">${summaryTags}</td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+    }
+
+    // 6. PDF Download Setup
+    function setupPDFDownload() {
+        document.getElementById('download-pdf-btn').addEventListener('click', () => {
+            const element = document.getElementById('dashboard-content');
+            
+            // Temporary hide the download button to prevent it from showing in the PDF
+            const downloadButton = document.getElementById('download-pdf-btn');
+            downloadButton.style.display = 'none';
+
+            // html2pdf options
+            const opt = {
+                margin: 1,
+                filename: '에어팟프로3_리뷰_분석_리포트.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, logging: true, dpi: 192, letterRendering: true },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Restore the download button after saving
+                downloadButton.style.display = 'flex';
+            });
+        });
+    }
+
+</script>
+</body>
+</html>

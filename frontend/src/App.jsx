@@ -4,6 +4,7 @@ import Main from './components/Main';
 import Login from './components/Login';
 import LoginJoin from './components/LoginJoin';
 import LoginFind from './components/LoginFind';
+import Dashboard from './components/Dashboard';
 import './App.css';
 import './styles/common.css';
 
@@ -18,6 +19,7 @@ function App() {
         <Route path="/login/join" element={<LoginJoin />} />
         <Route path="/login/find" element={<LoginFind />} />
         <Route path="/main" element={<Main />} />
+        <Route path="/dashboard" element={<Dashboard />} />
 
         {/* 테스트용 or 임시 라우트 */}
         <Route path="/wp" element={<div>Workplace Page (wp.html)</div>} />

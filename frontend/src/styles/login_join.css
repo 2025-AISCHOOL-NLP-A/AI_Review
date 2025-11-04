@@ -2,21 +2,18 @@
    회원가입 페이지 스타일
    ======================================== */
 
-/* 페이지 배경 */
-body {
-  background-attachment: fixed;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40px 20px;
-}
-
 .join-container {
   width: 100%;
   max-width: 600px;
-  position: relative; /* ★ 추가 */
-  overflow: hidden; /* ★ 추가: 사각형 하단을 컨테이너에서 잘라냄 */
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  margin: 0;
 }
 
 /* 오른쪽 배치된 기울어진 사각형 */
@@ -28,7 +25,7 @@ body {
   background: linear-gradient(225deg, #c8e3ff 100%, #f0f4ff 0%);
   border-radius: 24px;
   top: 55%;
-  left: 110%; /* 오른쪽으로 이동 */
+  left: 110%;
   transform: translate(-50%, -50%) rotate(11deg);
   z-index: 0;
   opacity: 0.85;
@@ -51,10 +48,11 @@ body {
 .join-card {
   position: relative;
   z-index: 1;
-  background: rgba(255, 255, 255, 0.8); /* 반투명 유리 느낌 */
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(8px);
   border-radius: 20px;
   padding: 40px;
+  width: 100%;
 }
 
 /* 폼 그룹 */
@@ -284,11 +282,17 @@ body {
   font-family: "Pretendard", "Noto Sans KR", sans-serif;
 }
 
-.join-button:hover {
+.join-button:hover:not(:disabled) {
   background: #2563eb;
   transform: translateY(-1px);
 }
 
-.join-button:active {
+.join-button:active:not(:disabled) {
   transform: translateY(0);
 }
+
+.join-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+

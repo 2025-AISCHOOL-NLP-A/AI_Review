@@ -18,7 +18,7 @@ body {
   isolation: isolate;
   overflow: hidden;
 
-  width: min(100%, 680px);
+  width: min(100%, 660px);
   min-height: 100dvh;
   margin: 0 auto;
   padding: 40px 20px;

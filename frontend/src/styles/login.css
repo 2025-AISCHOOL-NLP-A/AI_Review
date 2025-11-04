@@ -14,7 +14,10 @@
 /* 왼쪽 섹션 */
 .left-section {
   width: 50%;
-  background: #f0f0f0;
+  /* 기존 배경 제거 후 이미지 삽입 */
+  background: url("/images/login_left_section_draw.png") no-repeat center center;
+  background-size: cover; /* 이미지를 섹션 크기에 맞게 꽉 채움 */
+
   display: flex;
   flex-direction: column;
   justify-content: center;

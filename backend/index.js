@@ -17,7 +17,11 @@ app.use(cors());
 app.use(express.json());
 
 // Serve static files from ../frontend/public (CSS, JS, images)
-app.use(express.static(path.join(__dirname, '..', 'frontend', 'public')));
+// This must come before views to ensure CSS/JS/images are served correctly
+app.use(express.static(path.join(__dirname, '..', 'frontend', 'public'), {
+  maxAge: '1d',
+  etag: true
+}));
 
 // Serve view files from ../frontend/views (HTML)
 app.use(express.static(path.join(__dirname, '..', 'frontend', 'views')));

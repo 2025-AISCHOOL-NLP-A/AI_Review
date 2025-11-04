@@ -1,45 +1,85 @@
 const express = require('express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
-const path = require('path');
+const cors = require('cors');
 const { testConnection, createUserTable } = require('./config/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// CORS 설정 (React 앱과 통신을 위해)
+app.use(cors({
+  origin: ['http://localhost:3001', 'http://localhost:3000'], // React 개발 서버 포트
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 // 미들웨어 설정
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(express.static('public'));
 
-// 세션 설정
+// 세션 설정 (JWT로 변경 예정이지만 일단 유지)
 app.use(session({
   secret: 'review-analysis-secret',
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: false }
+  cookie: { 
+    secure: false,
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24시간
+  }
 }));
-
-// EJS 템플릿 엔진 설정
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
 
 // 라우터 설정
 const authRouter = require('./app/routes/authRouter');
-const dashboardRouter = require('./app/routes/dashboardRouter');
-const reportRouter = require('./app/routes/reportRouter');
+const productsRouter = require('./app/routes/productsRouter');
+const insightsRouter = require('./app/routes/insightsRouter');
 
+// API 라우트 등록
 app.use('/auth', authRouter);
-app.use('/dashboard', dashboardRouter);
-app.use('/report', reportRouter);
+app.use('/products', productsRouter);
+app.use('/insights', insightsRouter);
 
-// 메인 페이지 리다이렉트
+// 기본 API 정보
 app.get('/', (req, res) => {
-  if (req.session.user) {
-    res.redirect('/dashboard');
-  } else {
-    res.redirect('/auth/login');
-  }
+  res.json({
+    message: 'Review Analysis API Server',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      auth: '/auth/*',
+      products: '/products/*',
+      insights: '/insights/*'
+    }
+  });
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    service: 'review-analysis-api'
+  });
+});
+
+// 404 핸들러
+app.use('*', (req, res) => {
+  res.status(404).json({ 
+    error: 'Endpoint not found',
+    path: req.originalUrl,
+    method: req.method
+  });
+});
+
+// 에러 핸들러
+app.use((error, req, res, next) => {
+  console.error('Server Error:', error);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+  });
 });
 
 // 서버 시작 및 데이터베이스 초기화
@@ -57,9 +97,12 @@ async function startServer() {
 
     // 서버 시작
     app.listen(PORT, () => {
-      console.log(`🚀 서버가 포트 ${PORT}에서 실행 중입니다.`);
-      console.log(`📱 로그인 페이지: http://localhost:${PORT}/auth/login`);
-      console.log(`📊 대시보드: http://localhost:${PORT}/dashboard`);
+      console.log(`🚀 API 서버가 포트 ${PORT}에서 실행 중입니다.`);
+      console.log(`📋 API 문서: http://localhost:${PORT}/`);
+      console.log(`🏥 Health Check: http://localhost:${PORT}/health`);
+      console.log(`🔐 Auth API: http://localhost:${PORT}/auth/*`);
+      console.log(`📦 Products API: http://localhost:${PORT}/products/*`);
+      console.log(`💡 Insights API: http://localhost:${PORT}/insights/*`);
     });
 
   } catch (error) {

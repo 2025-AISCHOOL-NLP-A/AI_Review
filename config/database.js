@@ -1,5 +1,6 @@
 const mysql = require('mysql2/promise');
-import dotenv from "dotenv";
+// import mysql from 'mysql2/promise';
+const dotenv = require('dotenv');
 
 dotenv.config();
 
@@ -7,12 +8,13 @@ dotenv.config();
 // const dbConfig = {
 //     host: process.env.DB_HOST,
 //     port: 3312,
-//     user: 'DB_USER',
-//     password: 'DB_PASS',
-//     database: 'DB_DATABASE',
+//     user: process.env.DB_USER,
+//     password: process.env.DB_PASS,
+//     database: process.env.DB_DATABASE,
 //     charset: 'utf8mb4',
 //     connectionLimit: 10
 // };
+
 
 const dbConfig = {
     host: 'localhost',       // or the IP/domain of your DB server

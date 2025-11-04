@@ -2,16 +2,54 @@ const { pool } = require('../config/database');
 const bcrypt = require('bcrypt');
 
 class User {
+  // 비밀번호 해싱
+  static async hashPassword(password) {
+    return await bcrypt.hash(password, 10);
+  }
+
+  // 비밀번호 검증
+  static async validatePassword(plainPassword, hashedPassword) {
+    return await bcrypt.compare(plainPassword, hashedPassword);
+  }
+
   // 이메일로 사용자 찾기
   static async findByEmail(email) {
     try {
       const [rows] = await pool.execute(
-        'SELECT * FROM User WHERE email = ?',
+        'SELECT * FROM tb_user WHERE email = ?',
         [email]
       );
       return rows[0] || null;
     } catch (error) {
-      console.error('사용자 조회 오류:', error);
+      console.error('사용자 이메일 조회 오류:', error);
+      throw error;
+    }
+  }
+
+  // 로그인 ID로 사용자 찾기
+  static async findByLoginId(loginId) {
+    try {
+      const [rows] = await pool.execute(
+        'SELECT * FROM tb_user WHERE login_id = ?',
+        [loginId]
+      );
+      return rows[0] || null;
+    } catch (error) {
+      console.error('사용자 로그인ID 조회 오류:', error);
+      throw error;
+    }
+  }
+
+  // 사용자 ID로 찾기
+  static async findById(userId) {
+    try {
+      const [rows] = await pool.execute(
+        'SELECT user_id, email, login_id, signup_date FROM tb_user WHERE user_id = ?',
+        [userId]
+      );
+      return rows[0] || null;
+    } catch (error) {
+      console.error('사용자 ID 조회 오류:', error);
       throw error;
     }
   }
@@ -19,18 +57,18 @@ class User {
   // 사용자 생성
   static async create(userData) {
     try {
-      const { email, password, name } = userData;
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const { email, loginId, password } = userData;
+      const hashedPassword = await this.hashPassword(password);
       
       const [result] = await pool.execute(
-        'INSERT INTO users (email, password, login_id) VALUES (?, ?, ?)',
-        [email, hashedPassword, name]
+        'INSERT INTO tb_user (email, login_id, password) VALUES (?, ?, ?)',
+        [email, loginId, hashedPassword]
       );
-    
+      
       return {
-        id: result.insertId,
+        user_id: result.insertId,
         email,
-        name
+        login_id: loginId
       };
     } catch (error) {
       console.error('사용자 생성 오류:', error);
@@ -38,47 +76,79 @@ class User {
     }
   }
 
-  // 비밀번호 검증
-  static async validatePassword(plainPassword, hashedPassword) {
+  // 사용자 정보 수정
+  static async update(userId, updateData) {
     try {
-      return await bcrypt.compare(plainPassword, hashedPassword);
-    } catch (error) {
-      console.error('비밀번호 검증 오류:', error);
-      return false;
-    }
-  }
-
-  // 로그인 인증
-  static async authenticate(email, password) {
-    try {
-      const user = await this.findByEmail(email);
-      if (!user) {
-        return null;
+      const fields = [];
+      const values = [];
+      
+      if (updateData.email) {
+        fields.push('email = ?');
+        values.push(updateData.email);
       }
-
-      const isValidPassword = await this.validatePassword(password, user.password);
-      if (!isValidPassword) {
-        return null;
+      
+      if (updateData.password) {
+        fields.push('password = ?');
+        values.push(await this.hashPassword(updateData.password));
       }
-
-      // 비밀번호 제외하고 반환
-      const { password: _, ...userWithoutPassword } = user;
-      return userWithoutPassword;
+      
+      if (fields.length === 0) {
+        throw new Error('수정할 데이터가 없습니다.');
+      }
+      
+      values.push(userId);
+      
+      const [result] = await pool.execute(
+        `UPDATE tb_user SET ${fields.join(', ')} WHERE user_id = ?`,
+        values
+      );
+      
+      return result.affectedRows > 0;
     } catch (error) {
-      console.error('인증 오류:', error);
+      console.error('사용자 정보 수정 오류:', error);
       throw error;
     }
   }
 
-  // 모든 사용자 조회 (관리자용)
-  static async findAll() {
+  // 사용자 삭제
+  static async delete(userId) {
+    try {
+      const [result] = await pool.execute(
+        'DELETE FROM tb_user WHERE user_id = ?',
+        [userId]
+      );
+      
+      return result.affectedRows > 0;
+    } catch (error) {
+      console.error('사용자 삭제 오류:', error);
+      throw error;
+    }
+  }
+
+  // 이메일 중복 확인
+  static async isEmailExists(email) {
     try {
       const [rows] = await pool.execute(
-        'SELECT id, email, name, created_at FROM users ORDER BY created_at DESC'
+        'SELECT COUNT(*) as count FROM tb_user WHERE email = ?',
+        [email]
       );
-      return rows;
+      return rows[0].count > 0;
     } catch (error) {
-      console.error('사용자 목록 조회 오류:', error);
+      console.error('이메일 중복 확인 오류:', error);
+      throw error;
+    }
+  }
+
+  // 로그인 ID 중복 확인
+  static async isLoginIdExists(loginId) {
+    try {
+      const [rows] = await pool.execute(
+        'SELECT COUNT(*) as count FROM tb_user WHERE login_id = ?',
+        [loginId]
+      );
+      return rows[0].count > 0;
+    } catch (error) {
+      console.error('로그인ID 중복 확인 오류:', error);
       throw error;
     }
   }

@@ -2,10 +2,24 @@
    회원가입 페이지 스타일
    ======================================== */
 /* 스크롤 완전 차단. */
+/* 가운데 정렬 + 스크롤 방지 + 컨테이너 내부로만 배경 클리핑 */
 html,
 body {
-  height: 100vh;
-  overflow: hidden;
+  height: 100%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0; /* 왼쪽 들뜸 방지 */
+  min-height: 100dvh; /* 모바일 주소창 대응 */
+  display: grid;
+  place-items: center; /* 화면 정중앙에 컨테이너 배치 */
+  background: #f6f8ff; /* 필요 시 */
 }
 
 .join-container {

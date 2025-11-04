@@ -2,19 +2,16 @@
    아이디/비밀번호 찾기 페이지 스타일
    ======================================== */
 
-/* 페이지 배경 */
-body {
-  background-attachment: fixed;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40px 20px;
-}
-
 .find-container {
   width: 100%;
   max-width: 500px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  margin: 0;
 }
 
 /* 로고 */
@@ -37,6 +34,7 @@ body {
   padding: 32px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   margin-bottom: 0;
+  width: 100%;
 }
 
 .card-title {
@@ -106,13 +104,18 @@ body {
   font-family: "Pretendard", "Noto Sans KR", sans-serif;
 }
 
-.find-button:hover {
+.find-button:hover:not(:disabled) {
   background: #2563eb;
   transform: translateY(-1px);
 }
 
-.find-button:active {
+.find-button:active:not(:disabled) {
   transform: translateY(0);
+}
+
+.find-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* 구분선 */
@@ -140,3 +143,21 @@ body {
   text-decoration: underline;
   opacity: 0.7;
 }
+
+.result-message {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.result-message.success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.result-message.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+

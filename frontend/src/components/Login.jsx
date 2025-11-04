@@ -7,7 +7,7 @@ import '../styles/common.css';
 function Login() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: '',
+    login_id: '',
     password: ''
   });
   const [loading, setLoading] = useState(false);
@@ -26,21 +26,19 @@ function Login() {
     setError('');
     setLoading(true);
 
-    if (!formData.username || !formData.password) {
+    if (!formData.login_id || !formData.password) {
       setError('아이디와 비밀번호를 입력해주세요.');
       setLoading(false);
       return;
     }
 
-    const result = await authService.login(formData.username, formData.password);
+    const result = await authService.login(formData.login_id, formData.password);
 
     setLoading(false);
 
     if (result.success) {
-      // 로그인 성공
       console.log('로그인 성공:', result.data);
-      // 성공 후 wp.html 또는 메인 페이지로 이동
-      navigate('/wp');
+      navigate('/main');
     } else {
       setError(result.message);
     }
@@ -64,10 +62,10 @@ function Login() {
               </div>
               <input
                 type="text"
-                name="username"
+                name="login_id"
                 className="form-input"
                 placeholder="아이디"
-                value={formData.username}
+                value={formData.login_id}
                 onChange={handleChange}
                 required
               />
@@ -104,4 +102,3 @@ function Login() {
 }
 
 export default Login;
-

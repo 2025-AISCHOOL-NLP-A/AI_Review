@@ -5,17 +5,23 @@ import '../styles/login_find.css';
 import '../styles/common.css';
 
 function LoginFind() {
+  // 아이디 찾기 폼 데이터
   const [findIdData, setFindIdData] = useState({ email: '' });
+  // 비밀번호 찾기 폼 데이터
   const [findPasswordData, setFindPasswordData] = useState({ login_id: '', email: '' });
+
+  // 결과 / 로딩 상태
   const [findIdResult, setFindIdResult] = useState(null);
   const [findPasswordResult, setFindPasswordResult] = useState(null);
   const [loading, setLoading] = useState({ findId: false, findPassword: false });
 
+  // 🔹 아이디 찾기 입력 핸들러
   const handleFindIdChange = (e) => {
     setFindIdData({ email: e.target.value });
     setFindIdResult(null);
   };
 
+  // 🔹 비밀번호 찾기 입력 핸들러
   const handleFindPasswordChange = (e) => {
     setFindPasswordData({
       ...findPasswordData,
@@ -24,33 +30,55 @@ function LoginFind() {
     setFindPasswordResult(null);
   };
 
+  // 🔹 아이디 찾기 요청
   const handleFindId = async (e) => {
     e.preventDefault();
-    setLoading({ ...loading, findId: true });
+    setLoading((prev) => ({ ...prev, findId: true }));
 
-    const result = await authService.findId(findIdData.email);
-
-    setLoading({ ...loading, findId: false });
-
-    if (result.success) {
-      setFindIdResult({ success: true, loginId: result.loginId, message: result.message });
-    } else {
-      setFindIdResult({ success: false, message: result.message });
+    try {
+      const result = await authService.findId(findIdData.email);
+      if (result.success) {
+        setFindIdResult({
+          success: true,
+          loginId: result.loginId,
+          message: result.message
+        });
+      } else {
+        setFindIdResult({ success: false, message: result.message });
+      }
+    } catch (err) {
+      setFindIdResult({ success: false, message: '요청 중 오류가 발생했습니다.' });
+    } finally {
+      setLoading((prev) => ({ ...prev, findId: false }));
     }
   };
 
+  // 🔹 비밀번호 찾기 요청
   const handleFindPassword = async (e) => {
     e.preventDefault();
-    setLoading({ ...loading, findPassword: true });
+    setLoading((prev) => ({ ...prev, findPassword: true }));
 
-    const result = await authService.findPassword(findPasswordData.login_id, findPasswordData.email);
+    try {
+      const result = await authService.findPassword(
+        findPasswordData.login_id,
+        findPasswordData.email
+      );
 
-    setLoading({ ...loading, findPassword: false });
-
-    if (result.success) {
-      setFindPasswordResult({ success: true, message: result.message });
-    } else {
-      setFindPasswordResult({ success: false, message: result.message });
+      if (result.success) {
+        setFindPasswordResult({
+          success: true,
+          message: result.message
+        });
+      } else {
+        setFindPasswordResult({
+          success: false,
+          message: result.message
+        });
+      }
+    } catch (err) {
+      setFindPasswordResult({ success: false, message: '요청 중 오류가 발생했습니다.' });
+    } finally {
+      setLoading((prev) => ({ ...prev, findPassword: false }));
     }
   };
 
@@ -60,6 +88,7 @@ function LoginFind() {
         <img src="/images/logo.png" alt="logo" />
       </div>
 
+      {/* 🔹 아이디 찾기 */}
       <div className="find-card">
         <h2 className="card-title">아이디 찾기</h2>
         <form className="find-form" onSubmit={handleFindId}>
@@ -80,13 +109,18 @@ function LoginFind() {
           <button type="submit" className="find-button" disabled={loading.findId}>
             {loading.findId ? '찾는 중...' : '아이디 찾기'}
           </button>
+
           {findIdResult && (
             <div className={`result-message ${findIdResult.success ? 'success' : 'error'}`}>
               {findIdResult.success ? (
-                <div>
+                <>
                   <p>{findIdResult.message}</p>
-                  {findIdResult.loginId && <p><strong>아이디: {findIdResult.loginId}</strong></p>}
-                </div>
+                  {findIdResult.loginId && (
+                    <p>
+                      <strong>아이디: {findIdResult.loginId}</strong>
+                    </p>
+                  )}
+                </>
               ) : (
                 <p>{findIdResult.message}</p>
               )}
@@ -97,6 +131,7 @@ function LoginFind() {
 
       <div className="divider"></div>
 
+      {/* 🔹 비밀번호 찾기 */}
       <div className="find-card">
         <h2 className="card-title">비밀번호 찾기</h2>
         <form className="find-form" onSubmit={handleFindPassword}>
@@ -131,8 +166,13 @@ function LoginFind() {
           <button type="submit" className="find-button" disabled={loading.findPassword}>
             {loading.findPassword ? '찾는 중...' : '비밀번호 찾기'}
           </button>
+
           {findPasswordResult && (
-            <div className={`result-message ${findPasswordResult.success ? 'success' : 'error'}`}>
+            <div
+              className={`result-message ${
+                findPasswordResult.success ? 'success' : 'error'
+              }`}
+            >
               <p>{findPasswordResult.message}</p>
             </div>
           )}
@@ -147,4 +187,3 @@ function LoginFind() {
 }
 
 export default LoginFind;
-

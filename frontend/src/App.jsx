@@ -11,20 +11,22 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* 기본 경로를 로그인으로 리다이렉트 */}
-        <Route path="/" element={<Navigate to="/login" />} />
+        {/* ✅ 기본 경로를 메인 페이지로 설정 */}
+        <Route path="/" element={<Main />} />
 
+        {/* 로그인 관련 페이지 */}
         <Route path="/login" element={<Login />} />
         <Route path="/login/join" element={<LoginJoin />} />
         <Route path="/login/find" element={<LoginFind />} />
-        <Route path="/main" element={<Main />} />
 
-        {/* 테스트용 or 임시 라우트 */}
+        {/* 예비 페이지 */}
         <Route path="/wp" element={<div>Workplace Page (wp.html)</div>} />
+
+        {/* 🚧 존재하지 않는 경로는 메인으로 */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
   );
 }
 
 export default App;
-

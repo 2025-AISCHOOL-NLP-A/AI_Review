@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Chart,
   CategoryScale,
@@ -9,7 +10,10 @@ import {
   RadialLinearScale,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  BarController,
+  LineController,
+  RadarController
 } from 'chart.js';
 import html2pdf from 'html2pdf.js';
 import '../styles/dashboard.css';
@@ -24,10 +28,16 @@ Chart.register(
   RadialLinearScale,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  BarController,
+  LineController,
+  RadarController
 );
 
 function Dashboard() {
+  const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = React.useState(true);
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
   const dailyTrendChartRef = useRef(null);
   const radarChartRef = useRef(null);
   const splitBarChartRef = useRef(null);
@@ -123,6 +133,12 @@ function Dashboard() {
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          aspectRatio: 1.5,
+          layout: {
+            padding: {
+              top: 20
+            }
+          },
           plugins: {
             legend: {
               position: 'top',
@@ -136,7 +152,10 @@ function Dashboard() {
           scales: {
             x: {
               stacked: true,
-              grid: { display: false }
+              grid: { display: false },
+              ticks: {
+                padding: 10
+              }
             },
             y: {
               stacked: true,
@@ -298,7 +317,7 @@ function Dashboard() {
         if (isMounted) {
           initializeCharts();
         }
-      }, 150);
+      }, 500);
     });
 
     // Cleanup
@@ -424,8 +443,134 @@ function Dashboard() {
   };
 
   return (
-    <div className="dashboard-page">
-      <div id="dashboard-content" ref={dashboardContentRef} className="dashboard-content">
+    <div className={`dashboard-page ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+      {/* Sidebar */}
+      <aside className={`dashboard-sidebar ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+        <div className="sidebar-header">
+          <div className="sidebar-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-main" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            {sidebarOpen && <span className="sidebar-brand">리뷰 분석</span>}
+          </div>
+          <button 
+            className="sidebar-toggle"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label="Toggle sidebar"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              {sidebarOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
+        </div>
+        
+        <nav className="sidebar-nav">
+          <a href="#" className="sidebar-nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            {sidebarOpen && <span>대시보드</span>}
+          </a>
+          
+          <a href="#" className="sidebar-nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            {sidebarOpen && <span>분석 리포트</span>}
+          </a>
+          
+          <a href="#" className="sidebar-nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            {sidebarOpen && <span>리뷰 관리</span>}
+          </a>
+          
+          <div className="sidebar-nav-item-parent">
+            <a 
+              href="#" 
+              className={`sidebar-nav-item ${settingsOpen ? 'active' : ''}`}
+              onClick={(e) => {
+                e.preventDefault();
+                setSettingsOpen(!settingsOpen);
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {sidebarOpen && (
+                <>
+                  <span>설정</span>
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    className={`h-4 w-4 ml-auto transition-transform ${settingsOpen ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor" 
+                    strokeWidth="2"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </>
+              )}
+            </a>
+            {sidebarOpen && settingsOpen && (
+              <div className="sidebar-submenu">
+                <a 
+                  href="#" 
+                  className="sidebar-submenu-item" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/dashboardupdate');
+                  }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>회원정보 수정</span>
+                </a>
+                <a href="#" className="sidebar-submenu-item" onClick={(e) => e.preventDefault()}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>요금제 관리</span>
+                </a>
+                <a href="#" className="sidebar-submenu-item" onClick={(e) => e.preventDefault()}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span>회원 탈퇴</span>
+                </a>
+              </div>
+            )}
+          </div>
+        </nav>
+        
+        <div className="sidebar-footer">
+          {sidebarOpen && (
+            <div className="sidebar-user">
+              <div className="sidebar-user-avatar">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <div className="sidebar-user-info">
+                <div className="sidebar-user-name">관리자</div>
+                <div className="sidebar-user-email">admin@example.com</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </aside>
+      
+      {/* Main Content */}
+      <div className="dashboard-wrapper">
+        <div id="dashboard-content" ref={dashboardContentRef} className="dashboard-content">
         {/* Header & Filter Section */}
         <header className="pt-6 pb-4">
           <h1 className="text-3xl font-extrabold text-gray-800">리뷰 분석 대시보드</h1>
@@ -435,12 +580,12 @@ function Dashboard() {
               <span className="text-2xl font-bold text-gray-900">에어팟 프로 3</span>
             </div>
             <div className="flex items-center space-x-3 text-sm">
-              <span className="text-gray-600">데이터 기간: 2025.01.15 ~ 2025.02.07</span>
+              <span className="text-gray-600">필터 기간: 2025.01.15 ~ 2025.02.07</span>
               <button className="bg-main text-white px-4 py-2 rounded-lg font-medium hover-opacity-90 transition shadow-md flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                필터 적용하기
+                🔍 적용하기
               </button>
               <button className="bg-gray-200 text-gray-800 px-3 py-2 rounded-lg font-medium hover-bg-gray-300 transition flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -498,11 +643,11 @@ function Dashboard() {
         </div>
 
         {/* Main Chart Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="card lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-stretch" id="main-chart-section">
+          <div className="card lg:col-span-3 flex flex-col" id="daily-trend-card">
             <h2 className="text-xl font-semibold mb-4">📊 일자별 긍·부정 포함 리뷰 비율</h2>
-            <div className="relative h-96">
-              <canvas ref={dailyTrendChartRef}></canvas>
+            <div className="relative h-96 flex-1">
+              <canvas ref={dailyTrendChartRef} style={{ display: 'block', width: '100%', height: '100%' }}></canvas>
             </div>
             <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
               <h4 className="font-bold text-gray-700 mb-1">📈 결과 요약:</h4>
@@ -510,10 +655,10 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="card lg:col-span-1">
+          <div className="card lg:col-span-2 flex flex-col">
             <h2 className="text-xl font-semibold mb-4">🕸️ 속성별 감정 밸런스</h2>
-            <div className="relative h-96">
-              <canvas ref={radarChartRef}></canvas>
+            <div className="relative h-96 flex-1">
+              <canvas ref={radarChartRef} style={{ display: 'block', width: '100%', height: '100%' }}></canvas>
             </div>
             <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
               <h4 className="font-bold text-gray-700 mb-1">📈 해석:</h4>
@@ -658,6 +803,7 @@ function Dashboard() {
             </svg>
             📥 [ 리포트 PDF 다운로드 ]
           </button>
+        </div>
         </div>
       </div>
     </div>

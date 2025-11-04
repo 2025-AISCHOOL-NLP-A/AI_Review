@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import authService from "../services/authService";
-import "../styles/login_join.css";
+import "../styles/memberupdate.css";
 import "../styles/common.css";
 
 function Memberupdate() {

@@ -7,6 +7,7 @@ import {
   findId,
   findPassword,
   verifyToken,
+  verifyEmailCode,
 } from "../controllers/authController.js";
 
 const router = express.Router();
@@ -19,6 +20,8 @@ router.post("/login", loginUser);
 router.post("/check-duplicate", checkDuplicate);
 // 이메일 인증번호 발송
 router.post("/send-verification", sendVerification);
+// 이메일 인증번호 확인
+router.post("/verify-code", verifyEmailCode);
 // 아이디 찾기
 router.post("/find-id", findId);
 // 비밀번호 찾기

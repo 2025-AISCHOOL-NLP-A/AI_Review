@@ -178,3 +178,40 @@ export const verifyToken = async (req, res) => {
     res.status(401).json({ message: "유효하지 않은 토큰입니다." });
   }
 };
+
+// ==============================
+// 이메일 인증번호 확인
+// ==============================
+export const verifyEmailCode = async (req, res) => {
+  const { email, code } = req.body;
+
+  if (!email || !code)
+    return res.status(400).json({ message: "이메일과 인증번호를 모두 입력해주세요." });
+
+  try {
+    // 최근 인증번호만 확인 (5분 이내)
+    const [rows] = await db.query(
+      `SELECT * FROM tb_email_verification 
+       WHERE email = ? AND code = ? 
+       AND created_at >= NOW() - INTERVAL 5 MINUTE
+       ORDER BY created_at DESC 
+       LIMIT 1`,
+      [email, code]
+    );
+
+    if (rows.length === 0) {
+      return res.status(400).json({ message: "인증번호가 올바르지 않거나 만료되었습니다." });
+    }
+
+    // 인증 성공 시, 상태 업데이트 (optional)
+    await db.query(
+      "UPDATE tb_email_verification SET verified = 1 WHERE email = ? AND code = ?",
+      [email, code]
+    );
+
+    res.json({ success: true, message: "이메일 인증이 완료되었습니다." });
+  } catch (err) {
+    console.error("❌ 인증번호 확인 오류:", err);
+    res.status(500).json({ message: "이메일 인증 확인 중 서버 오류가 발생했습니다." });
+  }
+};

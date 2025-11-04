@@ -85,9 +85,14 @@ function Dashboard() {
 
   // Initialize charts
   useEffect(() => {
-    if (dailyTrendChartRef.current && !dailyTrendChartInstance.current) {
-      const ctx = dailyTrendChartRef.current.getContext('2d');
-      dailyTrendChartInstance.current = new Chart(ctx, {
+    let isMounted = true;
+
+    const initializeCharts = () => {
+      try {
+        if (dailyTrendChartRef.current && !dailyTrendChartInstance.current && isMounted) {
+          const ctx = dailyTrendChartRef.current.getContext('2d');
+          if (ctx) {
+            dailyTrendChartInstance.current = new Chart(ctx, {
         type: 'bar',
         data: {
           labels: dailyTrendData.dates,
@@ -148,12 +153,14 @@ function Dashboard() {
             }
           }
         }
-      });
-    }
+            });
+          }
+        }
 
-    if (radarChartRef.current && !radarChartInstance.current) {
-      const ctx = radarChartRef.current.getContext('2d');
-      radarChartInstance.current = new Chart(ctx, {
+        if (radarChartRef.current && !radarChartInstance.current && isMounted) {
+          const ctx = radarChartRef.current.getContext('2d');
+          if (ctx) {
+            radarChartInstance.current = new Chart(ctx, {
         type: 'radar',
         data: {
           labels: radarData.labels,
@@ -201,16 +208,18 @@ function Dashboard() {
             }
           }
         }
-      });
-    }
+            });
+          }
+        }
 
-    if (splitBarChartRef.current && !splitBarChartInstance.current) {
-      const ctx = splitBarChartRef.current.getContext('2d');
-      const labels = splitBarRawData.map(d => d.label);
-      const negData = splitBarRawData.map(d => -d.negRatio);
-      const posData = splitBarRawData.map(d => d.posRatio);
+        if (splitBarChartRef.current && !splitBarChartInstance.current && isMounted) {
+          const ctx = splitBarChartRef.current.getContext('2d');
+          if (ctx) {
+            const labels = splitBarRawData.map(d => d.label);
+            const negData = splitBarRawData.map(d => -d.negRatio);
+            const posData = splitBarRawData.map(d => d.posRatio);
 
-      splitBarChartInstance.current = new Chart(ctx, {
+            splitBarChartInstance.current = new Chart(ctx, {
         type: 'bar',
         data: {
           labels: labels,
@@ -273,21 +282,54 @@ function Dashboard() {
             }
           }
         }
-      });
-    }
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Chart initialization error:', error);
+      }
+    };
+
+    // Delay initialization slightly to ensure DOM is ready
+    // Use requestAnimationFrame to ensure DOM is fully rendered
+    let timeoutId = null;
+    const initTimer = requestAnimationFrame(() => {
+      timeoutId = setTimeout(() => {
+        if (isMounted) {
+          initializeCharts();
+        }
+      }, 150);
+    });
 
     // Cleanup
     return () => {
+      isMounted = false;
+      cancelAnimationFrame(initTimer);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       if (dailyTrendChartInstance.current) {
-        dailyTrendChartInstance.current.destroy();
+        try {
+          dailyTrendChartInstance.current.destroy();
+        } catch (error) {
+          console.error('Error destroying daily trend chart:', error);
+        }
         dailyTrendChartInstance.current = null;
       }
       if (radarChartInstance.current) {
-        radarChartInstance.current.destroy();
+        try {
+          radarChartInstance.current.destroy();
+        } catch (error) {
+          console.error('Error destroying radar chart:', error);
+        }
         radarChartInstance.current = null;
       }
       if (splitBarChartInstance.current) {
-        splitBarChartInstance.current.destroy();
+        try {
+          splitBarChartInstance.current.destroy();
+        } catch (error) {
+          console.error('Error destroying split bar chart:', error);
+        }
         splitBarChartInstance.current = null;
       }
     };
@@ -394,13 +436,13 @@ function Dashboard() {
             </div>
             <div className="flex items-center space-x-3 text-sm">
               <span className="text-gray-600">데이터 기간: 2025.01.15 ~ 2025.02.07</span>
-              <button className="bg-main text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition shadow-md flex items-center">
+              <button className="bg-main text-white px-4 py-2 rounded-lg font-medium hover-opacity-90 transition shadow-md flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 필터 적용하기
               </button>
-              <button className="bg-gray-200 text-gray-800 px-3 py-2 rounded-lg font-medium hover:bg-gray-300 transition flex items-center">
+              <button className="bg-gray-200 text-gray-800 px-3 py-2 rounded-lg font-medium hover-bg-gray-300 transition flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
@@ -410,8 +452,8 @@ function Dashboard() {
         </header>
 
         {/* 1. KPI Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="card">
+        <div className="kpi-cards-container grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="card kpi-card">
             <h3 className="text-sm font-medium text-gray-500">💬 총 리뷰 수</h3>
             <div className="mt-1 flex items-end justify-between">
               <p className="text-3xl font-extrabold text-gray-900">1,235건</p>
@@ -419,7 +461,7 @@ function Dashboard() {
             </div>
             <p className="mt-2 text-xs text-gray-400">분석 대상 전체 리뷰 수</p>
           </div>
-          <div className="card">
+          <div className="card kpi-card">
             <h3 className="text-sm font-medium text-gray-500">😀 긍정 비율</h3>
             <div className="mt-1 flex items-end justify-between">
               <p className="text-3xl font-extrabold text-gray-900">78%</p>
@@ -432,7 +474,7 @@ function Dashboard() {
             </div>
             <p className="mt-2 text-xs text-gray-400">긍정 평가 비중</p>
           </div>
-          <div className="card">
+          <div className="card kpi-card">
             <h3 className="text-sm font-medium text-gray-500">😟 부정 비율</h3>
             <div className="mt-1 flex items-end justify-between">
               <p className="text-3xl font-extrabold text-gray-900">12%</p>
@@ -445,7 +487,7 @@ function Dashboard() {
             </div>
             <p className="mt-2 text-xs text-gray-400">부정 평가 비중</p>
           </div>
-          <div className="card">
+          <div className="card kpi-card">
             <h3 className="text-sm font-medium text-gray-500">⭐ 종합 스코어</h3>
             <div className="mt-1 flex items-end justify-between">
               <p className="text-3xl font-extrabold text-gray-900">4.5 / 5.0</p>
@@ -609,7 +651,7 @@ function Dashboard() {
           <button
             ref={downloadBtnRef}
             onClick={handlePDFDownload}
-            className="bg-main text-white px-8 py-3 rounded-xl font-bold text-lg hover:opacity-90 transition shadow-lg flex items-center"
+            className="bg-main text-white px-8 py-3 rounded-xl font-bold text-lg hover-opacity-90 transition shadow-lg flex items-center"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

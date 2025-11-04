@@ -1,11 +1,11 @@
-// src/components/Dashboardupdate.jsx
+// src/components/Memberupdate.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import authService from "../services/authService";
 import "../styles/login_join.css";
 import "../styles/common.css";
 
-function Dashboardupdate() {
+function Memberupdate() {
   const navigate = useNavigate();
 
   // 프로필 기본값 불러오기
@@ -328,5 +328,5 @@ function Dashboardupdate() {
   );
 }
 
-export default Dashboardupdate;
+export default Memberupdate;
 

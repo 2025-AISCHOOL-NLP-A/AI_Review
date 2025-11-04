@@ -153,7 +153,7 @@
   justify-content: center;
   align-items: center;
   padding: 40px;
-  position: relative;
+  position: relative; /* ::before 기준 */
   overflow: hidden;
 }
 
@@ -161,8 +161,8 @@
 .right-section::before {
   content: "";
   position: absolute;
-  width: 800px;
-  height: 1200px;
+  width: 780px;
+  height: 1300px;
   background: linear-gradient(225deg, #c8e3ff 0%, #f0f4ff 100%);
   border-radius: 24px;
   top: 50%;
@@ -175,6 +175,8 @@
 /* 로그인 컨테이너 */
 .login-container {
   position: relative;
+  overflow: hidden; /* 클리핑 핵심 */
+  isolation: isolate; /* 스택 분리 → ::before 확실히 뒤로 */
   z-index: 1;
   width: 100%;
   max-width: 400px;
@@ -183,4 +185,3 @@
   border-radius: 20px;
   padding: 40px;
 }
-

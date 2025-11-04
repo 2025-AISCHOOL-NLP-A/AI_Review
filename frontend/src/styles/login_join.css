@@ -1,18 +1,8 @@
 /* ========================================
    회원가입 페이지 스타일
    ======================================== */
-/* 스크롤 완전 차단. */
-/* 가운데 정렬 + 스크롤 방지 + 컨테이너 내부로만 배경 클리핑 */
-html,
-body {
-  height: 100%;
-}
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+/* 가운데 정렬 */
 
 body {
   margin: 0; /* 왼쪽 들뜸 방지 */
@@ -27,7 +17,7 @@ body {
   isolation: isolate;
   overflow: hidden;
 
-  width: min(100%, 600px); /* 기존 640px → max-width 600과 맞춰 통일 */
+  width: min(100%, 600px);
   max-width: 600px;
   min-height: 100dvh;
   margin: 0 auto;

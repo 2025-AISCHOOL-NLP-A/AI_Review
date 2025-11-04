@@ -25,10 +25,16 @@
   background: linear-gradient(225deg, #c8e3ff 100%, #f0f4ff 0%);
   border-radius: 24px;
   top: 55%;
-  left: 110%;
+  left: 85%; /* 더 오른쪽으로 보내고 싶으면 88~92% */
   transform: translate(-50%, -50%) rotate(11deg);
-  z-index: 0;
+  z-index: 0; /* 맨 뒤 */
   opacity: 0.85;
+} /* ====== 실제 카드/푸터는 위로 띄우기 ====== */
+.join-card,
+.form-footer,
+.logo {
+  position: relative;
+  z-index: 1; /* ::before(0) 위 */
 }
 
 /* 로고 */
@@ -295,4 +301,3 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
-

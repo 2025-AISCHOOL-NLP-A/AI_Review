@@ -14,7 +14,42 @@
   margin: 0;
 }
 
-/* 로고 */
+/* 로고 */ /* 페이지 배경 */
+body {
+  background-attachment: fixed;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+} /* ====== 컨테이너: 배경 사각형 기준/클리핑/스택 분리 ====== */
+.find-container {
+  width: 100%;
+  max-width: 600px;
+  position: relative; /* ::before 기준 */
+  overflow: hidden; /* 화면(컨테이너) 밖으로 삐져나온 부분 숨김 */
+  isolation: isolate; /* 자체 스택 컨텍스트 생성 -> ::before를 확실히 뒤로 */
+} /* ====== 오른쪽에 배치된 기울어진 사각형(맨 뒤) ====== */
+.find-container::before {
+  content: "";
+  position: absolute;
+  width: 780px;
+  height: 1200px;
+  background: linear-gradient(200deg, #ffffff 10%, #d7e8ff 45%, #bcd6ff 85%);
+  border-radius: 24px;
+  top: 55%;
+  left: 85%; /* 더 오른쪽으로 보내고 싶으면 88~92% */
+  transform: translate(-50%, -50%) rotate(11deg);
+  z-index: 0; /* 맨 뒤 */
+  opacity: 0.85;
+} /* ====== 실제 카드/푸터는 위로 띄우기 ====== */
+.find-card,
+.form-footer,
+.logo {
+  position: relative;
+  z-index: 1; /* ::before(0) 위 */
+}
+
 .logo {
   display: flex;
   justify-content: center;
@@ -160,4 +195,3 @@
   background: #fee2e2;
   color: #991b1b;
 }
-

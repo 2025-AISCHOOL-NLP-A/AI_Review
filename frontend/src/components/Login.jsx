@@ -94,7 +94,6 @@ function Login() {
 
             <div className="form-footer">
               <Link to="/login/find">아이디 / 비밀번호 찾기</Link>
-              <span className="footer-divider">|</span>
               <Link to="/login/join">회원가입</Link>
             </div>
           </form>

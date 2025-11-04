@@ -17,24 +17,18 @@ AI_Review/
 ## 🚀 서비스 구성
 
 ### Backend Service (Node.js + Express)
-- **포트**: 3000
 - **역할**: REST API 서버, 사용자 인증, 데이터 관리
 - **기술스택**: Node.js, Express, MySQL, bcrypt
 
 ### Frontend Service (React)
-- **포트**: 3001 (개발 서버)
 - **역할**: 웹 사용자 인터페이스
 - **기술스택**: React, Bootstrap, Axios
 
 ### AI Analysis Service (Python + FastAPI)
-- **포트**: 8000
 - **역할**: 리뷰 분석, 워드클라우드 생성, 감정 분석
 - **기술스택**: Python, FastAPI, WordCloud, Jieba
 
 ## 📊 데이터베이스
-
-- **MySQL**: 리모트 서버 (project-db-campus.smhrd.com:3312)
-- **데이터베이스**: Insa6_aiNLP_p3_1
 - **테이블**: 사용자, 제품, 리뷰, 키워드, 인사이트 등
 
 ## 🛠 설치 및 실행
@@ -87,14 +81,16 @@ python main.py
 
 ### 제품 API (/products)
 - `GET /products` - 제품 목록
-- `GET /products/{id}/reviews` - 제품 리뷰
-- `GET /products/{id}/insights` - 제품 인사이트
+- `GET /products/{product_id}/` - 제품 대시보드
+- `GET /products/{product_id}/reviews` - 제품 리뷰(파라미터로 키워드)
+- `POST /products/{product_id}/reviews/analysis` - 해당 상품 리뷰 분석 요청(Python API)
 - `DELETE /products/{id}` - 제품 삭제
 
 ### 인사이트 API (/insights)
-- `GET /insights` - 인사이트 목록
+- `GET /insights` - 인사이트 목록(파라미터로 제품 id 받으면 그 제품 리스트만)
 - `GET /insights/{id}` - 인사이트 상세
-- `POST /insights/request` - 분석 요청
+- `POST /insights/request` - 분석 요청(파라미터로 제품 id, 기간, 요청사항등)
+
 
 ## 🔧 개발 환경
 

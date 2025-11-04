@@ -389,3 +389,27 @@
   cursor: not-allowed;
 }
 
+/* ===== 고정 필드(아이디, 기존 이메일) 완전 비활성 처리 ===== */
+input[name="user_id"][readonly],
+input[name="current_email"][readonly] {
+  background: #eef2f7 !important; /* 살짝 흐린 배경 */
+  color: #6b7280 !important; /* 비활성 텍스트 색 */
+  cursor: not-allowed !important; /* 마우스 커서도 비활성 */
+  pointer-events: none; /* 클릭/포커스 자체 차단 */
+  caret-color: transparent; /* 캐럿 숨김 */
+}
+
+/* 컨테이너도 포커스 스타일 제거 */
+.input-with-icon:has(input[name="user_id"][readonly]),
+.input-with-icon:has(input[name="current_email"][readonly]) {
+  background: #eef2f7;
+  border-color: #e5e7eb;
+  box-shadow: none;
+}
+
+.input-with-icon:has(input[name="user_id"][readonly]):focus-within,
+.input-with-icon:has(input[name="current_email"][readonly]):focus-within {
+  background: #eef2f7;
+  border-color: #e5e7eb;
+  box-shadow: none;
+}

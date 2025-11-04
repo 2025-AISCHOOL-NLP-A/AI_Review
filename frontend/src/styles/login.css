@@ -197,21 +197,7 @@
   padding: 40px;
   position: relative; /* ::before 기준 */
   overflow: hidden;
-}
-
-/* 회전 직사각형 */
-.right-section::before {
-  content: "";
-  position: absolute;
-  width: 780px;
-  height: 1300px;
   background: linear-gradient(225deg, #c8e3ff 0%, #f0f4ff 100%);
-  border-radius: 24px;
-  top: 50%;
-  left: 65%;
-  transform: translate(-50%, -50%) rotate(11.047deg);
-  z-index: 0;
-  opacity: 0.8;
 }
 
 /* 로그인 컨테이너 */

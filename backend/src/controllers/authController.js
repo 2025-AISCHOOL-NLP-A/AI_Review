@@ -66,29 +66,39 @@ export const loginUser = async (req, res) => {
   }
 };
 
-// ==============================
-// 아이디 중복 검사
-// ==============================
+// ✅ 아이디 중복 검사
 export const checkDuplicate = async (req, res) => {
   try {
-    const { user_id } = req.body;
-    const [rows] = await db.query("SELECT user_id FROM tb_user WHERE login_id = ?", [user_id]);
+    const { user_id } = req.body; // 프론트에서 입력받는 "아이디" → 실제로는 login_id
+
+    if (!user_id || user_id.trim() === "") {
+      return res.status(400).json({ message: "아이디가 비어 있습니다." });
+    }
+
+    // ⚙️ login_id 기준 중복 검사
+    const [rows] = await db.query(
+      "SELECT login_id FROM tb_user WHERE login_id = ?",
+      [user_id]
+    );
+
     res.json({ exists: rows.length > 0 });
   } catch (err) {
-    res.status(500).json({ message: "중복 검사 중 오류가 발생했습니다." });
+    console.error("❌ 중복 검사 오류:", err);
+    res.status(500).json({ message: "중복 검사 중 서버 오류가 발생했습니다." });
   }
 };
 
-// ==============================
-// 이메일 인증
-// ==============================
+
+// ✉️ 이메일 인증번호 발송
 export const sendVerification = async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ message: "이메일을 입력해주세요." });
 
   try {
-    const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6자리 인증번호
+    // ✅ 인증번호 생성
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
 
+    // ✅ Gmail SMTP 설정
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -97,22 +107,25 @@ export const sendVerification = async (req, res) => {
       },
     });
 
+    // ✅ 메일 전송
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: `"꽤뚫어뷰 인증센터" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "[꽤뚫어뷰] 이메일 인증번호",
-      text: `인증번호는 ${code} 입니다.`,
+      subject: "[꽤뚫어뷰] 이메일 인증번호 안내",
+      text: `안녕하세요! 꽤뚫어뷰입니다.\n인증번호는 [ ${code} ] 입니다.\n5분 내에 입력해주세요.`,
     });
 
+    // ✅ DB에 인증번호 저장
     await db.query(
       "INSERT INTO tb_email_verification (email, code, created_at) VALUES (?, ?, NOW())",
       [email, code]
     );
 
-    res.json({ message: "이메일로 인증번호를 전송했습니다." });
+    console.log(`📧 이메일 인증번호 발송 완료 → ${email} (${code})`);
+    res.json({ success: true, message: "이메일로 인증번호를 전송했습니다." });
   } catch (err) {
-    console.error("이메일 발송 오류:", err);
-    res.status(500).json({ message: "이메일 발송 중 오류가 발생했습니다." });
+    console.error("❌ 이메일 발송 오류:", err);
+    res.status(500).json({ success: false, message: "이메일 발송 중 오류가 발생했습니다." });
   }
 };
 

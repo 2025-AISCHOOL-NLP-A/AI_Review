@@ -1,30 +1,35 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import '../styles/main.css';
-import '../styles/common.css';
+// src/pages/Main.jsx
+import React, { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import "../styles/main.css";
+import "../styles/common.css";
 
 function Main() {
   const navigate = useNavigate();
+  const previewRef = useRef(null);
+  const priceRef = useRef(null);
 
-  // -----------------------------------
-  // 🔹 Smooth Scroll 헬퍼 함수
-  // -----------------------------------
-  const scrollToSection = (selector) => {
-    const section = document.querySelector(selector);
-    if (section) section.scrollIntoView({ behavior: 'smooth' });
+  // 페이지 진입 시 맨 위로 이동
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, []);
+
+  // 스무스 스크롤 함수
+  const smoothScrollTo = (el) => {
+    if (!el) return;
+    const headerH = 72; // 헤더 높이 고려
+    const y = el.getBoundingClientRect().top + window.scrollY - headerH;
+    window.scrollTo({ top: y, behavior: "smooth" });
   };
 
-  // -----------------------------------
-  // 🔹 렌더링
-  // -----------------------------------
   return (
     <div className="main-page">
       {/* ===================== HEADER ===================== */}
       <header className="main-header">
         <nav className="nav-buttons">
-          <button onClick={() => scrollToSection('.preview')}>시연영상</button>
-          <button onClick={() => scrollToSection('.price-section')}>요금제</button>
-          <button onClick={() => navigate('/login')}>로그인</button>
+          <button onClick={() => smoothScrollTo(previewRef.current)}>시연영상</button>
+          <button onClick={() => smoothScrollTo(priceRef.current)}>요금제</button>
+          <button onClick={() => navigate("/login")}>로그인</button>
         </nav>
       </header>
 
@@ -41,19 +46,17 @@ function Main() {
       </section>
 
       {/* ===================== PREVIEW SECTION ===================== */}
-      <section className="preview">
+      <section className="preview" ref={previewRef}>
         <h2 className="section-title">서비스 시연</h2>
         <div className="preview-video">
-          {/* 실제 서비스 시연 영상 또는 GIF로 교체 가능 */}
           <img src="/images/demo_preview.png" alt="서비스 시연 화면" />
         </div>
       </section>
 
       {/* ===================== PRICE SECTION ===================== */}
-      <section className="price-section">
+      <section className="price-section" ref={priceRef}>
         <h2 className="section-title">요금제 안내</h2>
         <div className="price-cards">
-
           {/* 🔸 Free Plan */}
           <div className="card free">
             <h3 className="plan-name">프리</h3>
@@ -66,7 +69,7 @@ function Main() {
             <button className="select-btn free-btn">요금제 선택</button>
           </div>
 
-          {/* 🔸 Pro Plan */}
+          {/* 🔹 Pro Plan */}
           <div className="card pro">
             <h3 className="plan-name">프로</h3>
             <p className="price">15,000원 / 월</p>
@@ -93,7 +96,7 @@ function Main() {
       </section>
 
       {/* ===================== FOOTER ===================== */}
-      <footer className="main-footer">
+      <footer>
         <div className="footer-left">
           <img src="/images/logo.png" alt="logo" className="footer-logo" />
         </div>

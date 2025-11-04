@@ -108,6 +108,32 @@ function LoginJoin() {
   };
 
   // -----------------------------
+  // ✅ 이메일 인증번호 확인
+  // -----------------------------
+  const handleVerifyEmailCode = async () => {
+    if (!formData.email_code.trim()) {
+      alert('인증번호를 입력해주세요.');
+      return;
+    }
+
+    if (!formData.email_prefix.trim()) {
+      alert('이메일을 입력해주세요.');
+      return;
+    }
+
+    const email = `${formData.email_prefix}@${formData.email_domain}`;
+    const result = await authService.verifyCode(email, formData.email_code);
+
+    if (result.success) {
+      alert('이메일 인증이 완료되었습니다.');
+      setIsEmailVerified(true);
+    } else {
+      alert(result.message || '인증번호가 일치하지 않습니다.');
+      setIsEmailVerified(false);
+    }
+  };
+
+  // -----------------------------
   // ✅ 회원가입 제출
   // -----------------------------
   const handleSubmit = async (e) => {
@@ -129,6 +155,11 @@ function LoginJoin() {
     const passwordPattern = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z0-9!@#$%^&*]{8,20}$/;
     if (!passwordPattern.test(password)) {
       alert('비밀번호는 영문, 숫자, 특수문자를 포함하여 8~20자로 입력해주세요.');
+      return;
+    }
+
+    if (!isEmailVerified) {
+      alert('이메일 인증을 완료해주세요.');
       return;
     }
 
@@ -260,8 +291,8 @@ function LoginJoin() {
           </div>
 
           {/* 🔹 인증 코드 입력 */}
-          {isEmailSent && (
-            <div className="form-group">
+          <div className="form-group">
+            <div className="input-with-button">
               <div className="input-with-icon">
                 <div className="form-icon">
                   <img src="/images/email_icon.png" alt="이메일 코드 아이콘" />
@@ -270,13 +301,30 @@ function LoginJoin() {
                   type="text"
                   name="email_code"
                   className="form-input"
-                  placeholder="이메일 인증번호 입력"
+                  placeholder={isEmailSent ? "이메일 인증번호 입력" : "인증하기 버튼을 먼저 눌러주세요"}
                   value={formData.email_code}
                   onChange={handleChange}
+                  disabled={!isEmailSent}
+                  style={{
+                    backgroundColor: !isEmailSent ? '#f3f4f6' : 'transparent',
+                    cursor: !isEmailSent ? 'not-allowed' : 'text'
+                  }}
                 />
               </div>
+              <button 
+                type="button" 
+                className="check-button" 
+                onClick={handleVerifyEmailCode}
+                disabled={!isEmailSent || isEmailVerified}
+                style={{ 
+                  backgroundColor: isEmailVerified ? '#10B981' : (!isEmailSent ? '#9ca3af' : '#3b82f6'),
+                  cursor: (!isEmailSent || isEmailVerified) ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {isEmailVerified ? '✓ 인증완료' : '확인'}
+              </button>
             </div>
-          )}
+          </div>
 
           {/* 🔹 약관 동의 */}
           <div className="agreement-section">

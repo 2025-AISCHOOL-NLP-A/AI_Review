@@ -1,19 +1,28 @@
 /* ========================================
    회원가입 페이지 스타일
    ======================================== */
+/* 스크롤 완전 차단. */
+html,
+body {
+  height: 100vh;
+  overflow: hidden;
+}
 
 .join-container {
-  width: 100%;
-  max-width: 600px;
   position: relative;
+  isolation: isolate;
   overflow: hidden;
-  min-height: 100vh;
+
+  width: min(100%, 600px); /* 기존 640px → max-width 600과 맞춰 통일 */
+  max-width: 600px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 40px 20px;
+
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
-  padding: 40px 20px;
-  margin: 0;
+  align-items: stretch;
 }
 
 /* 오른쪽 배치된 기울어진 사각형 */

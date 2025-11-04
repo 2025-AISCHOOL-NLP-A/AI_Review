@@ -1,17 +1,29 @@
 /* ========================================
    아이디/비밀번호 찾기 페이지 스타일
    ======================================== */
+/* 스크롤 완전 차단. */
+html,
+body {
+  height: 100vh;
+  overflow: hidden;
+}
 
 .find-container {
-  width: 100%;
+  /* 중앙 배치와 배경 클리핑 핵심 */
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  width: min(100%, 500px);
   max-width: 500px;
-  min-height: 100vh;
+  min-height: 100dvh; /* 세로 중앙 정렬 유지 */
+  margin: 0 auto; /* 혹시 body 중앙정렬 안 쓸 때도 대비 */
+  padding: 40px 20px;
+
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
-  padding: 40px 20px;
-  margin: 0;
+  align-items: stretch; /* 내부 폼이 넓게 놓이도록 */
 }
 
 /* 로고 */ /* 페이지 배경 */
@@ -29,7 +41,9 @@ body {
   position: relative; /* ::before 기준 */
   overflow: hidden; /* 화면(컨테이너) 밖으로 삐져나온 부분 숨김 */
   isolation: isolate; /* 자체 스택 컨텍스트 생성 -> ::before를 확실히 뒤로 */
-} /* ====== 오른쪽에 배치된 기울어진 사각형(맨 뒤) ====== */
+}
+
+/* ====== 오른쪽에 배치된 기울어진 사각형(맨 뒤) ====== */
 .find-container::before {
   content: "";
   position: absolute;

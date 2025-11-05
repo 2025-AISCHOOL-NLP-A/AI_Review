@@ -2,7 +2,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import authService from "../services/authService";
+import Sidebar from "./Sidebar";
 import "../styles/memberupdate.css";
+import "../styles/dashboard.css";
 import "../styles/common.css";
 
 function Memberupdate() {
@@ -155,12 +157,19 @@ function Memberupdate() {
   };
 
   return (
-    <div className="join-container">
-      <div className="logo">
-        <img src="/images/logo.png" alt="logo" />
-      </div>
+    <div className={`dashboard-page sidebar-open`}>
+      {/* Sidebar */}
+      <Sidebar />
 
-      <div className="join-card">
+      {/* Main Content */}
+      <div className="dashboard-wrapper">
+        <div className="dashboard-content" style={{ padding: "24px" }}>
+          <div className="join-container">
+            <div className="logo">
+              <img src="/images/logo.png" alt="logo" />
+            </div>
+
+            <div className="join-card">
         <form className="join-form" onSubmit={handleSubmit}>
           {/* 아이디 (고정) */}
           <div className="form-group">
@@ -323,6 +332,9 @@ function Memberupdate() {
             {loading ? "저장 중..." : "저장"}
           </button>
         </form>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import LoginJoin from './components/LoginJoin';
 import LoginFind from './components/LoginFind';
 import Dashboard from './components/Dashboard';
 import Memberupdate from './components/Memberupdate';
+import PricingSystem from './components/PricingSystem';
 import './App.css';
 import './styles/common.css';
 
@@ -23,6 +24,7 @@ function App() {
         <Route path="/main" element={<Main />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/memberupdate" element={<Memberupdate />} />
+        <Route path="/pricingsystem" element={<PricingSystem />} />
 
         {/* 예비 페이지 */}
         <Route path="/wp" element={<div>Workplace Page (wp.html)</div>} />

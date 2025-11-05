@@ -761,7 +761,7 @@ function Dashboard() {
                 ) : (() => {
                   // Parse pos_top_keywords from tb_productInsight (VARCHAR(255), comma-separated)
                   const posKeywords = dashboardData?.insight?.pos_top_keywords 
-                    ? dashboardData.insight.pos_top_keywords.split(',').map(k => k.trim()).filter(Boolean)
+                    ? dashboardData.insight.pos_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean)
                     : dashboardData?.analysis?.positiveKeywords || [];
                   
                   return posKeywords.length > 0 ? (
@@ -788,7 +788,7 @@ function Dashboard() {
                 ) : (() => {
                   // Parse neg_top_keywords from tb_productInsight (VARCHAR(255), comma-separated)
                   const negKeywords = dashboardData?.insight?.neg_top_keywords 
-                    ? dashboardData.insight.neg_top_keywords.split(',').map(k => k.trim()).filter(Boolean)
+                    ? dashboardData.insight.neg_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean)
                     : dashboardData?.analysis?.negativeKeywords || [];
                   
                   return negKeywords.length > 0 ? (
@@ -828,8 +828,8 @@ function Dashboard() {
                           로딩 중...
                         </td>
                       </tr>
-                    ) : dashboardData?.reviewSamples?.length > 0 ? (
-                      dashboardData.reviewSamples.map((review, idx) => {
+                    ) : dashboardData?.reviews?.length > 0 ? (
+                      dashboardData.reviews.map((review, idx) => {
                         const reviewDate = new Date(review.review_date);
                         const formattedDate = `${reviewDate.getMonth() + 1}/${reviewDate.getDate()}`;
                         const rating = parseFloat(review.rating) || 0;
@@ -898,8 +898,8 @@ function Dashboard() {
               <h2 className="text-lg font-semibold mb-3">C. 리뷰 샘플</h2>
               <p className="whitespace-pre-wrap text-sm text-gray-700">
                 {loading ? "데이터 로딩 중..." : 
-                 dashboardData?.reviewSamples?.length > 0 ?
-                 dashboardData.reviewSamples.slice(0, 3).map((review, idx) => 
+                 dashboardData?.reviews?.length > 0 ?
+                 dashboardData.reviews.slice(0, 3).map((review, idx) => 
                    `💬 "${review.review_text}"`
                  ).join(" ") :
                  "리뷰 데이터가 없습니다."}
@@ -917,11 +917,11 @@ function Dashboard() {
                 {loading ? "데이터 로딩 중..." : 
                  dashboardData?.insight ? (() => {
                    // Data from tb_productInsight
-                   const posKeywords = dashboardData.insight.pos_top_keywords 
-                     ? dashboardData.insight.pos_top_keywords.split(',').map(k => k.trim()).slice(0, 3).join(", ")
+                  const posKeywords = dashboardData.insight.pos_top_keywords 
+                    ? dashboardData.insight.pos_top_keywords.split(/[|,]/).map(k => k.trim()).slice(0, 3).join(", ")
                      : "없음";
                    const negKeywords = dashboardData.insight.neg_top_keywords 
-                     ? dashboardData.insight.neg_top_keywords.split(',').map(k => k.trim()).slice(0, 2).join(", ")
+                    ? dashboardData.insight.neg_top_keywords.split(/[|,]/).map(k => k.trim()).slice(0, 2).join(", ")
                      : "없음";
                    const avgRating = parseFloat(dashboardData.insight.avg_rating || dashboardData.insight.avgRating || 0);
                    

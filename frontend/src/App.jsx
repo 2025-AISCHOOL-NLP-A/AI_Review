@@ -1,15 +1,20 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Main from './components/Main';
-import Login from './components/Login';
-import LoginJoin from './components/LoginJoin';
-import LoginFind from './components/LoginFind';
-import Dashboard from './components/Dashboard';
-import Memberupdate from './components/Memberupdate';
-import PricingSystem from './components/PricingSystem';
-import ProtectedRoute from './components/ProtectedRoute';
-import './App.css';
-import './styles/common.css';
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import Main from "./components/Main";
+import Login from "./components/Login";
+import LoginJoin from "./components/LoginJoin";
+import LoginFind from "./components/LoginFind";
+import Dashboard from "./components/Dashboard";
+import Memberupdate from "./components/Memberupdate";
+import PricingSystem from "./components/PricingSystem";
+import ProtectedRoute from "./components/ProtectedRoute";
+import "./App.css";
+import "./styles/common.css";
 
 function App() {
   return (
@@ -23,31 +28,31 @@ function App() {
         <Route path="/login/join" element={<LoginJoin />} />
         <Route path="/login/find" element={<LoginFind />} />
         <Route path="/main" element={<Main />} />
-        
+
         {/* 인증이 필요한 페이지 */}
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/dashboard"
           element={
             <ProtectedRoute>
               <Dashboard />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/memberupdate" 
+        <Route
+          path="/memberupdate"
           element={
             <ProtectedRoute>
               <Memberupdate />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/pricingsystem" 
+        <Route
+          path="/pricingsystem"
           element={
             <ProtectedRoute>
               <PricingSystem />
             </ProtectedRoute>
-          } 
+          }
         />
 
         {/* 예비 페이지 */}

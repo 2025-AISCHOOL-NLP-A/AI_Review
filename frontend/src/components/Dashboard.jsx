@@ -726,7 +726,7 @@ function Dashboard() {
                   className="sidebar-submenu-item"
                   onClick={(e) => {
                     e.preventDefault();
-                    navigate("/pricing"); // 요금제 페이지 이동
+                    navigate("/pricingsystem"); // 요금제 페이지 이동
                   }}
                 >
                   <svg

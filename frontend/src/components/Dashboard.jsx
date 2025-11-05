@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Chart,
@@ -17,6 +17,7 @@ import {
 } from "chart.js";
 import html2pdf from "html2pdf.js";
 import Sidebar from "./Sidebar";
+import dashboardService from "../services/dashboardService";
 import "../styles/dashboard.css";
 import "../styles/sidebar.css";
 
@@ -48,6 +49,10 @@ function Dashboard() {
   const radarChartInstance = useRef(null);
   const splitBarChartInstance = useRef(null);
 
+  // State for dashboard data
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   // Color constants
   const primaryColor = "#5B8EFF";
   const neutralColor = "#CBD5E1";
@@ -56,83 +61,95 @@ function Dashboard() {
   const negativeHighlight = "#EF4444";
   const fontColor = "#333333";
 
-  // Data
-  const dailyTrendData = {
+  // Fetch dashboard data
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const result = await dashboardService.getDashboardData();
+      if (result.success) {
+        setDashboardData(result.data);
+      } else {
+        alert(result.message || "데이터를 불러오는데 실패했습니다.");
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
+
+  // Process data for charts
+  const dailyTrendData = dashboardData?.dailyTrend ? {
+    dates: dashboardData.dailyTrend.map(item => {
+      const date = new Date(item.date);
+      return `${date.getMonth() + 1}/${date.getDate()}`;
+    }).reverse(),
+    positive: dashboardData.dailyTrend.map(item => 
+      item.positive_ratio || item.positiveRatio || 0
+    ).reverse(),
+    negative: dashboardData.dailyTrend.map(item => 
+      item.negative_ratio || item.negativeRatio || 0
+    ).reverse(),
+    newReviews: dashboardData.dailyTrend.map(item => item.reviewCount || 0).reverse(),
+  } : {
     dates: ["1/15", "1/18", "1/21", "1/24", "1/27", "1/30", "2/02", "2/07"],
     positive: [62, 65, 68, 70, 72, 75, 77, 78],
     negative: [38, 35, 32, 30, 28, 25, 23, 22],
     newReviews: [120, 150, 200, 250, 280, 300, 305, 310],
   };
 
-  const radarData = {
-    labels: [
-      "디자인",
-      "착용감",
-      "음질",
-      "배터리",
-      "전원 효율",
-      "브랜드 신뢰도",
-    ],
-    positive: [90, 82, 75, 60, 55, 88],
-    negative: [10, 18, 25, 40, 45, 12],
+  // Process keyword data for charts using positive_ratio and negative_ratio from DB
+  // Data comes from tb_productKeyword (product_id, keyword_id, positive_ratio DECIMAL(5,2), negative_ratio DECIMAL(5,2))
+  // Joined with tb_keyword to get keyword_text for display (VARCHAR(50))
+  const radarData = dashboardData?.keywords ? (() => {
+    const keywordData = dashboardData.keywords.slice(0, 6);
+    return {
+      labels: keywordData.map(kw => kw.keyword_text || kw.keyword || kw.keyword_id || ''),
+      positive: keywordData.map(kw => parseFloat(kw.positive_ratio || kw.positiveRatio || 0)),
+      negative: keywordData.map(kw => parseFloat(kw.negative_ratio || kw.negativeRatio || 0)),
+    };
+  })() : {
+    labels: [],
+    positive: [],
+    negative: [],
   };
 
-  const splitBarRawData = [
-    { label: "가격", negRatio: 80, negCount: 100, posRatio: 20, posCount: 25 },
-    {
-      label: "디자인",
-      negRatio: 10,
-      negCount: 15,
-      posRatio: 90,
-      posCount: 150,
-    },
-    { label: "음질", negRatio: 25, negCount: 30, posRatio: 75, posCount: 90 },
-    { label: "배터리", negRatio: 40, negCount: 50, posRatio: 60, posCount: 70 },
-    { label: "착용감", negRatio: 18, negCount: 20, posRatio: 82, posCount: 95 },
-  ];
+  // Split bar chart data from tb_productKeyword
+  // positive_ratio and negative_ratio are DECIMAL(5,2) - percentage values
+  // Uses tb_keyword.keyword_text for label
+  const splitBarRawData = dashboardData?.keywords ? dashboardData.keywords.slice(0, 5).map(kw => ({
+    label: kw.keyword_text || kw.keyword || kw.keyword_id || '',
+    negRatio: parseFloat(kw.negative_ratio || kw.negativeRatio || 0),
+    negCount: kw.negative_count || kw.negativeCount || 0,
+    posRatio: parseFloat(kw.positive_ratio || kw.positiveRatio || 0),
+    posCount: kw.positive_count || kw.positiveCount || 0,
+  })) : [];
 
-  const correlationLabels = ["디자인", "가격", "품질", "배터리", "착용감"];
-  const correlationMatrix = {
-    디자인: { 가격: 0.82, 품질: 0.45, 배터리: 0.22, 착용감: 0.35 },
-    가격: { 품질: 0.78, 배터리: 0.32, 착용감: 0.18 },
-    품질: { 배터리: 0.41, 착용감: 0.33 },
-    배터리: { 착용감: 0.27 },
-  };
+  // Correlation labels from tb_keyword (linked via tb_productKeyword)
+  // Uses tb_keyword.keyword_text (VARCHAR(50))
+  const correlationLabels = dashboardData?.keywords ? 
+    [...new Set(dashboardData.keywords.map(kw => kw.keyword_text || kw.keyword || kw.keyword_id || '').filter(Boolean))].slice(0, 5) : 
+    [];
+  
+  const correlationMatrix = {}; // 키워드 데이터로부터 계산하거나 빈 객체로 유지
 
-  const reviewSamples = [
-    {
-      date: "2/02",
-      content: "디자인은 예쁘고 착용감도 좋아요",
-      summary: [
-        { text: "디자인", type: "pos" },
-        { text: "착용감", type: "pos" },
-      ],
-    },
-    {
-      date: "2/05",
-      content: "배터리가 너무 빨리 닳아요",
-      summary: [{ text: "배터리", type: "neg" }],
-    },
-    {
-      date: "2/06",
-      content: "노이즈 캔슬링이 대박이에요",
-      summary: [
-        { text: "음질", type: "pos" },
-        { text: "기능", type: "pos" },
-      ],
-    },
-    {
-      date: "2/07",
-      content: "가격이 좀 비싸지만 만족해요",
-      summary: [
-        { text: "가격", type: "neg" },
-        { text: "만족", type: "pos" },
-      ],
-    },
-  ];
 
-  // Initialize charts
+  // Initialize and update charts when data changes
   useEffect(() => {
+    if (loading || !dashboardData) return;
+
+    // Destroy existing charts
+    if (dailyTrendChartInstance.current) {
+      dailyTrendChartInstance.current.destroy();
+      dailyTrendChartInstance.current = null;
+    }
+    if (radarChartInstance.current) {
+      radarChartInstance.current.destroy();
+      radarChartInstance.current = null;
+    }
+    if (splitBarChartInstance.current) {
+      splitBarChartInstance.current.destroy();
+      splitBarChartInstance.current = null;
+    }
+
     let isMounted = true;
 
     const initializeCharts = () => {
@@ -376,20 +393,15 @@ function Dashboard() {
     };
 
     // Delay initialization slightly to ensure DOM is ready
-    // Use requestAnimationFrame to ensure DOM is fully rendered
-    let timeoutId = null;
-    const initTimer = requestAnimationFrame(() => {
-      timeoutId = setTimeout(() => {
-        if (isMounted) {
-          initializeCharts();
-        }
-      }, 500);
-    });
+    const timeoutId = setTimeout(() => {
+      if (isMounted) {
+        initializeCharts();
+      }
+    }, 500);
 
     // Cleanup
     return () => {
       isMounted = false;
-      cancelAnimationFrame(initTimer);
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
@@ -418,7 +430,7 @@ function Dashboard() {
         splitBarChartInstance.current = null;
       }
     };
-  }, []);
+  }, [dashboardData, loading, dailyTrendData]);
 
   const handlePDFDownload = () => {
     if (!dashboardContentRef.current) return;
@@ -468,14 +480,9 @@ function Dashboard() {
         if (rowIndex === colIndex) {
           cellContent = "-";
           bgColor = "bg-gray-100";
-        } else if (rowIndex > colIndex) {
-          value = correlationMatrix[colLabel]
-            ? correlationMatrix[colLabel][rowLabel]
-            : null;
         } else {
-          value = correlationMatrix[rowLabel]
-            ? correlationMatrix[rowLabel][colLabel]
-            : null;
+          // 키워드 상관관계는 나중에 DB에서 계산하거나 구현
+          value = null;
         }
 
         if (value !== null) {
@@ -552,7 +559,10 @@ function Dashboard() {
                   분석 대상
                 </span>
                 <span className="text-2xl font-bold text-gray-900">
-                  에어팟 프로 3
+                  {loading ? "로딩 중..." : 
+                   dashboardData?.product?.product_name || 
+                   dashboardData?.product_name || 
+                   "상품 정보 없음"}
                 </span>
               </div>
               <div className="flex items-center space-x-3 text-sm">
@@ -603,10 +613,9 @@ function Dashboard() {
                 💬 총 리뷰 수
               </h3>
               <div className="mt-1 flex items-end justify-between">
-                <p className="text-3xl font-extrabold text-gray-900">1,235건</p>
-                <span className="kpi-change-up text-sm font-semibold">
-                  +12%
-                </span>
+                <p className="text-3xl font-extrabold text-gray-900">
+                  {loading ? "로딩 중..." : `${dashboardData?.stats?.totalReviews || 0}건`}
+                </p>
               </div>
               <p className="mt-2 text-xs text-gray-400">
                 분석 대상 전체 리뷰 수
@@ -617,22 +626,9 @@ function Dashboard() {
                 😀 긍정 비율
               </h3>
               <div className="mt-1 flex items-end justify-between">
-                <p className="text-3xl font-extrabold text-gray-900">78%</p>
-                <span className="kpi-change-up text-sm font-semibold flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-3 w-3 mr-0.5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M5.47 10.74a.75.75 0 010-1.06l3.75-3.75a.75.75 0 011.06 0l3.75 3.75a.75.75 0 01-1.06 1.06L10 7.31l-3.22 3.22a.75.75 0 01-1.06 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  +3%
-                </span>
+                <p className="text-3xl font-extrabold text-gray-900">
+                  {loading ? "로딩 중..." : `${Math.round(dashboardData?.stats?.positiveRatio || 0)}%`}
+                </p>
               </div>
               <p className="mt-2 text-xs text-gray-400">긍정 평가 비중</p>
             </div>
@@ -641,22 +637,9 @@ function Dashboard() {
                 😟 부정 비율
               </h3>
               <div className="mt-1 flex items-end justify-between">
-                <p className="text-3xl font-extrabold text-gray-900">12%</p>
-                <span className="kpi-change-down text-sm font-semibold flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-3 w-3 mr-0.5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M14.53 9.26a.75.75 0 010 1.06l-3.75 3.75a.75.75 0 01-1.06 0l-3.75-3.75a.75.75 0 011.06-1.06L10 12.69l3.22-3.22a.75.75 0 011.06 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  -2%
-                </span>
+                <p className="text-3xl font-extrabold text-gray-900">
+                  {loading ? "로딩 중..." : `${Math.round(dashboardData?.stats?.negativeRatio || 0)}%`}
+                </p>
               </div>
               <p className="mt-2 text-xs text-gray-400">부정 평가 비중</p>
             </div>
@@ -666,11 +649,8 @@ function Dashboard() {
               </h3>
               <div className="mt-1 flex items-end justify-between">
                 <p className="text-3xl font-extrabold text-gray-900">
-                  4.5 / 5.0
+                  {loading ? "로딩 중..." : `${parseFloat(dashboardData?.insight?.avg_rating || dashboardData?.stats?.avgRating || 0).toFixed(1)} / 5.0`}
                 </p>
-                <span className="kpi-change-up text-sm font-semibold">
-                  +0.2
-                </span>
               </div>
               <p className="mt-2 text-xs text-gray-400">
                 전체 감정 점수 기반 산출
@@ -680,11 +660,11 @@ function Dashboard() {
 
           {/* Main Chart Section */}
           <div
-            className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-stretch"
+            className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch"
             id="main-chart-section"
           >
             <div
-              className="card lg:col-span-3 flex flex-col"
+              className="card lg:col-span-2 flex flex-col"
               id="daily-trend-card"
             >
               <h2 className="text-xl font-semibold mb-4">
@@ -693,42 +673,45 @@ function Dashboard() {
               <div className="relative h-96 flex-1">
                 <canvas
                   ref={dailyTrendChartRef}
-                  style={{ display: "block", width: "100%", height: "100%" }}
+                  className="chart-canvas"
                 ></canvas>
               </div>
               <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
                 <h4 className="font-bold text-gray-700 mb-1">📈 결과 요약:</h4>
                 <p>
-                  긍정 언급 62% → 78%로 상승, 부정 언급 38% → 22%로 감소. 해당일
-                  리뷰 수: 120건 → 310건. 펌웨어 업데이트 이후 "노이즈 캔슬링"
-                  관련 긍정 리뷰 급증.
+                  {loading ? "데이터 로딩 중..." : 
+                   dashboardData?.analysis ? 
+                   `긍정 비율: ${Math.round(dashboardData.analysis.positiveRatio || 0)}%, 부정 비율: ${Math.round(dashboardData.analysis.negativeRatio || 0)}%. 총 리뷰 수: ${dashboardData?.stats?.totalReviews || 0}건.` :
+                   "분석 데이터가 없습니다."}
                 </p>
               </div>
             </div>
 
-            <div className="card lg:col-span-2 flex flex-col">
+            <div className="card lg:col-span-1 flex flex-col">
               <h2 className="text-xl font-semibold mb-4">
                 🕸️ 속성별 감정 밸런스
               </h2>
               <div className="relative h-96 flex-1">
                 <canvas
                   ref={radarChartRef}
-                  style={{ display: "block", width: "100%", height: "100%" }}
+                  className="chart-canvas"
                 ></canvas>
               </div>
               <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
                 <h4 className="font-bold text-gray-700 mb-1">📈 해석:</h4>
                 <p>
-                  "디자인", "브랜드 신뢰도"는 긍정 비중 높음. "배터리", "전원
-                  효율"은 부정 피드백 상대적으로 많음.
+                  {loading ? "데이터 로딩 중..." : 
+                   dashboardData?.analysis ?
+                   `긍정 비율: ${Math.round(dashboardData.analysis.positiveRatio || 0)}%, 부정 비율: ${Math.round(dashboardData.analysis.negativeRatio || 0)}%. 평균 평점: ${parseFloat(dashboardData?.insight?.avg_rating || dashboardData.analysis.avgRating || 0).toFixed(1)}/5.0` :
+                   "분석 데이터가 없습니다."}
                 </p>
               </div>
             </div>
           </div>
 
           {/* Detailed Analysis Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="card lg:col-span-2">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" id="detailed-analysis-section">
+            <div className="card lg:col-span-2" id="split-bar-chart-card">
               <h2 className="text-xl font-semibold mb-4">
                 📊 속성별 긍·부정 분기형 막대 그래프
               </h2>
@@ -737,77 +720,93 @@ function Dashboard() {
               </div>
             </div>
 
-            <div className="card lg:col-span-1">
+            <div className="card lg:col-span-1" id="heatmap-card">
               <h2 className="text-xl font-semibold mb-4">
                 🔥 속성 상관관계 히트맵
               </h2>
-              <div className="grid grid-cols-6 text-center text-sm font-semibold border-b border-gray-200 pb-2">
-                <div className="text-gray-500"></div>
-                <div className="text-gray-600">디자인</div>
-                <div className="text-gray-600">가격</div>
-                <div className="text-gray-600">품질</div>
-                <div className="text-gray-600">배터리</div>
-                <div className="text-gray-600">착용감</div>
-              </div>
-              <div className="mt-2 text-xs">{renderHeatmap()}</div>
-              <p className="mt-4 text-xs text-gray-500">
-                <span className="text-main font-bold">🔵</span> 진할수록 함께
-                언급되는 빈도가 높음.
-                <br />
-                예: 디자인–가격(0.82) → "디자인 만족도"가 "가격 인식"에 영향
-              </p>
+              {loading || !dashboardData?.keywords || correlationLabels.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  {loading ? "로딩 중..." : "키워드 데이터가 없습니다."}
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-6 text-center text-sm font-semibold border-b border-gray-200 pb-2">
+                    <div className="text-gray-500"></div>
+                    {correlationLabels.map((label, idx) => (
+                      <div key={idx} className="text-gray-600">{label}</div>
+                    ))}
+                    {correlationLabels.length < 5 && Array(5 - correlationLabels.length).fill(0).map((_, idx) => (
+                      <div key={`empty-${idx}`} className="text-gray-500">-</div>
+                    ))}
+                  </div>
+                  <div className="mt-2 text-xs">{renderHeatmap()}</div>
+                  <p className="mt-4 text-xs text-gray-500">
+                    <span className="text-main font-bold">🔵</span> 진할수록 함께
+                    언급되는 빈도가 높음.
+                  </p>
+                </>
+              )}
             </div>
           </div>
 
           {/* Word Cloud & Review Sample */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" id="wordcloud-review-section">
             <div className="card">
               <h2 className="text-xl font-semibold mb-4">
                 🌈 감정 워드클라우드
               </h2>
               <div className="flex flex-wrap gap-3">
-                <span
-                  style={{ fontSize: "36px", color: primaryColor }}
-                  className="font-bold"
-                >
-                  만족
-                </span>
-                <span style={{ fontSize: "30px", color: primaryColor }}>
-                  디자인
-                </span>
-                <span style={{ fontSize: "28px", color: primaryColor }}>
-                  음질
-                </span>
-                <span style={{ fontSize: "24px", color: primaryColor }}>
-                  편안
-                </span>
-                <span style={{ fontSize: "22px", color: primaryColor }}>
-                  착용감
-                </span>
-                <span style={{ fontSize: "20px", color: primaryColor }}>
-                  노캔좋음
-                </span>
+                {loading ? (
+                  <span className="text-gray-500">로딩 중...</span>
+                ) : (() => {
+                  // Parse pos_top_keywords from tb_productInsight (VARCHAR(255), comma-separated)
+                  const posKeywords = dashboardData?.insight?.pos_top_keywords 
+                    ? dashboardData.insight.pos_top_keywords.split(',').map(k => k.trim()).filter(Boolean)
+                    : dashboardData?.analysis?.positiveKeywords || [];
+                  
+                  return posKeywords.length > 0 ? (
+                    posKeywords.slice(0, 6).map((keyword, idx) => {
+                      const keywordText = typeof keyword === 'string' ? keyword : keyword.keyword_text || keyword.keyword || keyword;
+                      return (
+                        <span
+                          key={idx}
+                          className={`wordcloud-positive wordcloud-size-${idx} ${idx === 0 ? "font-bold" : ""}`}
+                        >
+                          {keywordText}
+                        </span>
+                      );
+                    })
+                  ) : (
+                    <span className="text-gray-500">긍정 키워드 데이터가 없습니다.</span>
+                  );
+                })()}
               </div>
               <div className="border-t border-gray-100 my-4"></div>
               <div className="flex flex-wrap gap-3">
-                <span
-                  style={{ fontSize: "36px", color: neutralColor }}
-                  className="font-bold"
-                >
-                  비싸다
-                </span>
-                <span style={{ fontSize: "30px", color: neutralColor }}>
-                  배터리
-                </span>
-                <span style={{ fontSize: "26px", color: neutralColor }}>
-                  무겁다
-                </span>
-                <span style={{ fontSize: "22px", color: neutralColor }}>
-                  끊김
-                </span>
-                <span style={{ fontSize: "20px", color: neutralColor }}>
-                  발열
-                </span>
+                {loading ? (
+                  <span className="text-gray-500">로딩 중...</span>
+                ) : (() => {
+                  // Parse neg_top_keywords from tb_productInsight (VARCHAR(255), comma-separated)
+                  const negKeywords = dashboardData?.insight?.neg_top_keywords 
+                    ? dashboardData.insight.neg_top_keywords.split(',').map(k => k.trim()).filter(Boolean)
+                    : dashboardData?.analysis?.negativeKeywords || [];
+                  
+                  return negKeywords.length > 0 ? (
+                    negKeywords.slice(0, 5).map((keyword, idx) => {
+                      const keywordText = typeof keyword === 'string' ? keyword : keyword.keyword_text || keyword.keyword || keyword;
+                      return (
+                        <span
+                          key={idx}
+                          className={`wordcloud-negative wordcloud-size-${idx} ${idx === 0 ? "font-bold" : ""}`}
+                        >
+                          {keywordText}
+                        </span>
+                      );
+                    })
+                  ) : (
+                    <span className="text-gray-500">부정 키워드 데이터가 없습니다.</span>
+                  );
+                })()}
               </div>
             </div>
 
@@ -823,33 +822,47 @@ function Dashboard() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200 text-sm">
-                    {reviewSamples.map((review, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 whitespace-nowrap text-gray-500">
-                          {review.date}
-                        </td>
-                        <td className="px-3 py-2 text-gray-900">
-                          {review.content}
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap">
-                          {review.summary.map((item, i) => {
-                            const tagClass =
-                              item.type === "pos"
-                                ? "bg-pos-light text-pos"
-                                : "bg-neg-light text-neg";
-                            const tagIcon = item.type === "pos" ? "🟩" : "🟥";
-                            return (
-                              <span
-                                key={i}
-                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${tagClass} mr-1`}
-                              >
-                                {tagIcon} {item.text}
-                              </span>
-                            );
-                          })}
+                    {loading ? (
+                      <tr>
+                        <td colSpan="3" className="px-3 py-2 text-center text-gray-500">
+                          로딩 중...
                         </td>
                       </tr>
-                    ))}
+                    ) : dashboardData?.reviewSamples?.length > 0 ? (
+                      dashboardData.reviewSamples.map((review, idx) => {
+                        const reviewDate = new Date(review.review_date);
+                        const formattedDate = `${reviewDate.getMonth() + 1}/${reviewDate.getDate()}`;
+                        const rating = parseFloat(review.rating) || 0;
+                        return (
+                          <tr key={review.review_id || idx} className="hover:bg-gray-50">
+                            <td className="px-3 py-2 whitespace-nowrap text-gray-500">
+                              {formattedDate}
+                            </td>
+                            <td className="px-3 py-2 text-gray-900">
+                              {review.review_text}
+                            </td>
+                            <td className="px-3 py-2 whitespace-nowrap">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                rating >= 4 ? "bg-pos-light text-pos" : 
+                                rating <= 2 ? "bg-neg-light text-neg" : 
+                                "bg-gray-200 text-gray-600"
+                              } mr-1`}>
+                                {rating >= 4 ? "🟩" : rating <= 2 ? "🟥" : "⚪"} 평점 {rating.toFixed(1)}
+                              </span>
+                              {review.source && (
+                                <span className="ml-1 text-xs text-gray-400">({review.source})</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="3" className="px-3 py-2 text-center text-gray-500">
+                          리뷰 데이터가 없습니다.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -857,38 +870,73 @@ function Dashboard() {
           </div>
 
           {/* Insights and AI Report Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Data from tb_productInsight: insight_summary (TEXT), improvement_suggestion (TEXT) */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" id="insights-section">
             <div className="card">
               <h2 className="text-lg font-semibold mb-3">A. 핵심 인사이트</h2>
               <p className="whitespace-pre-wrap text-sm text-gray-700">
-                👍 전체 긍정률 78%로 상승 중 '디자인·착용감·음질' 주요 강점
+                {loading ? "데이터 로딩 중..." : 
+                 dashboardData?.insight?.insight_summary ?
+                 dashboardData.insight.insight_summary :
+                 dashboardData?.analysis ?
+                 `👍 전체 긍정률 ${Math.round(dashboardData.analysis.positiveRatio || 0)}%${dashboardData.analysis.positiveKeywords?.length > 0 ? `, 주요 긍정 키워드: ${dashboardData.analysis.positiveKeywords.slice(0, 3).map(k => typeof k === 'string' ? k : k.keyword_text || k.keyword || k).join(", ") || "없음"}` : ""}` :
+                 "인사이트 데이터가 없습니다."}
               </p>
             </div>
             <div className="card">
               <h2 className="text-lg font-semibold mb-3">B. 개선 제안</h2>
               <p className="whitespace-pre-wrap text-sm text-gray-700">
-                ⚙️ 배터리 지속시간 관련 부정 리뷰 40%↑ 전원 효율 개선 필요
+                {loading ? "데이터 로딩 중..." : 
+                 dashboardData?.insight?.improvement_suggestion ?
+                 dashboardData.insight.improvement_suggestion :
+                 dashboardData?.analysis && dashboardData.analysis.negativeRatio > 0 ?
+                 `⚙️ 부정 비율 ${Math.round(dashboardData.analysis.negativeRatio || 0)}%${dashboardData.analysis.negativeKeywords?.length > 0 ? `, 주요 부정 키워드: ${dashboardData.analysis.negativeKeywords.slice(0, 2).map(k => typeof k === 'string' ? k : k.keyword_text || k.keyword || k).join(", ") || "없음"}. 개선 필요` : ""}` :
+                 dashboardData?.analysis ? "개선이 필요한 영역이 없습니다." : "인사이트 데이터가 없습니다."}
               </p>
             </div>
             <div className="card">
               <h2 className="text-lg font-semibold mb-3">C. 리뷰 샘플</h2>
               <p className="whitespace-pre-wrap text-sm text-gray-700">
-                💬 "디자인은 예쁜데 가격이 비싸요." 💬 "소음이 거의 없어
-                만족합니다." 💬 "배터리 빨리 닳아요."
+                {loading ? "데이터 로딩 중..." : 
+                 dashboardData?.reviewSamples?.length > 0 ?
+                 dashboardData.reviewSamples.slice(0, 3).map((review, idx) => 
+                   `💬 "${review.review_text}"`
+                 ).join(" ") :
+                 "리뷰 데이터가 없습니다."}
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6">
-            <div className="card">
+          {/* AI 인사이트 리포트 - 전체 너비 차지 */}
+          <div className="grid grid-cols-1 gap-6" id="ai-insight-report-section">
+            <div className="card w-full">
               <h2 className="text-xl font-semibold mb-4">
                 🤖 AI 인사이트 리포트
               </h2>
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm whitespace-pre-wrap text-gray-800">
-                🔍 AI 자동 분석 요약 - 긍정 요인: 디자인, 착용감, 음질 (전체
-                리뷰의 70% 이상) - 부정 요인: 배터리 지속시간, 가격 - 인사이트:
-                신규 리뷰 유입과 함께 긍정률 상승. 펌웨어 업데이트 영향 가능성
-                높음.
+                {loading ? "데이터 로딩 중..." : 
+                 dashboardData?.insight ? (() => {
+                   // Data from tb_productInsight
+                   const posKeywords = dashboardData.insight.pos_top_keywords 
+                     ? dashboardData.insight.pos_top_keywords.split(',').map(k => k.trim()).slice(0, 3).join(", ")
+                     : "없음";
+                   const negKeywords = dashboardData.insight.neg_top_keywords 
+                     ? dashboardData.insight.neg_top_keywords.split(',').map(k => k.trim()).slice(0, 2).join(", ")
+                     : "없음";
+                   const avgRating = parseFloat(dashboardData.insight.avg_rating || dashboardData.insight.avgRating || 0);
+                   
+                   return `🔍 AI 자동 분석 요약
+- 긍정 요인: ${posKeywords}
+- 부정 요인: ${negKeywords}
+- 평균 평점: ${avgRating.toFixed(1)}/5.0`;
+                 })() :
+                 dashboardData?.analysis ?
+                 `🔍 AI 자동 분석 요약
+- 긍정 요인: ${dashboardData.analysis.positiveKeywords?.slice(0, 3).map(k => typeof k === 'string' ? k : k.keyword_text || k.keyword || k).join(", ") || "없음"}
+- 부정 요인: ${dashboardData.analysis.negativeKeywords?.slice(0, 2).map(k => typeof k === 'string' ? k : k.keyword_text || k.keyword || k).join(", ") || "없음"}
+- 긍정 비율: ${Math.round(dashboardData.analysis.positiveRatio || 0)}%, 부정 비율: ${Math.round(dashboardData.analysis.negativeRatio || 0)}%
+- 평균 평점: ${(dashboardData.analysis.avgRating || 0).toFixed(1)}/5.0` :
+                 "인사이트 데이터가 없습니다."}
               </div>
             </div>
           </div>

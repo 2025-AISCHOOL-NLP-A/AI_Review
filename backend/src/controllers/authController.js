@@ -217,23 +217,54 @@ export const findId = async (req, res) => {
 
 
 // ==============================
-// 비밀번호 찾기 (임시)
+// 비밀번호 찾기 (임시 비밀번호 발송)
 // ==============================
 export const findPassword = async (req, res) => {
   try {
     const { login_id, email } = req.body;
 
+    // 사용자 확인
     const [rows] = await db.query(
       "SELECT * FROM tb_user WHERE login_id = ? AND email = ?",
       [login_id, email]
     );
-
     if (rows.length === 0)
-      return res.status(404).json({ message: "일치하는 정보를 찾을 수 없습니다." });
+      return res
+        .status(404)
+        .json({ message: "일치하는 사용자 정보를 찾을 수 없습니다." });
 
-    // 🔹 임시비밀번호 생성 및 발송 (선택적으로 구현 가능)
-    console.log(`🔑 비밀번호 재설정 링크 발송 대상: ${email}`);
-    res.json({ message: "비밀번호 재설정 링크가 이메일로 발송되었습니다." });
+    // ✅ 임시 비밀번호 생성
+    const tempPassword = Math.random().toString(36).slice(2, 10) + "!";
+    const hashedTemp = await bcrypt.hash(tempPassword, 10);
+
+    // ✅ DB에 임시 비밀번호 업데이트
+    await db.query("UPDATE tb_user SET password = ? WHERE login_id = ?", [
+      hashedTemp,
+      login_id,
+    ]);
+
+    // ✅ 이메일 발송
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"꽤뚫어뷰 비밀번호 재설정" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "[꽤뚫어뷰] 임시 비밀번호 안내",
+      text: `안녕하세요 ${login_id}님,\n\n요청하신 임시 비밀번호는 다음과 같습니다:\n\n${tempPassword}\n\n로그인 후 반드시 비밀번호를 변경해주세요.`,
+    });
+
+    console.log(`✅ 임시 비밀번호 발송 완료: ${email}`);
+
+    res.json({
+      success: true,
+      message: "임시 비밀번호가 이메일로 발송되었습니다.",
+    });
   } catch (err) {
     console.error("❌ 비밀번호 찾기 오류:", err);
     res.status(500).json({ message: "비밀번호 찾기 중 서버 오류가 발생했습니다." });

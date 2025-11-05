@@ -22,10 +22,9 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response && error.response.status === 401) {
-            console.warn("토큰 만료 또는 인증 실패");
-            // 자동 로그아웃 or 새 로그인 페이지로 이동 가능
+            // 토큰 만료 또는 인증 실패 시 토큰만 제거
+            // 브라우저 이동은 제거 - 각 컴포넌트에서 react-router-dom의 navigate() 사용
             localStorage.removeItem("token");
-            window.location.href="/login";
         }
         return Promise.reject(error);
     }

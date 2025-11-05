@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
 import '../styles/login.css';
@@ -13,19 +13,45 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const errorRef = useRef(''); // 에러 상태를 ref로도 저장
+
+  // 에러 상태를 ref에도 동기화
+  useEffect(() => {
+    errorRef.current = error;
+  }, [error]);
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
-    setError('');
+
+    // 로그인 실패 에러는 유지 - 사용자가 다시 로그인 시도할 때만 초기화
   };
 
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
+    // 페이지 새로고침 방지 - 최우선으로 처리
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
+    if (e && e.stopPropagation) {
+      e.stopPropagation();
+    }
+    if (e && e.stopImmediatePropagation) {
+      e.stopImmediatePropagation();
+    }
+    
+    // 이미 로딩 중이면 중복 실행 방지
+    if (loading) {
+      return;
+    }
+    
     setLoading(true);
+    // 새로운 로그인 시도 시 이전 에러 초기화
+    setError('');
 
     if (!formData.login_id || !formData.password) {
       setError('아이디와 비밀번호를 입력해주세요.');
@@ -33,15 +59,31 @@ function Login() {
       return;
     }
 
-    const result = await authService.login(formData.login_id, formData.password);
+    try {
+      const result = await authService.login(formData.login_id, formData.password);
 
-    setLoading(false);
-
-    if (result.success) {
-      console.log('로그인 성공:', result.data);
-      navigate('/dashboard');
-    } else {
-      setError(result.message);
+      if (result.success) {
+        setError(''); // 성공 시 에러 초기화
+        setLoading(false);
+        navigate('/dashboard');
+        return;
+      } else {
+        // 로그인 실패 시 에러 설정 - 항상 표시되도록
+        const errorMessage = result.message || '잘못된 아이디 또는 비밀번호입니다.';
+        setLoading(false);
+        // 에러를 명시적으로 설정하고 확인
+        setError(errorMessage);
+        // formData는 유지됨 (로그인 실패 시에도 ID와 비밀번호가 그대로 남아있음)
+        // 새로고침 방지
+        return false;
+      }
+    } catch (error) {
+      setLoading(false);
+      // 에러 설정 - 항상 표시되도록
+      const errorMessage = '로그인 중 오류가 발생했습니다.';
+      setError(errorMessage);
+      // 새로고침 방지
+      return false;
     }
   };
 
@@ -54,9 +96,17 @@ function Login() {
             <img src="/images/logo.png" alt="logo" />
           </div>
 
-          <form className="login-form" onSubmit={handleSubmit}>
-            {error && <div className="error-message">{error}</div>}
-            
+          <form 
+            className="login-form" 
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              e.stopImmediatePropagation();
+              return false; // 명시적으로 false 반환
+            }}
+            noValidate
+            action="javascript:void(0)"
+          >
             <div className="form-group">
               <div className="form-icon">
                 <img src="/images/id_icon.png" alt="아이디 아이콘" />
@@ -68,6 +118,12 @@ function Login() {
                 placeholder="아이디"
                 value={formData.login_id}
                 onChange={handleChange}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !loading) {
+                    e.preventDefault();
+                    handleSubmit(e);
+                  }
+                }}
                 required
               />
             </div>
@@ -84,6 +140,12 @@ function Login() {
                   placeholder="비밀번호"
                   value={formData.password}
                   onChange={handleChange}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !loading) {
+                      e.preventDefault();
+                      handleSubmit(e);
+                    }
+                  }}
                   required
                 />
                 <button
@@ -106,8 +168,21 @@ function Login() {
                 </button>
               </div>
             </div>
+            
+            {error && <div className="error-message">{error}</div>}
 
-            <button type="submit" className="login-button" disabled={loading}>
+            <button 
+              type="button" 
+              className="login-button" 
+              disabled={loading}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!loading) {
+                  handleSubmit(e);
+                }
+              }}
+            >
               {loading ? '로그인 중...' : '로그인'}
             </button>
 

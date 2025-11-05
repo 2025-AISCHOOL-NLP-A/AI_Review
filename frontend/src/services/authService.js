@@ -109,6 +109,29 @@ const authService = {
       return { success: false, message: msg };
     }
   },
+
+
+  /** ✏️ 회원정보 수정 */
+  async updateProfile(payload) {
+    try {
+      const res = await api.post("/auth/update-profile", payload); // ✅ post로 통일
+      return { success: true, message: res.data.message };
+    } catch (err) {
+      const msg = err.response?.data?.message || "회원정보 수정 중 오류가 발생했습니다.";
+      return { success: false, message: msg };
+    }
+  },
+  
+  /** 🙋‍♀️ 현재 로그인된 사용자 정보 조회 */
+  async getMe() {
+    try {
+      const res = await api.get("/auth/verify");
+      return res.data.user; // { id, login_id, email }
+    } catch (err) {
+      console.error("getMe() 오류:", err);
+      throw new Error("인증 정보 확인 실패");
+    }
+  },
 };
 
 export default authService;

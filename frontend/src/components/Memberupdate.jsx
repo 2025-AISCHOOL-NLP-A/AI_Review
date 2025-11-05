@@ -35,7 +35,7 @@ function Memberupdate() {
         const me = await authService.getMe(); // { user_id, email }
         setFormData((p) => ({
           ...p,
-          user_id: me?.user_id || "",
+          user_id: me?.login_id || "",
           current_email: me?.email || "",
         }));
       } catch (e) {

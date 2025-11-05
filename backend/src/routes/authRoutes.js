@@ -9,6 +9,7 @@ import {
   verifyToken,
   verifyEmailCode,
   updateProfile,
+  withdrawUser,
 } from "../controllers/authController.js";
 
 const router = express.Router();
@@ -31,5 +32,7 @@ router.post("/find-password", findPassword);
 router.post("/update-profile", updateProfile);
 // JWT 토큰 검증
 router.get("/verify", verifyToken);
+// 🔹 회원탈퇴
+router.delete("/withdraw", withdrawUser);
 
 export default router;

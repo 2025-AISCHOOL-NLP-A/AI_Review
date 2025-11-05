@@ -357,3 +357,39 @@ export const verifyToken = (req, res) => {
     res.status(401).json({ message: "유효하지 않은 토큰입니다." });
   }
 };
+
+// ==============================
+// 🗑️ 회원탈퇴 (DELETE)
+// ==============================
+export const withdrawUser = async (req, res) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    if (!authHeader)
+      return res.status(401).json({ success: false, message: "인증 토큰이 없습니다." });
+
+    const token = authHeader.split(" ")[1];
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(403).json({ success: false, message: "토큰 검증 실패" });
+    }
+
+    const userId = decoded.id;
+
+    // 🔹 사용자 존재 확인
+    const [rows] = await db.query("SELECT * FROM tb_user WHERE user_id = ?", [userId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: "사용자를 찾을 수 없습니다." });
+    }
+
+    // 🔹 실제 탈퇴 처리 (완전 삭제)
+    await db.query("DELETE FROM tb_user WHERE user_id = ?", [userId]);
+
+    console.log(`🗑️ 회원탈퇴 완료 (user_id=${userId})`);
+    return res.json({ success: true, message: "회원탈퇴가 완료되었습니다." });
+  } catch (err) {
+    console.error("❌ 회원탈퇴 오류:", err);
+    return res.status(500).json({ success: false, message: "회원탈퇴 중 서버 오류가 발생했습니다." });
+  }
+};

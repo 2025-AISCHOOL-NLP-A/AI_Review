@@ -8,6 +8,7 @@ import {
   findPassword,
   verifyToken,
   verifyEmailCode,
+  updateProfile,
 } from "../controllers/authController.js";
 
 const router = express.Router();
@@ -26,6 +27,8 @@ router.post("/verify-code", verifyEmailCode);
 router.post("/find-id", findId);
 // 비밀번호 찾기
 router.post("/find-password", findPassword);
+// 회원정보 수정
+router.post("/update-profile", updateProfile);
 // JWT 토큰 검증
 router.get("/verify", verifyToken);
 

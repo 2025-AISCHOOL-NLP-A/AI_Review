@@ -240,6 +240,75 @@ export const findPassword = async (req, res) => {
   }
 };
 
+// ==============================
+// 회원정보 수정 (POST 방식)
+// ==============================
+export const updateProfile = async (req, res) => {
+  try {
+    const { current_password, new_password, new_email, email_code } = req.body;
+    const authHeader = req.headers["authorization"];
+
+    if (!authHeader)
+      return res.status(401).json({ message: "인증 토큰이 없습니다." });
+
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+
+    // 🔹 현재 비밀번호 확인
+    const [users] = await db.query("SELECT * FROM tb_user WHERE user_id = ?", [userId]);
+    if (users.length === 0)
+      return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+
+    const user = users[0];
+    const isMatch = await bcrypt.compare(current_password, user.password);
+    if (!isMatch)
+      return res.status(400).json({ message: "현재 비밀번호가 일치하지 않습니다." });
+
+    // 🔹 이메일 변경 시: 인증번호 검증
+    if (new_email && email_code) {
+      const [codes] = await db.query(
+        `SELECT * FROM tb_email_verification 
+         WHERE email = ? AND code = ? AND verified = 1 
+         ORDER BY created_at DESC LIMIT 1`,
+        [new_email, email_code]
+      );
+
+      if (codes.length === 0) {
+        return res.status(400).json({ message: "이메일 인증이 완료되지 않았습니다." });
+      }
+    }
+
+    // 🔹 업데이트 대상 준비
+    const updates = [];
+    const params = [];
+
+    if (new_password) {
+      const hashed = await bcrypt.hash(new_password, 10);
+      updates.push("password = ?");
+      params.push(hashed);
+    }
+
+    if (new_email) {
+      updates.push("email = ?");
+      params.push(new_email);
+    }
+
+    if (updates.length === 0)
+      return res.status(400).json({ message: "변경할 항목이 없습니다." });
+
+    // 🔹 쿼리 실행
+    const sql = `UPDATE tb_user SET ${updates.join(", ")} WHERE user_id = ?`;
+    params.push(userId);
+    await db.query(sql, params);
+
+    console.log(`✅ 회원정보 수정 완료 (user_id=${userId})`);
+    res.json({ success: true, message: "회원정보가 수정되었습니다." });
+  } catch (err) {
+    console.error("❌ 회원정보 수정 오류:", err);
+    res.status(500).json({ message: "회원정보 수정 중 서버 오류가 발생했습니다." });
+  }
+};
 
 // ==============================
 // JWT 유효성 검증

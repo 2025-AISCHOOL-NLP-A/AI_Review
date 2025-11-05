@@ -38,10 +38,10 @@ function Sidebar() {
         sidebarOpen ? "sidebar-open" : "sidebar-closed"
       }`}
     >
-      <div 
+      <div
         className="sidebar-header"
         onClick={!sidebarOpen ? () => setSidebarOpen(true) : undefined}
-        style={!sidebarOpen ? { cursor: 'pointer' } : {}}
+        style={!sidebarOpen ? { cursor: "pointer" } : {}}
       >
         <div className="sidebar-logo">
           <svg
@@ -96,7 +96,9 @@ function Sidebar() {
       <nav className="sidebar-nav">
         <a
           href="#"
-          className={`sidebar-nav-item ${isActive("/dashboard") ? "active" : ""}`}
+          className={`sidebar-nav-item ${
+            isActive("/dashboard") ? "active" : ""
+          }`}
           onClick={(e) => {
             e.preventDefault();
             navigate("/dashboard");
@@ -167,7 +169,11 @@ function Sidebar() {
           <a
             href="#"
             className={`sidebar-nav-item ${settingsOpen ? "active" : ""} ${
-              isActive("/memberupdate") || isActive("/pricingsystem") ? "active" : ""
+              isActive("/memberupdate") ||
+              isActive("/pricingsystem") ||
+              isActive("/memberdrop")
+                ? "active"
+                : ""
             }`}
             onClick={(e) => {
               e.preventDefault();
@@ -272,8 +278,13 @@ function Sidebar() {
               </a>
               <a
                 href="#"
-                className="sidebar-submenu-item"
-                onClick={(e) => e.preventDefault()}
+                className={`sidebar-submenu-item ${
+                  isActive("/memberdrop") ? "active" : ""
+                }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate("/memberdrop");
+                }}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -317,7 +328,9 @@ function Sidebar() {
                 </svg>
               </div>
               <div className="sidebar-user-info">
-                <div className="sidebar-user-name">{userInfo.login_id || "사용자"}</div>
+                <div className="sidebar-user-name">
+                  {userInfo.login_id || "사용자"}
+                </div>
                 <div className="sidebar-user-email">{userInfo.email || ""}</div>
               </div>
             </div>
@@ -377,4 +390,3 @@ function Sidebar() {
 }
 
 export default Sidebar;
-

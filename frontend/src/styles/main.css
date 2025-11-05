@@ -52,7 +52,14 @@ header button:hover {
   padding-top: 120px;
   padding-bottom: 60px;
 }
-
+/* Hero 로고 */
+.hero-logo {
+  display: block; /* inline 이미지의 여백/정렬 이슈 방지 */
+  margin: 0 auto 8px; /* 안전한 중앙 정렬 */
+  max-width: 160px; /* 필요 시 크기 제한 */
+  height: auto;
+  float: none; /* 혹시 전역 float 규칙이 있다면 무력화 */
+}
 .hero img {
   width: 80px;
   height: 80px;

@@ -19,8 +19,6 @@ body {
   isolation: isolate;
   overflow: hidden;
 
-  width: min(100%, 500px);
-  max-width: 500px;
   min-height: 100dvh; /* 세로 중앙 정렬 유지 */
   margin: 0 auto; /* 혹시 body 중앙정렬 안 쓸 때도 대비 */
   padding: 40px 20px;
@@ -29,7 +27,6 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: stretch; /* 내부 폼이 넓게 놓이도록 */
-
   width: 100%;
   max-width: 600px;
 }
@@ -41,7 +38,6 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 40px 20px;
 }
 
 /* ====== 실제 카드/푸터는 위로 띄우기 ====== */

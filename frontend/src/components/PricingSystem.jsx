@@ -14,15 +14,9 @@ function PricingSystem() {
       {/* Main Content */}
       <div className="dashboard-wrapper">
         <div className="dashboard-content" style={{ padding: "24px" }}>
-          <header className="pt-6 pb-4">
-            <h1 className="text-3xl font-extrabold text-gray-800">
-              요금제 관리
-            </h1>
-          </header>
-
           {/* 요금제 섹션 */}
           <section className="price-section" style={{ paddingTop: "40px" }}>
-            <h2 className="section-title">요금제 안내</h2>
+            <h1 className="section-title">요금제 안내</h1>
             <div className="price-cards">
               {/* 프리 Plan */}
               <div className="card free">
@@ -58,6 +52,128 @@ function PricingSystem() {
                   <li>✅ 팀 협업 기능 포함</li>
                 </ul>
                 <button className="select-btn blue-btn">요금제 선택</button>
+              </div>
+            </div>
+          </section>
+          {/* 요금제 비교표 */}
+          <section className="compare-section">
+            <h1 className="section-title">모든 기능 비교</h1>
+
+            <div
+              className="compare-table"
+              role="table"
+              aria-label="요금제 비교"
+            >
+              {/* 헤더 */}
+              <div className="compare-row compare-header" role="row">
+                <div
+                  className="compare-cell compare-head feature-col"
+                  role="columnheader"
+                  aria-colindex={1}
+                ></div>
+                <div
+                  className="compare-cell compare-head"
+                  role="columnheader"
+                  aria-colindex={2}
+                >
+                  프리
+                </div>
+                <div
+                  className="compare-cell compare-head"
+                  role="columnheader"
+                  aria-colindex={3}
+                >
+                  프로
+                </div>
+                <div
+                  className="compare-cell compare-head"
+                  role="columnheader"
+                  aria-colindex={4}
+                >
+                  프리미엄
+                </div>
+              </div>
+
+              {/* 행 1: 리뷰 분석 */}
+              <div className="compare-row" role="row">
+                <div className="compare-cell feature-col" role="rowheader">
+                  리뷰 분석
+                </div>
+                <div className="compare-cell" role="cell">
+                  <span className="badge good" aria-label="지원">
+                    ✔
+                  </span>
+                </div>
+                <div className="compare-cell" role="cell">
+                  <span className="badge good" aria-label="지원">
+                    ✔
+                  </span>
+                </div>
+                <div className="compare-cell" role="cell">
+                  <span className="badge good" aria-label="지원">
+                    ✔
+                  </span>
+                </div>
+              </div>
+
+              {/* 행 2: 리포트 다운로드 */}
+              <div className="compare-row" role="row">
+                <div className="compare-cell feature-col" role="rowheader">
+                  리포트 다운로드
+                </div>
+                <div className="compare-cell" role="cell">
+                  <span className="badge bad" aria-label="미지원">
+                    ✖
+                  </span>
+                </div>
+                <div className="compare-cell" role="cell">
+                  <span className="badge good" aria-label="지원">
+                    ✔
+                  </span>
+                </div>
+                <div className="compare-cell" role="cell">
+                  <span className="badge good" aria-label="지원">
+                    ✔
+                  </span>
+                </div>
+              </div>
+
+              {/* 행 3: 협업 가능 */}
+              <div className="compare-row" role="row">
+                <div className="compare-cell feature-col" role="rowheader">
+                  협업 가능
+                </div>
+                <div className="compare-cell" role="cell">
+                  <span className="badge bad" aria-label="미지원">
+                    ✖
+                  </span>
+                </div>
+                <div className="compare-cell" role="cell">
+                  <span className="badge bad" aria-label="미지원">
+                    ✖
+                  </span>
+                </div>
+                <div className="compare-cell" role="cell">
+                  <span className="badge good" aria-label="지원">
+                    ✔
+                  </span>
+                </div>
+              </div>
+
+              {/* 행 4: 프로젝트 수 */}
+              <div className="compare-row" role="row">
+                <div className="compare-cell feature-col" role="rowheader">
+                  프로젝트 수
+                </div>
+                <div className="compare-cell" role="cell">
+                  5
+                </div>
+                <div className="compare-cell" role="cell">
+                  10
+                </div>
+                <div className="compare-cell" role="cell">
+                  무제한
+                </div>
               </div>
             </div>
           </section>

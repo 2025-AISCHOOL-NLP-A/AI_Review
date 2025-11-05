@@ -360,6 +360,40 @@
   background: #2563eb;
 }
 
+/* 인증번호 입력과 확인 버튼 */
+.input-with-button {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.input-with-button .input-with-icon {
+  flex: 1;
+}
+
+.check-button {
+  padding: 12px 20px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
+}
+
+.check-button:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.check-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .join-button {
   width: 100%;
   padding: 16px;

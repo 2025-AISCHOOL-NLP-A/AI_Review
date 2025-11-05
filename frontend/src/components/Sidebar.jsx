@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import "../styles/dashboard.css";
+import "../styles/sidebar.css";
 
 function Sidebar() {
   const navigate = useNavigate();
@@ -19,7 +19,11 @@ function Sidebar() {
         sidebarOpen ? "sidebar-open" : "sidebar-closed"
       }`}
     >
-      <div className="sidebar-header">
+      <div 
+        className="sidebar-header"
+        onClick={!sidebarOpen ? () => setSidebarOpen(true) : undefined}
+        style={!sidebarOpen ? { cursor: 'pointer' } : {}}
+      >
         <div className="sidebar-logo">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -39,7 +43,10 @@ function Sidebar() {
         </div>
         <button
           className="sidebar-toggle"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setSidebarOpen(!sidebarOpen);
+          }}
           aria-label="Toggle sidebar"
         >
           <svg
@@ -54,13 +61,13 @@ function Sidebar() {
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
+                d="M15 19l-7-7 7-7"
               />
             ) : (
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                d="M4 6h16M4 12h16M4 18h16"
+                d="M9 5l7 7-7 7"
               />
             )}
           </svg>

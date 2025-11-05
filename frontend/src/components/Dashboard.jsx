@@ -18,6 +18,7 @@ import {
 import html2pdf from "html2pdf.js";
 import Sidebar from "./Sidebar";
 import "../styles/dashboard.css";
+import "../styles/sidebar.css";
 
 // Register Chart.js components
 Chart.register(

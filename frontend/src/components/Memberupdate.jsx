@@ -5,6 +5,7 @@ import authService from "../services/authService";
 import Sidebar from "./Sidebar";
 import "../styles/memberupdate.css";
 import "../styles/dashboard.css";
+import "../styles/sidebar.css";
 import "../styles/common.css";
 
 function Memberupdate() {
@@ -13,7 +14,7 @@ function Memberupdate() {
   // 프로필 기본값 불러오기
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    user_id: "", // 고정
+    lgin_id: "", // 고정
     current_password: "", // 확인용
     new_password: "", // 변경용
     new_password_confirm: "",
@@ -25,6 +26,7 @@ function Memberupdate() {
   });
 
   const [isEmailSent, setIsEmailSent] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   useEffect(() => {
     // 현재 로그인 사용자 정보 조회
@@ -64,11 +66,40 @@ function Memberupdate() {
       if (res.success) {
         alert("인증 메일이 발송되었습니다. 이메일을 확인해주세요.");
         setIsEmailSent(true);
+        setIsEmailVerified(false);
       } else {
         alert(res.message || "인증 메일 발송에 실패했습니다.");
       }
     } catch {
       alert("인증 메일 발송 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 이메일 인증번호 확인
+  const handleVerifyEmailCode = async () => {
+    if (!formData.email_code.trim()) {
+      alert("인증번호를 입력해주세요.");
+      return;
+    }
+
+    if (!formData.new_email_prefix.trim()) {
+      alert("이메일을 입력해주세요.");
+      return;
+    }
+
+    const newEmail = `${formData.new_email_prefix}@${formData.email_domain}`;
+    try {
+      const result = await authService.verifyCode(newEmail, formData.email_code);
+      if (result.success) {
+        alert("이메일 인증이 완료되었습니다.");
+        setIsEmailVerified(true);
+      } else {
+        alert(result.message || "인증번호가 일치하지 않습니다.");
+        setIsEmailVerified(false);
+      }
+    } catch {
+      alert("인증번호 확인 중 오류가 발생했습니다.");
+      setIsEmailVerified(false);
     }
   };
 
@@ -117,6 +148,10 @@ function Memberupdate() {
       }
       if (!isEmailSent) {
         alert("변경 이메일 인증을 먼저 진행해주세요.");
+        return;
+      }
+      if (!isEmailVerified) {
+        alert("이메일 인증을 완료해주세요.");
         return;
       }
       if (!email_code.trim()) {
@@ -309,9 +344,9 @@ function Memberupdate() {
             </div>
           </div>
 
-          {/* 이메일 인증번호 입력 (발송 후 표시) */}
-          {isEmailSent && (
-            <div className="form-group">
+          {/* 🔹 인증 코드 입력 */}
+          <div className="form-group">
+            <div className="input-with-button">
               <div className="input-with-icon">
                 <div className="form-icon">
                   <img src="/images/email_icon.png" alt="이메일 코드 아이콘" />
@@ -320,13 +355,30 @@ function Memberupdate() {
                   type="text"
                   name="email_code"
                   className="form-input"
-                  placeholder="이메일 인증번호"
+                  placeholder={isEmailSent ? "이메일 인증번호 입력" : "인증하기 버튼을 먼저 눌러주세요"}
                   value={formData.email_code}
                   onChange={handleChange}
+                  disabled={!isEmailSent}
+                  style={{
+                    backgroundColor: !isEmailSent ? '#f3f4f6' : 'transparent',
+                    cursor: !isEmailSent ? 'not-allowed' : 'text'
+                  }}
                 />
               </div>
+              <button 
+                type="button" 
+                className="check-button" 
+                onClick={handleVerifyEmailCode}
+                disabled={!isEmailSent || isEmailVerified}
+                style={{ 
+                  backgroundColor: isEmailVerified ? '#10B981' : (!isEmailSent ? '#9ca3af' : '#3b82f6'),
+                  cursor: (!isEmailSent || isEmailVerified) ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {isEmailVerified ? '✓ 인증완료' : '확인'}
+              </button>
             </div>
-          )}
+          </div>
 
           <button type="submit" className="join-button" disabled={loading}>
             {loading ? "저장 중..." : "저장"}

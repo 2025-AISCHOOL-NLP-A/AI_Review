@@ -1,6 +1,7 @@
 import React from "react";
 import Sidebar from "./Sidebar";
 import "../styles/dashboard.css";
+import "../styles/sidebar.css";
 import "../styles/pricingsystem.css";
 import "../styles/common.css";
 

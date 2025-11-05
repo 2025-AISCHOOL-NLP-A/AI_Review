@@ -16,6 +16,8 @@ app.use(cors({
 app.use(express.json());
 // ✅ 라우트 등록
 app.use("/auth", authRoutes);
+// ✅ 이메일 인증 라우터 등록
+// app.use("/api/auth", authRoutes);
 
 // ✅ 서버 시작
 const PORT = process.env.PORT || 3001;

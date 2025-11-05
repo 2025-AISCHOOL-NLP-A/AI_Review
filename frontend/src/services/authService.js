@@ -61,6 +61,7 @@ const authService = {
       const res = await api.post("/auth/send-verification", { email });
       return { success: true, message: res.data.message };
     } catch (err) {
+      console.error("이메일 인증번호 발송 오류:", err);
       const msg = err.response?.data?.message || "이메일 발송 중 오류가 발생했습니다.";
       return { success: false, message: msg };
     }
@@ -72,11 +73,12 @@ const authService = {
       const res = await api.post("/auth/verify-code", { email, code });
       return { success: true, message: res.data.message };
     } catch (err) {
+      console.error("이메일 인증번호 확인 오류:", err);
       const msg = err.response?.data?.message || "인증번호 확인 중 오류가 발생했습니다.";
       return { success: false, message: msg };
     }
   },
-  
+
   /** 🆔 아이디 찾기 */
   async findId(email) {
     try {
@@ -87,6 +89,7 @@ const authService = {
         message: res.data.message,
       };
     } catch (err) {
+      console.error("아이디 찾기 오류:", err);
       const msg = err.response?.data?.message || "일치하는 정보를 찾을 수 없습니다.";
       return { success: false, message: msg };
     }
@@ -101,6 +104,7 @@ const authService = {
       });
       return { success: true, message: res.data.message };
     } catch (err) {
+      console.error("비밀번호 찾기 오류:", err);
       const msg = err.response?.data?.message || "비밀번호 찾기 중 오류가 발생했습니다.";
       return { success: false, message: msg };
     }

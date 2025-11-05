@@ -30,6 +30,7 @@
   align-items: center;
   gap: 12px;
   padding-top: 24px;
+  padding-bottom: 40px;
 }
 
 .compare-table {
@@ -125,7 +126,7 @@
 
 /* 가격표 섹션 */
 .price-section {
-  padding: 40px 0 100px;
+  padding: 40px 0 40px;
 }
 
 .price-section h2 {

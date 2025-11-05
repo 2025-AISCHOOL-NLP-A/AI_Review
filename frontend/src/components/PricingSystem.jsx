@@ -177,8 +177,28 @@ function PricingSystem() {
               </div>
             </div>
           </section>
+
+          {/* ===================== FOOTER ===================== */}
+          <footer>
+            <div className="footer-left">
+              <img src="/images/logo.png" alt="logo" className="footer-logo" />
+            </div>
+            <div className="footer-right">
+              <div className="footer-links">
+                <span>문의</span>
+                <span className="divider">|</span>
+                <span>개인정보처리방침</span>
+              </div>
+              <div className="footer-info">© 2025 Team 꽤뚫어뷰</div>
+              <div className="footer-email">
+                문의: team.kkwaetoolview@gmail.com
+              </div>
+            </div>
+          </footer>
         </div>
+        {/* dashboard-content 끝 */}
       </div>
+      {/* dashboard-wrapper 끝 */}
     </div>
   );
 }

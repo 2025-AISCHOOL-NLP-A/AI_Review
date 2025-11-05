@@ -1,5 +1,7 @@
 import db from "../models/db.js";
 
+/** 제품 대시보드 데이터 조회 API (productId 쿼리 ) */
+export const getProductDashboardData = async (req, res) => {
 // ==============================
 // 제품 대시보드 조회
 // ==============================
@@ -16,6 +18,10 @@ import db from "../models/db.js";
 /** 제품 대시보드 데이터 조회 API (productId URL 파라미터) */
 export const getProductDashboardData = async (req, res) => {
   try {
+    const parsedId = Number.parseInt(req.query.productId, 10);
+    const productId = Number.isNaN(parsedId) ? undefined : parsedId; //기본값: undefined(productId입력)
+
+    // 1) 제품 정보
     const parsedId = Number.parseInt(req.params.id, 10); // 기존 핸들러 재사용을 위해 params.id 로 매핑
     const productId = Number.isNaN(parsedId) ? undefined : parsedId; //기본값: undefined(productId입력)
 
@@ -24,6 +30,8 @@ export const getProductDashboardData = async (req, res) => {
       "SELECT * FROM tb_product WHERE product_id = ?",
       [productId]
     );
+
+    // 2) 인사이트 (제품별)
 
     // 2) 총 리뷰 수
     const [[reviewCountRow]] = await db.query(
@@ -37,11 +45,15 @@ export const getProductDashboardData = async (req, res) => {
       [productId]
     );
 
+    // 3) 리뷰 목록 & 평점
+
     // 3) 리뷰 통계(리뷰 원문 샘플 & 최신순 정렬)
     const [reviews] = await db.query(
       "SELECT * FROM tb_review WHERE product_id = ? ORDER BY review_date ASC",
       [productId]
     );
+
+    // 4) 주요 키워드, 긍/부정 비율 + 건수(툴팁용) //서브 쿼리 조인
 
     // 4) 주요 키워드, 긍/부정 비율 + 속성별 긍·부정 분기형 막대 그래프 //서브 쿼리 조인
     const [keywords] = await db.query(
@@ -73,6 +85,40 @@ export const getProductDashboardData = async (req, res) => {
       [productId]
     );
 
+    // 5) KPI 통계: 총 리뷰 수, 긍/부정 비율
+    const [[reviewCountRow]] = await db.query(
+      "SELECT COUNT(*) AS totalReviews FROM tb_review WHERE product_id = ?",
+      [productId]
+    );
+
+    // 6) 리뷰 분석 데이터
+    const [[sentimentRow]] = await db.query(
+      `SELECT
+         SUM(CASE WHEN ra.sentiment = 'positive' THEN 1 ELSE 0 END) AS positiveCount,
+         SUM(CASE WHEN ra.sentiment = 'negative' THEN 1 ELSE 0 END) AS negativeCount,
+         COUNT(*) AS totalCount
+       FROM tb_reviewAnalysis ra
+       JOIN tb_review r ON ra.review_id = r.review_id
+       WHERE r.product_id = ?`,
+      [productId]
+    );
+
+    // 7) 일자별 통계 데이터
+    /*const [dailyTrend] = await db.query(
+      `SELECT date, positive_ratio, negative_ratio, reviewCount
+       FROM v_product_daily_trend
+       WHERE product_id = ?
+       ORDER BY date ASC`,
+      [productId]
+    );*/
+
+    
+    const totalCount = Number(sentimentRow?.totalCount || 0);
+    const positiveCount = Number(sentimentRow?.positiveCount || 0);
+    const negativeCount = Number(sentimentRow?.negativeCount || 0);
+    const positiveRatio = totalCount > 0 ? (positiveCount / totalCount) * 100 : 0;
+    const negativeRatio = totalCount > 0 ? (negativeCount / totalCount) * 100 : 0;
+
 
     // 6) 감정 분석 결과(긍/부정 비율, 일자별 긍·부정 포함 리뷰 비율, 
     const [[sentimentRow]] = await db.query(
@@ -102,6 +148,19 @@ export const getProductDashboardData = async (req, res) => {
     const negativeRatio = totalCount > 0 ? (negativeCount / totalCount) * 100 : 0; //일자별 긍·부정 포함 리뷰 비율,속성별 긍·부정 분기형 막대 그래프
 
     // 프론트엔드에 데이터 전달
+    res.json({
+      product: products[0] || null,
+      insight: insights[0] || null,
+      reviews,
+      keywords,
+      stats: {
+        totalReviews: Number(reviewCountRow?.totalReviews || 0),
+        positiveRatio,
+        negativeRatio,
+        avgRating: insights[0]?.avg_rating ?? null,
+      },
+      //  dailyTrend, // 일자별 통계 데이터
+    });
     res.json({
       product: products[0] || null,
       insight: insights[0] || null,

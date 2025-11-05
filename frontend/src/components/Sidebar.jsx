@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import authService from "../services/authService";
 import "../styles/sidebar.css";
 
 function Sidebar() {
@@ -7,11 +8,29 @@ function Sidebar() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [userInfo, setUserInfo] = useState({ login_id: "", email: "" });
 
   // 현재 경로에 따라 active 상태 결정
   const isActive = (path) => {
     return location.pathname === path;
   };
+
+  // 로그인한 사용자 정보 가져오기
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const user = await authService.getMe();
+        setUserInfo({
+          login_id: user?.login_id || "",
+          email: user?.email || "",
+        });
+      } catch (error) {
+        console.error("사용자 정보를 가져오는데 실패했습니다:", error);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
 
   return (
     <aside
@@ -279,11 +298,39 @@ function Sidebar() {
 
       <div className="sidebar-footer">
         {sidebarOpen && (
-          <div className="sidebar-user">
-            <div className="sidebar-user-avatar">
+          <>
+            <div className="sidebar-user">
+              <div className="sidebar-user-avatar">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+              </div>
+              <div className="sidebar-user-info">
+                <div className="sidebar-user-name">{userInfo.login_id || "사용자"}</div>
+                <div className="sidebar-user-email">{userInfo.email || ""}</div>
+              </div>
+            </div>
+            <button
+              className="sidebar-logout-button"
+              onClick={() => {
+                authService.logout();
+                navigate("/login");
+              }}
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
+                className="h-5 w-5"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -292,15 +339,37 @@ function Sidebar() {
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                 />
               </svg>
-            </div>
-            <div className="sidebar-user-info">
-              <div className="sidebar-user-name">관리자</div>
-              <div className="sidebar-user-email">admin@example.com</div>
-            </div>
-          </div>
+              <span>로그아웃</span>
+            </button>
+          </>
+        )}
+        {!sidebarOpen && (
+          <button
+            className="sidebar-logout-button-icon-only"
+            onClick={() => {
+              authService.logout();
+              navigate("/login");
+            }}
+            aria-label="로그아웃"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              />
+            </svg>
+          </button>
         )}
       </div>
     </aside>

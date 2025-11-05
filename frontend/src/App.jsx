@@ -11,6 +11,7 @@ import LoginJoin from "./components/LoginJoin";
 import LoginFind from "./components/LoginFind";
 import Dashboard from "./components/Dashboard";
 import Memberupdate from "./components/Memberupdate";
+import Memberdrop from "./components/Memberdrop";
 import PricingSystem from "./components/PricingSystem";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
@@ -51,6 +52,14 @@ function App() {
           element={
             <ProtectedRoute>
               <PricingSystem />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/memberdrop"
+          element={
+            <ProtectedRoute>
+              <Memberdrop />
             </ProtectedRoute>
           }
         />

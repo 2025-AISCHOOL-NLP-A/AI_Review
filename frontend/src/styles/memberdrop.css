@@ -1,0 +1,204 @@
+/* Memberdrop Page Styles */
+.memberdrop-content {
+  padding: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.memberdrop-container {
+  background: white;
+  padding: 40px 60px;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* 제목 */
+.memberdrop-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333333;
+  margin: 0 0 20px 0;
+}
+
+.memberdrop-divider {
+  width: 100%;
+  height: 1px;
+  background-color: #E5E7EB;
+  margin-bottom: 30px;
+}
+
+/* 안내 문구 */
+.memberdrop-intro {
+  font-size: 1rem;
+  color: #333333;
+  margin-bottom: 30px;
+  line-height: 1.6;
+}
+
+/* 경고 메시지들 */
+.memberdrop-warnings {
+  margin-bottom: 40px;
+}
+
+.warning-item {
+  margin-bottom: 30px;
+}
+
+.warning-item:last-child {
+  margin-bottom: 0;
+}
+
+.warning-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.check-icon {
+  width: 20px;
+  height: 20px;
+  color: #10B981;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.warning-text {
+  font-size: 1rem;
+  color: #333333;
+  line-height: 1.6;
+  flex: 1;
+}
+
+.warning-text strong {
+  color: #5B8EFF;
+  font-weight: 600;
+}
+
+.warning-detail {
+  font-size: 0.9rem;
+  color: #666666;
+  line-height: 1.8;
+  margin-left: 30px;
+  margin-top: 8px;
+}
+
+/* 동의 체크박스 */
+.memberdrop-agree {
+  margin-bottom: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #E5E7EB;
+}
+
+.agree-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.agree-checkbox input[type="checkbox"] {
+  display: none;
+}
+
+.checkmark {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #10B981;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.checkmark svg {
+  width: 16px;
+  height: 16px;
+  color: #10B981;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.agree-checkbox input[type="checkbox"]:checked + .checkmark {
+  background-color: #10B981;
+  border-color: #10B981;
+}
+
+.agree-checkbox input[type="checkbox"]:checked + .checkmark svg {
+  opacity: 1;
+  color: white;
+}
+
+.agree-text {
+  font-size: 1rem;
+  color: #333333;
+  line-height: 1.6;
+}
+
+/* 탈퇴하기 버튼 */
+.memberdrop-button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.memberdrop-button {
+  background: linear-gradient(180deg, #5B8EFF 0%, #4A7EE8 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 60px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 2px 4px rgba(91, 142, 255, 0.3);
+}
+
+.memberdrop-button:hover:not(:disabled) {
+  background: linear-gradient(180deg, #4A7EE8 0%, #3A6ED8 100%);
+  box-shadow: 0 4px 8px rgba(91, 142, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.memberdrop-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(91, 142, 255, 0.3);
+}
+
+.memberdrop-button:disabled {
+  background: #CBD5E1;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .memberdrop-content {
+    padding: 16px;
+  }
+
+  .memberdrop-container {
+    padding: 30px 24px;
+  }
+
+  .memberdrop-title {
+    font-size: 1.5rem;
+  }
+
+  .warning-detail {
+    margin-left: 0;
+  }
+
+  .memberdrop-button {
+    padding: 12px 40px;
+    font-size: 1rem;
+    width: 100%;
+  }
+}
+

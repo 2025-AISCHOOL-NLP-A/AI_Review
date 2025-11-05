@@ -138,6 +138,18 @@ const authService = {
       throw new Error("인증 정보 확인 실패");
     }
   },
+
+  /** 🗑️ 회원 탈퇴 */
+  async withdraw() {
+    try {
+      const res = await api.delete("/auth/withdraw");
+      return { success: true, message: res.data.message };
+    } catch (err) {
+      console.error("회원탈퇴 요청 중 오류:", err);
+      const msg = err.response?.data?.message || "회원탈퇴 중 오류가 발생했습니다.";
+      return { success: false, message: msg };
+    }
+  },
 };
 
 export default authService;

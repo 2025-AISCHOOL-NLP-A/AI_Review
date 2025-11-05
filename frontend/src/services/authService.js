@@ -123,9 +123,15 @@ const authService = {
   },
   
   /** 🙋‍♀️ 현재 로그인된 사용자 정보 조회 */
-  async getMe() {
+    async getMe() {
     try {
       const res = await api.get("/auth/verify");
+
+      // 🔹 valid 값 명시적으로 체크
+      if (!res.data.valid || !res.data.user) {
+        throw new Error("토큰이 유효하지 않습니다.");
+      }
+
       return res.data.user; // { id, login_id, email }
     } catch (err) {
       console.error("getMe() 오류:", err);

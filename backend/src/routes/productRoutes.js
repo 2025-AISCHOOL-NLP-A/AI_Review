@@ -15,9 +15,6 @@ import { getProductDashboardData } from "../controllers/dashboardController.js";
 const router = express.Router();
 
 // 더 구체적인 라우트를 먼저 배치
-//연결 테스트용
-router.get("/ping", (_req, res) => res.json({ ok: true }));
-
 //대시보드 새로고침 요청(refreshDashboard 라는 미들웨어를 만들어야함. refreshDashboard 로 대시보드 새로고침 한 뒤 대시보드 로드) 
 router.post("/:id/refresh", refreshDashboard, dashboard);
 

@@ -70,7 +70,6 @@ export const loginUser = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "2h" }
     );
-
     res.json({
       message: "로그인 성공",
       token,

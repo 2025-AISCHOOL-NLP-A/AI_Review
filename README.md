@@ -89,6 +89,7 @@ python main.py
 - `GET /products/{product_id}/` - 제품 대시보드
 - `GET /products/{product_id}/reviews` - 제품 리뷰(파라미터로 키워드)
 - `POST /products/{product_id}/reviews/analysis` - 해당 상품 리뷰 분석 요청(Python API)
+- `POST /products/{product_id}/refresh` - 대시보드 새로고침 요청
 - `DELETE /products/{id}` - 제품 삭제
 
 ### 인사이트 API (/insights)

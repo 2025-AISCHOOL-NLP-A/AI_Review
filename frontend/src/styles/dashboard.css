@@ -22,6 +22,8 @@
   width: 100%;
   display: flex;
   position: relative;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 
@@ -33,6 +35,10 @@
   width: 100%;
   box-sizing: border-box;
   overflow-x: auto;
+  min-width: 0;
+  flex-shrink: 1;
+  position: relative;
+  z-index: 1;
 }
 
 @media (min-width: 1024px) {

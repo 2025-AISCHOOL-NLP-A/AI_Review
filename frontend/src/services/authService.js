@@ -13,6 +13,10 @@ const authService = {
       // ✅ JWT 토큰 저장
       if (res.data && res.data.token) {
         localStorage.setItem("token", res.data.token);
+        // 이메일 정보도 localStorage에 저장
+        if (res.data.user && res.data.user.email) {
+          localStorage.setItem("userEmail", res.data.user.email);
+        }
         return { success: true, data: res.data };
       }
       
@@ -33,6 +37,7 @@ const authService = {
   /** 🚪 로그아웃 */
   logout() {
     localStorage.removeItem("token");
+    localStorage.removeItem("userEmail");
   },
 
   /** 🧍 회원가입 */
@@ -119,17 +124,29 @@ const authService = {
       const res = await api.get("/auth/verify");
       if (res.data.valid && res.data.user) {
         // JWT에 있는 정보만 반환 (id, login_id)
-        // email은 JWT에 없으므로 빈 문자열로 설정
+        // email은 localStorage에서 가져오기 (로그인 시 저장됨)
+        const email = localStorage.getItem("userEmail") || "";
         return {
           id: res.data.user.id,
           login_id: res.data.user.login_id,
-          email: "" // JWT에 email 정보가 없으므로 빈 문자열
+          email: email
         };
       }
       throw new Error("사용자 정보를 가져올 수 없습니다.");
     } catch (err) {
       console.error("사용자 정보 조회 중 오류:", err);
       throw err;
+    }
+  },
+
+  /** ✏️ 회원정보 수정 */
+  async updateProfile(payload) {
+    try {
+      const res = await api.post("/auth/update-profile", payload);
+      return { success: true, message: res.data.message };
+    } catch (err) {
+      const msg = err.response?.data?.message || "회원정보 수정 중 오류가 발생했습니다.";
+      return { success: false, message: msg };
     }
   },
 };

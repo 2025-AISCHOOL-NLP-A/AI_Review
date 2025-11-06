@@ -447,23 +447,95 @@ function Dashboard() {
     if (!dashboardContentRef.current) return;
 
     const downloadButton = downloadBtnRef.current;
+    const contentElement = dashboardContentRef.current;
+    
     if (downloadButton) {
       downloadButton.style.display = "none";
     }
 
+    // PDF 변환 전 원본 스타일 저장
+    const originalWidth = contentElement.style.width;
+    const originalMaxWidth = contentElement.style.maxWidth;
+    const originalPadding = contentElement.style.padding;
+    
+    // PDF 변환을 위한 고정 너비 설정
+    contentElement.style.width = "210mm"; // A4 너비
+    contentElement.style.maxWidth = "210mm";
+    contentElement.style.padding = "20px";
+    contentElement.style.boxSizing = "border-box";
+
+    // 모든 카드에 고정 너비 적용
+    const cards = contentElement.querySelectorAll('.card');
+    const originalCardStyles = [];
+    cards.forEach((card, index) => {
+      originalCardStyles[index] = {
+        width: card.style.width,
+        minWidth: card.style.minWidth,
+        maxWidth: card.style.maxWidth,
+        flex: card.style.flex,
+      };
+      card.style.width = "auto";
+      card.style.minWidth = "0";
+      card.style.maxWidth = "100%";
+      card.style.flex = "1 1 auto";
+    });
+
     const opt = {
-      margin: 1,
+      margin: [10, 10, 10, 10],
       filename: "에어팟프로_리뷰_분석_리포트.pdf",
       image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, logging: true, dpi: 192, letterRendering: true },
-      jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+      html2canvas: { 
+        scale: 2, 
+        logging: false, 
+        dpi: 192, 
+        letterRendering: true,
+        useCORS: true,
+        width: contentElement.scrollWidth,
+        height: contentElement.scrollHeight,
+        windowWidth: 210 * 3.779527559, // mm to px (210mm = ~794px)
+      },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
     };
 
     html2pdf()
       .set(opt)
-      .from(dashboardContentRef.current)
+      .from(contentElement)
       .save()
       .then(() => {
+        // 원본 스타일 복원
+        contentElement.style.width = originalWidth;
+        contentElement.style.maxWidth = originalMaxWidth;
+        contentElement.style.padding = originalPadding;
+        
+        cards.forEach((card, index) => {
+          if (originalCardStyles[index]) {
+            card.style.width = originalCardStyles[index].width;
+            card.style.minWidth = originalCardStyles[index].minWidth;
+            card.style.maxWidth = originalCardStyles[index].maxWidth;
+            card.style.flex = originalCardStyles[index].flex;
+          }
+        });
+
+        if (downloadButton) {
+          downloadButton.style.display = "flex";
+        }
+      })
+      .catch((error) => {
+        console.error("PDF 다운로드 오류:", error);
+        // 오류 발생 시에도 원본 스타일 복원
+        contentElement.style.width = originalWidth;
+        contentElement.style.maxWidth = originalMaxWidth;
+        contentElement.style.padding = originalPadding;
+        
+        cards.forEach((card, index) => {
+          if (originalCardStyles[index]) {
+            card.style.width = originalCardStyles[index].width;
+            card.style.minWidth = originalCardStyles[index].minWidth;
+            card.style.maxWidth = originalCardStyles[index].maxWidth;
+            card.style.flex = originalCardStyles[index].flex;
+          }
+        });
+
         if (downloadButton) {
           downloadButton.style.display = "flex";
         }

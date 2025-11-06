@@ -142,58 +142,73 @@
   flex-wrap: wrap;
 }
 
-.card {
-  width: 220px;
-  border-radius: 16px;
-  padding: 24px;
+.dashboard-content .price-section .card {
+  width: 340px !important;
+  border-radius: 24px !important;
+  padding: 36px !important;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  min-height: auto !important;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.card.free {
-  background: #fffafc;
-}
-.card.pro {
-  background: #f0f4ff;
-}
-.card.premium {
-  background: #f0f4ff;
+.dashboard-content .price-section .card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
-.card h3 {
-  font-size: 1.2rem;
-  margin-bottom: 8px;
+.dashboard-content .price-section .card.free {
+  background: #ffffff !important;
 }
-.card .price {
-  font-size: 1.5rem;
-  font-weight: bold;
+.dashboard-content .price-section .card.pro {
+  background: #f0f4ff !important;
+}
+.dashboard-content .price-section .card.premium {
+  background: #e1e9ff !important;
+}
+
+.dashboard-content .price-section .card h3 {
+  font-size: 1.6rem !important;
+  font-weight: 700 !important;
   margin-bottom: 16px;
+  padding-bottom: 16px !important;
+  border-bottom: 2px solid #d1d5db !important;
+}
+.dashboard-content .price-section .card .price {
+  font-size: 1.8rem !important;
+  font-weight: bold;
+  margin-bottom: 24px;
+  padding-bottom: 24px !important;
+  border-bottom: 2px solid #d1d5db !important;
 }
 
-.features {
+.dashboard-content .price-section .features {
   text-align: left;
-  font-size: 0.9rem;
-  margin-bottom: 20px;
-  line-height: 1.6;
+  font-size: 1.05rem !important;
+  margin-bottom: 28px;
+  line-height: 1.8 !important;
+  padding-bottom: 28px !important;
+  border-bottom: 2px solid #d1d5db !important;
 }
 
-.select-btn {
-  padding: 10px 20px;
+.dashboard-content .price-section .select-btn {
+  padding: 14px 28px !important;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px !important;
   cursor: pointer;
   font-weight: 600;
+  font-size: 1.1rem !important;
   font-family: "Pretendard", "Noto Sans KR", sans-serif;
 }
 
-.free-btn {
-  background: white;
-  border: 1px solid #ccc;
+.dashboard-content .price-section .free-btn,
+.dashboard-content .price-section .blue-btn {
+  background: #3b82f6 !important;
+  color: white !important;
+  border: none !important;
 }
-.blue-btn {
-  background: #3b82f6;
-  color: white;
-}
-.select-btn:hover {
+.dashboard-content .price-section .select-btn:hover {
   opacity: 0.85;
 }
 

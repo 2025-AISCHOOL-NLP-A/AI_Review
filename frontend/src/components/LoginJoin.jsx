@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
 import '../styles/login_join.css';
@@ -32,6 +32,28 @@ function LoginJoin() {
   const [errorMsg, setErrorMsg] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [timer, setTimer] = useState(0);
+  const timerRef = useRef(null);
+
+  // -----------------------------
+  // ✅ 타이머 복원 (페이지 로드 시)
+  // -----------------------------
+  useEffect(() => {
+    const savedTimerEndTime = localStorage.getItem('emailVerificationTimerEnd');
+    if (savedTimerEndTime) {
+      const endTime = parseInt(savedTimerEndTime, 10);
+      const now = Date.now();
+      const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+      
+      if (remaining > 0) {
+        setTimer(remaining);
+        setIsEmailSent(true);
+      } else {
+        // 타이머가 이미 만료된 경우
+        localStorage.removeItem('emailVerificationTimerEnd');
+      }
+    }
+  }, []);
 
   // -----------------------------
   // ✅ Input 변경 핸들러
@@ -89,6 +111,33 @@ function LoginJoin() {
   };
 
   // -----------------------------
+  // ✅ 타이머 효과
+  // -----------------------------
+  useEffect(() => {
+    if (timer > 0) {
+      // localStorage에 타이머 종료 시간 저장
+      const endTime = Date.now() + (timer * 1000);
+      localStorage.setItem('emailVerificationTimerEnd', endTime.toString());
+
+      timerRef.current = setTimeout(() => {
+        setTimer(timer - 1);
+      }, 1000);
+    } else {
+      // 타이머가 0이 되면 localStorage에서 제거
+      localStorage.removeItem('emailVerificationTimerEnd');
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, [timer]);
+
+  // -----------------------------
   // ✅ 이메일 인증 코드 발송
   // -----------------------------
   const handleSendEmailCode = async () => {
@@ -104,6 +153,10 @@ function LoginJoin() {
       alert('인증 메일이 발송되었습니다. 이메일을 확인해주세요.');
       setIsEmailSent(true);
       setIsEmailVerified(false);
+      setTimer(60); // 1분 타이머 시작
+      // 타이머 종료 시간을 localStorage에 저장
+      const endTime = Date.now() + (60 * 1000);
+      localStorage.setItem('emailVerificationTimerEnd', endTime.toString());
     } else {
       alert(result.message);
     }
@@ -129,6 +182,9 @@ function LoginJoin() {
     if (result.success) {
       alert('이메일 인증이 완료되었습니다.');
       setIsEmailVerified(true);
+      // 인증 완료 시 타이머 초기화
+      setTimer(0);
+      localStorage.removeItem('emailVerificationTimerEnd');
     } else {
       alert(result.message || '인증번호가 일치하지 않습니다.');
       setIsEmailVerified(false);
@@ -329,10 +385,15 @@ function LoginJoin() {
                 <option value="daum.net">daum.net</option>
                 <option value="kakao.com">kakao.com</option>
               </select>
-              <button type="button" className="verify-button" onClick={handleSendEmailCode}>
+              <button type="button" className="verify-button" onClick={handleSendEmailCode} disabled={timer > 0}>
                 인증하기
               </button>
             </div>
+            {timer > 0 && (
+              <div className="email-timer">
+                남은 시간: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}
+              </div>
+            )}
           </div>
 
           {/* 🔹 인증 코드 입력 */}

@@ -21,26 +21,26 @@ function Login() {
     errorRef.current = error;
   }, [error]);
 
-  // 로그인 성공 시 대시보드로 이동
+  // 로그인 성공 시 워크플레이스로 이동
   useEffect(() => {
     if (loginSuccess) {
       // 약간의 지연을 두어 상태 업데이트가 완료된 후 이동
       const timer = setTimeout(() => {
-        navigate('/dashboard', { replace: true });
+        navigate('/wp', { replace: true });
       }, 100);
       return () => clearTimeout(timer);
     }
   }, [loginSuccess, navigate]);
 
-  // 이미 로그인된 사용자가 로그인 페이지에 접근하면 dashboard로 리다이렉트
+  // 이미 로그인된 사용자가 로그인 페이지에 접근하면 워크플레이스로 리다이렉트
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
       if (token) {
         try {
           await authService.getMe();
-          // 이미 로그인된 상태이면 dashboard로 리다이렉트
-          navigate('/dashboard', { replace: true });
+          // 이미 로그인된 상태이면 워크플레이스로 리다이렉트
+          navigate('/wp', { replace: true });
         } catch (error) {
           // 토큰이 유효하지 않으면 로그인 페이지에 머무름
           localStorage.removeItem("token");
@@ -122,11 +122,11 @@ function Login() {
     <div className="login-page">
       <div className="left-section"></div>
       <div className="right-section">
-        <div className="login-container">
-          <div className="logo">
-            <img src="/images/logo.png" alt="logo" />
-          </div>
+        <Link to="/" className="logo">
+          <img src="/images/logo.png" alt="logo" />
+        </Link>
 
+        <div className="login-container">
           <form 
             className="login-form" 
             onSubmit={(e) => {

@@ -31,22 +31,50 @@ function Workplace() {
       );
       
       if (result.success && result.data) {
-        // 데이터 구조에 맞게 변환
-        const products = Array.isArray(result.data) 
-          ? result.data 
-          : result.data.products || [];
-        const total = result.data.total || products.length;
+        // 백엔드 응답 구조에 맞게 변환
+        let products = [];
+        let total = 0;
+        
+        // 백엔드가 { message: "...", products: [] } 형태로 보내는 경우
+        if (result.data.products && Array.isArray(result.data.products)) {
+          products = result.data.products;
+          total = result.data.total !== undefined ? result.data.total : result.data.products.length;
+        }
+        // 배열로 직접 반환하는 경우
+        else if (Array.isArray(result.data)) {
+          products = result.data;
+          total = result.data.length;
+        }
+        // { data: [] } 형태
+        else if (result.data.data && Array.isArray(result.data.data)) {
+          products = result.data.data;
+          total = result.data.total !== undefined ? result.data.total : result.data.data.length;
+        }
+        // 기타 객체 형태 - 모든 키를 확인
+        else if (typeof result.data === 'object') {
+          // 객체의 모든 키를 확인하여 배열을 찾음
+          for (const key in result.data) {
+            if (Array.isArray(result.data[key])) {
+              products = result.data[key];
+              total = result.data.total !== undefined ? result.data.total : result.data[key].length;
+              break;
+            }
+          }
+        }
         
         setWorkplaceData(products);
         setTotalCount(total);
         setTotalPages(Math.ceil(total / productsPerPage));
       } else {
-        console.error("제품 목록을 불러오는데 실패했습니다:", result.message);
         setWorkplaceData([]);
+        setTotalCount(0);
+        setTotalPages(1);
       }
     } catch (error) {
       console.error("제품 목록 조회 중 오류:", error);
       setWorkplaceData([]);
+      setTotalCount(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -104,13 +132,11 @@ function Workplace() {
 
   // 다운로드 버튼 클릭
   const handleDownload = () => {
-    console.log("Download clicked", selectedProducts);
     // 선택된 제품 다운로드 로직 구현
   };
 
   // 분석 버튼 클릭
   const handleAnalyze = () => {
-    console.log("Analyze clicked");
     // 분석 페이지로 이동하거나 모달 열기
   };
 
@@ -128,10 +154,11 @@ function Workplace() {
   };
 
   return (
-    <div className="dashboard-page">
+    <div className="dashboard-page sidebar-open">
       <Sidebar />
-      <div className="dashboard-content">
-        <div className="workplace-container">
+      <div className="dashboard-wrapper">
+        <div className="dashboard-content">
+          <div className="workplace-container">
           {/* Header Section */}
           <div className="workplace-header">
             <h1 className="workplace-title">Workplace</h1>
@@ -208,7 +235,14 @@ function Workplace() {
                 ) : workplaceData.length === 0 ? (
                   <tr>
                     <td colSpan="5" style={{ textAlign: "center", padding: "2rem" }}>
-                      등록된 제품이 없습니다.
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+                        <p style={{ margin: 0, fontSize: "1rem", color: "#6b7280" }}>
+                          등록된 제품이 없습니다.
+                        </p>
+                        <p style={{ margin: 0, fontSize: "0.875rem", color: "#9ca3af" }}>
+                          제품을 추가하여 분석을 시작하세요.
+                        </p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -319,6 +353,7 @@ function Workplace() {
               </button>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

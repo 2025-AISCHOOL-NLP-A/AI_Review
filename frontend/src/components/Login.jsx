@@ -20,6 +20,24 @@ function Login() {
     errorRef.current = error;
   }, [error]);
 
+  // 이미 로그인된 사용자가 로그인 페이지에 접근하면 dashboard로 리다이렉트
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          await authService.getMe();
+          // 이미 로그인된 상태이면 dashboard로 리다이렉트
+          navigate('/dashboard', { replace: true });
+        } catch (error) {
+          // 토큰이 유효하지 않으면 로그인 페이지에 머무름
+          localStorage.removeItem("token");
+        }
+      }
+    };
+    checkAuth();
+  }, [navigate]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 

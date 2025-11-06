@@ -1,6 +1,7 @@
 // src/pages/Main.jsx
 import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import authService from "../services/authService";
 import "../styles/main.css";
 import "../styles/common.css";
 
@@ -8,6 +9,24 @@ function Main() {
   const navigate = useNavigate();
   const previewRef = useRef(null);
   const priceRef = useRef(null);
+
+  // 이미 로그인된 사용자가 메인 페이지에 접근하면 dashboard로 리다이렉트
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          await authService.getMe();
+          // 이미 로그인된 상태이면 dashboard로 리다이렉트
+          navigate('/dashboard', { replace: true });
+        } catch (error) {
+          // 토큰이 유효하지 않으면 메인 페이지에 머무름
+          localStorage.removeItem("token");
+        }
+      }
+    };
+    checkAuth();
+  }, [navigate]);
 
   // 페이지 진입 시 맨 위로 이동
   useEffect(() => {

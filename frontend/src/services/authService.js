@@ -73,6 +73,17 @@ const authService = {
     }
   },
 
+  /** ✅ 이메일 인증번호 확인 */
+  async verifyCode(email, code) {
+    try {
+      const res = await api.post("/auth/verify-code", { email, code });
+      return { success: true, message: res.data.message };
+    } catch (err) {
+      const msg = err.response?.data?.message || "인증번호가 일치하지 않습니다.";
+      return { success: false, message: msg };
+    }
+  },
+
   /** 🆔 아이디 찾기 */
   async findId(email) {
     try {

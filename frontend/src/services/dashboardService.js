@@ -12,6 +12,48 @@ const dashboardService = {
       return { success: false, message: msg };
     }
   },
+
+  /** 📦 제품 목록 조회 */
+  async getProducts(page = 1, limit = 10, search = "", categoryId = null) {
+    try {
+      const params = {
+        page,
+        limit,
+        ...(search && { search }),
+        ...(categoryId && { category_id: categoryId }),
+      };
+      const res = await api.get("/products", { params });
+      return { success: true, data: res.data };
+    } catch (err) {
+      console.error("제품 목록 조회 오류:", err);
+      const msg = err.response?.data?.message || "제품 목록을 불러오는데 실패했습니다.";
+      return { success: false, message: msg };
+    }
+  },
+
+  /** 📦 제품 상세 조회 */
+  async getProduct(productId) {
+    try {
+      const res = await api.get(`/products/${productId}`);
+      return { success: true, data: res.data };
+    } catch (err) {
+      console.error("제품 조회 오류:", err);
+      const msg = err.response?.data?.message || "제품을 불러오는데 실패했습니다.";
+      return { success: false, message: msg };
+    }
+  },
+
+  /** 🗑️ 제품 삭제 */
+  async deleteProduct(productId) {
+    try {
+      const res = await api.delete(`/products/${productId}`);
+      return { success: true, data: res.data };
+    } catch (err) {
+      console.error("제품 삭제 오류:", err);
+      const msg = err.response?.data?.message || "제품 삭제에 실패했습니다.";
+      return { success: false, message: msg };
+    }
+  },
 };
 
 export default dashboardService;

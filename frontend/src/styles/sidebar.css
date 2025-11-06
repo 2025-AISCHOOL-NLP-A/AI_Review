@@ -354,20 +354,63 @@
   padding: 0.75rem; /* 동일 유지 */
 }
 /* ===== 사이드바 닫힐 때 로고 크기 줄이기 ===== */
-.sidebar-logo svg {
+.sidebar-logo-img {
   transition: all 0.3s ease; /* 부드러운 전환 */
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 /* 열림 상태: 원래 크기 */
-.dashboard-sidebar.sidebar-open .sidebar-logo svg {
+.dashboard-sidebar.sidebar-open .sidebar-logo-img {
   width: 32px;
   height: 32px;
 }
 
 /* 닫힘 상태: 살짝 줄어듦 */
-.dashboard-sidebar.sidebar-closed .sidebar-logo svg {
+.dashboard-sidebar.sidebar-closed .sidebar-logo-img {
   width: 24px;
   height: 24px;
   margin: 0 auto; /* 중앙 정렬 */
   display: block;
+}
+
+/* 사이드바 닫혔을 때 네비게이션 아이템 아이콘이 잘리지 않도록 */
+.dashboard-sidebar.sidebar-closed .sidebar-nav-item {
+  justify-content: center;
+  padding: 0.75rem 0;
+  min-height: 48px;
+}
+
+.dashboard-sidebar.sidebar-closed .sidebar-nav-item svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+/* 사이드바 닫혔을 때 사용자 프로필 아이콘 */
+.dashboard-sidebar.sidebar-closed .sidebar-user-avatar-only {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background-color: var(--main-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  margin: 0 auto;
+}
+
+.dashboard-sidebar.sidebar-closed .sidebar-user-avatar-only svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+}
+
+/* 사이드바 닫혔을 때 토글 버튼 아이콘 */
+.dashboard-sidebar.sidebar-closed .sidebar-toggle svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
 }

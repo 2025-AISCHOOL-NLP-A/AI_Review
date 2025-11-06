@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Chart,
@@ -52,6 +52,7 @@ function Dashboard() {
   // State for dashboard data
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [expandedReviews, setExpandedReviews] = useState(new Set());
 
   // Color constants
   const primaryColor = "#5B8EFF";
@@ -75,6 +76,16 @@ function Dashboard() {
     };
     fetchData();
   }, []);
+
+  // 랜덤 리뷰 10개를 메모이제이션 (dashboardData.reviews가 변경될 때만 재생성)
+  const randomReviews = useMemo(() => {
+    if (!dashboardData?.reviews || dashboardData.reviews.length === 0) {
+      return [];
+    }
+    // 리뷰 배열을 복사하여 랜덤으로 섞고 10개만 선택
+    const shuffled = [...dashboardData.reviews].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 10);
+  }, [dashboardData?.reviews]);
 
   // Process data for charts
   const dailyTrendData = dashboardData?.dailyTrend ? {
@@ -828,34 +839,64 @@ function Dashboard() {
                           로딩 중...
                         </td>
                       </tr>
-                    ) : dashboardData?.reviews?.length > 0 ? (
-                      dashboardData.reviews.map((review, idx) => {
-                        const reviewDate = new Date(review.review_date);
-                        const formattedDate = `${reviewDate.getMonth() + 1}/${reviewDate.getDate()}`;
-                        const rating = parseFloat(review.rating) || 0;
-                        return (
-                          <tr key={review.review_id || idx} className="hover:bg-gray-50">
-                            <td className="px-3 py-2 whitespace-nowrap text-gray-500">
-                              {formattedDate}
-                            </td>
-                            <td className="px-3 py-2 text-gray-900">
-                              {review.review_text}
-                            </td>
-                            <td className="px-3 py-2 whitespace-nowrap">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                rating >= 4 ? "bg-pos-light text-pos" : 
-                                rating <= 2 ? "bg-neg-light text-neg" : 
-                                "bg-gray-200 text-gray-600"
-                              } mr-1`}>
-                                {rating >= 4 ? "🟩" : rating <= 2 ? "🟥" : "⚪"} 평점 {rating.toFixed(1)}
-                              </span>
-                              {review.source && (
-                                <span className="ml-1 text-xs text-gray-400">({review.source})</span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })
+                    ) : randomReviews.length > 0 ? (
+                      randomReviews.map((review, idx) => {
+                          const reviewDate = new Date(review.review_date);
+                          const formattedDate = `${reviewDate.getMonth() + 1}/${reviewDate.getDate()}`;
+                          const rating = parseFloat(review.rating) || 0;
+                          const reviewId = review.review_id || idx;
+                          const reviewText = review.review_text || "";
+                          const isExpanded = expandedReviews.has(reviewId);
+                          const isLongText = reviewText.length > 150;
+                          const displayText = isLongText && !isExpanded 
+                            ? reviewText.substring(0, 150) + "..."
+                            : reviewText;
+                          
+                          const toggleExpand = () => {
+                            setExpandedReviews(prev => {
+                              const newSet = new Set(prev);
+                              if (newSet.has(reviewId)) {
+                                newSet.delete(reviewId);
+                              } else {
+                                newSet.add(reviewId);
+                              }
+                              return newSet;
+                            });
+                          };
+                          
+                          return (
+                            <tr key={reviewId} className="hover:bg-gray-50">
+                              <td className="px-3 py-2 whitespace-nowrap text-gray-500">
+                                {formattedDate}
+                              </td>
+                              <td className="px-3 py-2 text-gray-900">
+                                <div>
+                                  {displayText}
+                                  {isLongText && (
+                                    <button
+                                      onClick={toggleExpand}
+                                      className="ml-2 text-blue-600 hover:text-blue-800 text-xs font-medium underline"
+                                    >
+                                      {isExpanded ? "접기" : "더보기"}
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-3 py-2 whitespace-nowrap">
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  rating >= 4 ? "bg-pos-light text-pos" : 
+                                  rating <= 2 ? "bg-neg-light text-neg" : 
+                                  "bg-gray-200 text-gray-600"
+                                } mr-1`}>
+                                  {rating >= 4 ? "🟩" : rating <= 2 ? "🟥" : "⚪"} 평점 {rating.toFixed(1)}
+                                </span>
+                                {review.source && (
+                                  <span className="ml-1 text-xs text-gray-400">({review.source})</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
                     ) : (
                       <tr>
                         <td colSpan="3" className="px-3 py-2 text-center text-gray-500">

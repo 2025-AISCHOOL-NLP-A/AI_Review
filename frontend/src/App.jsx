@@ -13,6 +13,7 @@ import Dashboard from "./components/Dashboard";
 import Memberupdate from "./components/Memberupdate";
 import Memberdrop from "./components/Memberdrop";
 import PricingSystem from "./components/PricingSystem";
+import Workplace from "./components/Workplace";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 import "./styles/common.css";
@@ -64,8 +65,15 @@ function App() {
           }
         />
 
-        {/* 예비 페이지 */}
-        <Route path="/wp" element={<div>Workplace Page (wp.html)</div>} />
+        {/* Workplace 페이지 */}
+        <Route
+          path="/wp"
+          element={
+            <ProtectedRoute>
+              <Workplace />
+            </ProtectedRoute>
+          }
+        />
 
         {/* 🚧 존재하지 않는 경로는 메인으로 */}
         <Route path="*" element={<Navigate to="/" />} />

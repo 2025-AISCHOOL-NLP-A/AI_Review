@@ -309,3 +309,65 @@
 .dashboard-page.sidebar-closed .dashboard-wrapper {
   margin-left: 64px;
 }
+/* 사이드바 접힘 상태에서 프로필 아이콘을 정확히 중앙 정렬 */
+.dashboard-sidebar.sidebar-closed .sidebar-user-profile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 0;
+}
+
+/* ===== 로그아웃 버튼 고정 크기 ===== */
+.sidebar-logout-button.fullsize-icon {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin-top: 0.75rem;
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fee2e2;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+/* hover 시 */
+.sidebar-logout-button.fullsize-icon:hover {
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+/* 닫았을 때도 아이콘 크기 유지 */
+.sidebar-closed .sidebar-footer .fullsize-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.sidebar-closed .sidebar-footer .fullsize-icon {
+  justify-content: center;
+  padding: 0.75rem; /* 동일 유지 */
+}
+/* ===== 사이드바 닫힐 때 로고 크기 줄이기 ===== */
+.sidebar-logo svg {
+  transition: all 0.3s ease; /* 부드러운 전환 */
+}
+
+/* 열림 상태: 원래 크기 */
+.dashboard-sidebar.sidebar-open .sidebar-logo svg {
+  width: 32px;
+  height: 32px;
+}
+
+/* 닫힘 상태: 살짝 줄어듦 */
+.dashboard-sidebar.sidebar-closed .sidebar-logo svg {
+  width: 24px;
+  height: 24px;
+  margin: 0 auto; /* 중앙 정렬 */
+  display: block;
+}

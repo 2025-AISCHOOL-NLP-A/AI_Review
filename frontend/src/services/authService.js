@@ -61,20 +61,7 @@ const authService = {
       const res = await api.post("/auth/send-verification", { email });
       return { success: true, message: res.data.message };
     } catch (err) {
-      console.error("이메일 인증번호 발송 오류:", err);
       const msg = err.response?.data?.message || "이메일 발송 중 오류가 발생했습니다.";
-      return { success: false, message: msg };
-    }
-  },
-
-  /** 🧾 이메일 인증번호 확인 */
-  async verifyCode(email, code) {
-    try {
-      const res = await api.post("/auth/verify-code", { email, code });
-      return { success: true, message: res.data.message };
-    } catch (err) {
-      console.error("이메일 인증번호 확인 오류:", err);
-      const msg = err.response?.data?.message || "인증번호 확인 중 오류가 발생했습니다.";
       return { success: false, message: msg };
     }
   },
@@ -89,7 +76,6 @@ const authService = {
         message: res.data.message,
       };
     } catch (err) {
-      console.error("아이디 찾기 오류:", err);
       const msg = err.response?.data?.message || "일치하는 정보를 찾을 수 없습니다.";
       return { success: false, message: msg };
     }
@@ -104,49 +90,7 @@ const authService = {
       });
       return { success: true, message: res.data.message };
     } catch (err) {
-      console.error("비밀번호 찾기 오류:", err);
       const msg = err.response?.data?.message || "비밀번호 찾기 중 오류가 발생했습니다.";
-      return { success: false, message: msg };
-    }
-  },
-
-
-  /** ✏️ 회원정보 수정 */
-  async updateProfile(payload) {
-    try {
-      const res = await api.post("/auth/update-profile", payload); // ✅ post로 통일
-      return { success: true, message: res.data.message };
-    } catch (err) {
-      const msg = err.response?.data?.message || "회원정보 수정 중 오류가 발생했습니다.";
-      return { success: false, message: msg };
-    }
-  },
-  
-  /** 🙋‍♀️ 현재 로그인된 사용자 정보 조회 */
-    async getMe() {
-    try {
-      const res = await api.get("/auth/verify");
-
-      // 🔹 valid 값 명시적으로 체크
-      if (!res.data.valid || !res.data.user) {
-        throw new Error("토큰이 유효하지 않습니다.");
-      }
-
-      return res.data.user; // { id, login_id, email }
-    } catch (err) {
-      console.error("getMe() 오류:", err);
-      throw new Error("인증 정보 확인 실패");
-    }
-  },
-
-  /** 🗑️ 회원 탈퇴 */
-  async withdraw() {
-    try {
-      const res = await api.delete("/auth/withdraw");
-      return { success: true, message: res.data.message };
-    } catch (err) {
-      console.error("회원탈퇴 요청 중 오류:", err);
-      const msg = err.response?.data?.message || "회원탈퇴 중 오류가 발생했습니다.";
       return { success: false, message: msg };
     }
   },

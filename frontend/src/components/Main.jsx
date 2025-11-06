@@ -1,5 +1,5 @@
 // src/pages/Main.jsx
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import authService from "../services/authService";
 import "../styles/main.css";
@@ -7,8 +7,11 @@ import "../styles/common.css";
 
 function Main() {
   const navigate = useNavigate();
+  const heroRef = useRef(null);
   const previewRef = useRef(null);
   const priceRef = useRef(null);
+  const videoRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // 이미 로그인된 사용자가 메인 페이지에 접근하면 dashboard로 리다이렉트
   useEffect(() => {
@@ -46,14 +49,16 @@ function Main() {
       {/* ===================== HEADER ===================== */}
       <header className="main-header">
         <nav className="nav-buttons">
+          <button onClick={() => smoothScrollTo(heroRef.current)}>홈</button>
           <button onClick={() => smoothScrollTo(previewRef.current)}>시연영상</button>
           <button onClick={() => smoothScrollTo(priceRef.current)}>요금제</button>
-          <button onClick={() => navigate("/login")}>로그인</button>
+          <span className="nav-divider"></span>
+          <button className="login-btn" onClick={() => navigate("/login")}>로그인</button>
         </nav>
       </header>
 
       {/* ===================== HERO SECTION ===================== */}
-      <section className="hero">
+      <section className="hero" ref={heroRef}>
         <img src="/images/logo.png" alt="서비스 로고" className="hero-logo" />
         <h1 className="hero-title">
           AI가 고객 리뷰 속 <br />
@@ -62,16 +67,45 @@ function Main() {
         <p className="hero-subtitle">
           리뷰 분석 자동화 플랫폼, <strong>꿰뚫어뷰</strong>와 함께하세요.
         </p>
+        <p className="hero-description">
+          AI 리뷰 분석은 고객이 진짜로 원하는 것을 찾아내는 가장 빠른 방법입니다.<br />
+          숨은 불만과 강점을 파악해, 제품 전략과 마케팅 방향을 개선할 수 있습니다.<br />
+          데이터에서 행동으로, 인사이트를 실행으로 바꾸세요
+        </p>
       </section>
 
       {/* ===================== PREVIEW SECTION ===================== */}
       <section className="preview" ref={previewRef}>
         <h2 className="section-title">서비스 시연</h2>
         <div className="preview-video">
-          <video controls muted loop>
-            <source src="/videos/test.mp4" type="video/mp4" />
-            브라우저가 비디오 태그를 지원하지 않습니다.
-          </video>
+          <div className="video-wrapper">
+            <video 
+              ref={videoRef}
+              muted 
+              loop
+              controlsList="nodownload"
+              onContextMenu={(e) => e.preventDefault()}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+            >
+              <source src="/videos/test.mp4" type="video/mp4" />
+              브라우저가 비디오 태그를 지원하지 않습니다.
+            </video>
+            {!isPlaying && (
+              <button 
+                className="video-play-button"
+                onClick={() => {
+                  videoRef.current?.play();
+                  setIsPlaying(true);
+                }}
+                aria-label="재생"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="64" height="64">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
       </section>
 

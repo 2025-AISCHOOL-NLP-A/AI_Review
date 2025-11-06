@@ -43,14 +43,38 @@ header button {
   font-family: "Pretendard", "Noto Sans KR", sans-serif;
 }
 
+/* 로그인 버튼(우측) - 진한 파란 버튼 */
+header button.login-btn {
+  background: #3b82f6;
+  color: white;
+}
+
+/* 헤더 버튼 사이 구분선 */
+.nav-divider {
+  width: 1px;
+  height: 24px;
+  background: #d1d5db;
+  margin: 0 12px;
+}
+
 header button:hover {
   background: #e5e7eb;
 }
 
+header button.login-btn:hover {
+  background: #2563eb;
+}
+
 /* Hero Section */
 .hero {
-  padding-top: 120px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding-top: 72px;
   padding-bottom: 60px;
+  box-sizing: border-box;
 }
 /* Hero 로고 */
 .hero-logo {
@@ -67,11 +91,28 @@ header button:hover {
 }
 
 .hero h1 {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 2.5rem;
+  font-weight: 700;
 }
 
-/* 시연영상(Preview) 섹션 */
+.hero-subtitle {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-top: 16px;
+}
+
+.hero-description {
+  font-size: 1.1rem;
+  font-weight: 400;
+  margin-top: 24px;
+  line-height: 1.8;
+  color: #4b5563;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ===================== PREVIEW(시연 영상) 섹션 ===================== */
 .preview {
   display: flex;
   flex-direction: column;
@@ -80,12 +121,14 @@ header button:hover {
   margin: 40px 0;
 }
 
-.preview img {
-  width: 700px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+.preview .section-title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #111827;
 }
 
+/* 비디오 컨테이너 (정중앙 정렬) */
 .preview-video {
   display: flex;
   justify-content: center;
@@ -93,81 +136,157 @@ header button:hover {
   margin-top: 20px;
 }
 
+/* 비디오 래퍼: 오버레이 버튼 배치를 위한 relative */
+.video-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 1250px;
+}
+
+/* 비디오 엘리먼트 기본 스타일 */
 .preview-video video {
   width: 100%;
-  max-width: 700px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: block;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-/* 가격표 섹션 */
+/* 중앙 재생 버튼 (커스텀 플레이) */
+.video-play-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+  z-index: 10;
+}
+
+.video-play-button:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.video-play-button:active {
+  transform: translate(-50%, -50%) scale(0.95);
+}
+
+/* ===================== PRICE(요금제) 섹션 ===================== */
 .price-section {
-  padding: 40px 0 100px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0;
+  box-sizing: border-box;
 }
 
-.price-section h2 {
-  font-size: 1.8rem;
-  font-weight: 600;
+/* 요금제 섹션 타이틀 */
+.price-section .section-title {
+  font-size: 3rem;
+  font-weight: 700;
   margin-bottom: 40px;
+  color: #111827;
 }
 
+/* 요금제 카드 리스트 래퍼 */
 .price-cards {
   display: flex;
   justify-content: center;
-  gap: 20px;
+  gap: 50px;
   flex-wrap: wrap;
+  width: 100%;
+  max-width: 1600px;
 }
 
-.card {
-  width: 220px;
-  border-radius: 16px;
-  padding: 24px;
+/* 개별 요금제 카드 기본 스타일 */
+.price-section .card {
+  width: 420px !important;
+  min-height: 480px;
+  border-radius: 24px;
+  padding: 50px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+  box-sizing: border-box;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.card.free {
-  background: #fffafc;
+/* 카드 호버 시 확대/그림자 강화 */
+.price-section .card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
-.card.pro {
+
+/* 프리 플랜 카드 색상 (화이트) */
+.price-section .card.free {
+  background: #ffffff;
+}
+/* 프로 플랜 카드 색상 (현재 연파랑) */
+.price-section .card.pro {
   background: #f0f4ff;
 }
-.card.premium {
-  background: #f0f4ff;
+/* 프리미엄 플랜 카드 색상 (프로보다 한 단계 진한 파랑) */
+.price-section .card.premium {
+  background: #e1e9ff;
 }
 
-.card h3 {
-  font-size: 1.2rem;
-  margin-bottom: 8px;
-}
-.card .price {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 16px;
-}
-
-.features {
-  text-align: left;
-  font-size: 0.9rem;
+/* 카드 제목 영역 + 상단 구분선 */
+.price-section .card h3 {
+  font-size: 2.5rem;
+  font-weight: 700;
   margin-bottom: 20px;
-  line-height: 1.6;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #d1d5db;
+}
+/* 가격 영역 + 구분선 */
+.price-section .card .price {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 32px;
+  padding-bottom: 32px;
+  border-bottom: 2px solid #d1d5db;
 }
 
-.select-btn {
-  padding: 10px 20px;
+/* 기능 리스트 영역 + 구분선 */
+.price-section .features {
+  text-align: left;
+  font-size: 1.2rem;
+  margin-bottom: 40px;
+  padding-bottom: 40px;
+  line-height: 1.8;
+  border-bottom: 2px solid #d1d5db;
+}
+
+/* 요금제 선택 버튼 공통 */
+.price-section .select-btn {
+  padding: 20px 40px;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
+  font-size: 1.2rem;
   font-family: "Pretendard", "Noto Sans KR", sans-serif;
 }
 
-.free-btn {
-  background: white;
-  border: 1px solid #ccc;
-}
-.blue-btn {
-  background: #3b82f6;
-  color: white;
+/* 플랜별 버튼 색상(현재 통일) */
+.price-section .free-btn,
+.price-section .blue-btn {
+  background: #3b82f6 !important;
+  color: white !important;
+  border: none !important;
 }
 .select-btn:hover {
   opacity: 0.85;

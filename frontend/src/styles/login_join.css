@@ -2,31 +2,59 @@
    회원가입 페이지 스타일
    ======================================== */
 
-/* 가운데 정렬 */
-
-body {
-  margin: 0; /* 왼쪽 들뜸 방지 */
-  min-height: 100dvh; /* 모바일 주소창 대응 */
-  display: grid;
-  place-items: center; /* 화면 정중앙에 컨테이너 배치 */
-  background: #f6f8ff; /* 필요 시 */
+.join-page {
+  display: flex;
+  min-height: 200vh;
+  height: auto;
+  overflow: auto;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
-.join-container {
-  background: linear-gradient(225deg, #c8e3ff 0%, #f0f4ff 100%);
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-
-  width: min(100%, 660px);
-  min-height: 100dvh;
-  margin: 0 auto;
-  padding: 40px 20px;
-
+/* 왼쪽 섹션 */
+.join-page .left-section {
+  width: 50%;
+  background: url("/images/login_left_section_draw.png") no-repeat left center;
+  background-size: 50% auto;
+  background-position: left center;
+  background-attachment: fixed;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  min-height: 200vh;
+  height: auto;
+}
+
+/* 오른쪽 섹션 */
+.join-page .right-section {
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: linear-gradient(225deg, #c8e3ff 0%, #f0f4ff 100%);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 40px 0 40px 0;
+  min-height: 200vh;
+  height: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
+
+.join-container {
+  width: 100%;
+  max-width: 660px;
+  padding: 40px 20px 40px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
   align-items: stretch;
+  min-height: fit-content;
+  box-sizing: border-box;
 }
 /* ====== 실제 카드/푸터는 위로 띄우기 ====== */
 .join-card,
@@ -40,7 +68,7 @@ body {
 .logo {
   display: flex;
   justify-content: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .logo img {
@@ -58,6 +86,8 @@ body {
   border-radius: 20px;
   padding: 40px;
   width: 100%;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 /* 폼 그룹 */
@@ -115,6 +145,43 @@ body {
 
 .form-input:focus {
   background: transparent;
+}
+
+/* 비밀번호 입력 래퍼 */
+.password-input-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .form-input {
+  padding-right: 45px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  transition: color 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+  color: #111;
+}
+
+.password-toggle-btn svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* 입력 필드 + 버튼 */
@@ -299,4 +366,30 @@ body {
 .join-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* 하단 링크 */
+.form-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  margin-bottom: 20px;
+  width: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+.form-footer a {
+  color: #111;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: text-decoration 0.2s ease, opacity 0.2s ease;
+}
+
+.form-footer a:hover {
+  text-decoration: underline;
+  opacity: 0.7;
 }

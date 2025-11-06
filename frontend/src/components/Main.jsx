@@ -60,7 +60,7 @@ function Main() {
           숨은 인사이트를 찾아드립니다!
         </h1>
         <p className="hero-subtitle">
-          리뷰 분석 자동화 플랫폼, <strong>꽤뚫어뷰</strong>와 함께하세요.
+          리뷰 분석 자동화 플랫폼, <strong>꿰뚫어뷰</strong>와 함께하세요.
         </p>
       </section>
 
@@ -68,7 +68,10 @@ function Main() {
       <section className="preview" ref={previewRef}>
         <h2 className="section-title">서비스 시연</h2>
         <div className="preview-video">
-          <img src="/images/demo_preview.png" alt="서비스 시연 화면" />
+          <video controls muted loop>
+            <source src="/videos/test.mp4" type="video/mp4" />
+            브라우저가 비디오 태그를 지원하지 않습니다.
+          </video>
         </div>
       </section>
 
@@ -125,8 +128,8 @@ function Main() {
             <span className="divider">|</span>
             <span>개인정보처리방침</span>
           </div>
-          <div className="footer-info">© 2025 Team 꽤뚫어뷰</div>
-          <div className="footer-email">문의: team.kkwaetoolview@gmail.com</div>
+          <div className="footer-info">© 2025 Team 꿰뚫어뷰</div>
+          <div className="footer-email">이메일(team.kkwaetoolview@gmail.com)</div>
         </div>
       </footer>
     </div>

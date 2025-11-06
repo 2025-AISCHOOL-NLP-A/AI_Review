@@ -11,13 +11,20 @@ const authService = {
       });
 
       // ✅ JWT 토큰 저장
-      if (res.data.token) {
+      if (res.data && res.data.token) {
         localStorage.setItem("token", res.data.token);
+        return { success: true, data: res.data };
       }
-
-      return { success: true, data: res.data };
+      
+      // 토큰이 없으면 실패로 처리
+      return { success: false, message: "로그인에 실패했습니다." };
     } catch (err) {
-      console.error("로그인 요청 중 오류:", err);
+      // 401 에러는 정상적인 로그인 실패이므로 에러를 throw하지 않고 처리
+      if (err.response && err.response.status === 401) {
+        const msg = err.response?.data?.message || "아이디 또는 비밀번호가 올바르지 않습니다.";
+        return { success: false, message: msg };
+      }
+      // 기타 에러
       const msg = err.response?.data?.message || "로그인에 실패했습니다.";
       return { success: false, message: msg };
     }
@@ -92,6 +99,26 @@ const authService = {
     } catch (err) {
       const msg = err.response?.data?.message || "비밀번호 찾기 중 오류가 발생했습니다.";
       return { success: false, message: msg };
+    }
+  },
+
+  /** 👤 현재 사용자 정보 가져오기 */
+  async getMe() {
+    try {
+      const res = await api.get("/auth/verify");
+      if (res.data.valid && res.data.user) {
+        // JWT에 있는 정보만 반환 (id, login_id)
+        // email은 JWT에 없으므로 빈 문자열로 설정
+        return {
+          id: res.data.user.id,
+          login_id: res.data.user.login_id,
+          email: "" // JWT에 email 정보가 없으므로 빈 문자열
+        };
+      }
+      throw new Error("사용자 정보를 가져올 수 없습니다.");
+    } catch (err) {
+      console.error("사용자 정보 조회 중 오류:", err);
+      throw err;
     }
   },
 };

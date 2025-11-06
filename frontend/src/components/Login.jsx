@@ -13,12 +13,24 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
   const errorRef = useRef(''); // 에러 상태를 ref로도 저장
 
   // 에러 상태를 ref에도 동기화
   useEffect(() => {
     errorRef.current = error;
   }, [error]);
+
+  // 로그인 성공 시 대시보드로 이동
+  useEffect(() => {
+    if (loginSuccess) {
+      // 약간의 지연을 두어 상태 업데이트가 완료된 후 이동
+      const timer = setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loginSuccess, navigate]);
 
   // 이미 로그인된 사용자가 로그인 페이지에 접근하면 dashboard로 리다이렉트
   useEffect(() => {
@@ -83,7 +95,8 @@ function Login() {
       if (result.success) {
         setError(''); // 성공 시 에러 초기화
         setLoading(false);
-        navigate('/dashboard');
+        // 로그인 성공 상태 설정하여 useEffect에서 navigate 실행
+        setLoginSuccess(true);
         return;
       } else {
         // 로그인 실패 시 에러 설정 - 항상 표시되도록

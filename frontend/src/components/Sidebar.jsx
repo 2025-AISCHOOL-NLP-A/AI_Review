@@ -10,12 +10,8 @@ function Sidebar() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [userInfo, setUserInfo] = useState({ login_id: "", email: "" });
 
-  // 현재 경로에 따라 active 상태 결정
-  const isActive = (path) => {
-    return location.pathname === path;
-  };
+  const isActive = (path) => location.pathname === path;
 
-  // 로그인한 사용자 정보 가져오기
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
@@ -28,7 +24,6 @@ function Sidebar() {
         console.error("사용자 정보를 가져오는데 실패했습니다:", error);
       }
     };
-
     fetchUserInfo();
   }, []);
 
@@ -59,6 +54,7 @@ function Sidebar() {
             setSidebarOpen(!sidebarOpen);
           }}
           aria-label="Toggle sidebar"
+          aria-expanded={sidebarOpen}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -85,7 +81,7 @@ function Sidebar() {
         </button>
       </div>
 
-      {/*사용자 프로필을 header 바로 아래로 */}
+      {/* ===== 사용자 프로필 ===== */}
       <div className="sidebar-user-profile">
         {sidebarOpen ? (
           <div className="sidebar-user">
@@ -131,13 +127,12 @@ function Sidebar() {
           </div>
         )}
       </div>
-      {/* 나머지 네비 메뉴들 */}
+
+      {/* ===== 네비 ===== */}
       <nav className="sidebar-nav">
         <a
           href="#"
-          className={`sidebar-nav-item ${
-            isActive("/wp") ? "active" : ""
-          }`}
+          className={`sidebar-nav-item ${isActive("/wp") ? "active" : ""}`}
           onClick={(e) => {
             e.preventDefault();
             navigate("/wp");
@@ -203,7 +198,7 @@ function Sidebar() {
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2"
             />
           </svg>
           {sidebarOpen && <span>분석 리포트</span>}
@@ -231,6 +226,7 @@ function Sidebar() {
           {sidebarOpen && <span>리뷰 관리</span>}
         </a>
 
+        {/* ===== 설정 ===== */}
         <div className="sidebar-nav-item-parent">
           <a
             href="#"
@@ -245,6 +241,7 @@ function Sidebar() {
               e.preventDefault();
               setSettingsOpen(!settingsOpen);
             }}
+            aria-expanded={settingsOpen}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -287,8 +284,12 @@ function Sidebar() {
               </>
             )}
           </a>
-          {sidebarOpen && settingsOpen && (
-            <div className="sidebar-submenu">
+
+          {/* ⬇ 변경: sidebarOpen 여부와 무관하게 settingsOpen이면 렌더 */}
+          {settingsOpen && (
+            <div
+              className={`sidebar-submenu ${!sidebarOpen ? "collapsed" : ""}`}
+            >
               <a
                 href="#"
                 className={`sidebar-submenu-item ${
@@ -298,6 +299,7 @@ function Sidebar() {
                   e.preventDefault();
                   navigate("/memberupdate");
                 }}
+                data-label="회원정보 수정"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -313,7 +315,7 @@ function Sidebar() {
                     d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                   />
                 </svg>
-                <span>회원정보 수정</span>
+                {sidebarOpen && <span>회원정보 수정</span>}
               </a>
 
               <a
@@ -325,6 +327,7 @@ function Sidebar() {
                   e.preventDefault();
                   navigate("/pricingsystem");
                 }}
+                data-label="요금제 관리"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -340,8 +343,9 @@ function Sidebar() {
                     d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <span>요금제 관리</span>
+                {sidebarOpen && <span>요금제 관리</span>}
               </a>
+
               <a
                 href="#"
                 className={`sidebar-submenu-item ${
@@ -351,6 +355,7 @@ function Sidebar() {
                   e.preventDefault();
                   navigate("/memberdrop");
                 }}
+                data-label="회원 탈퇴"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -366,14 +371,14 @@ function Sidebar() {
                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                   />
                 </svg>
-                <span>회원 탈퇴</span>
+                {sidebarOpen && <span>회원 탈퇴</span>}
               </a>
             </div>
           )}
         </div>
       </nav>
 
-      {/* ===== 로그아웃만 있는 푸터 ===== */}
+      {/* ===== 로그아웃 ===== */}
       <div className="sidebar-footer">
         <button
           className="sidebar-logout-button fullsize-icon"

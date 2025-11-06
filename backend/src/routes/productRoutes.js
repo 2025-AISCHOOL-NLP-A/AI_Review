@@ -5,7 +5,8 @@ import {
     dashboard,
     refreshDashboard,
     keywordReview,
-    analysisRequest
+    analysisRequest,
+    test
 } from "../controllers/productController.js";
 import { getProductDashboardData } from "../controllers/dashboardController.js";
 
@@ -28,6 +29,8 @@ router.get("/:id/reviews", keywordReview);
 
 //대시보드용 - 가장 일반적인 라우트는 마지막
 router.get("/:id", getProductDashboardData);
+
+router.get("test", test)
 
 //워크 플레이스용 제품 리스트 
 router.get("/", productList);

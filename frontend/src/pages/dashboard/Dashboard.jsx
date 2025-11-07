@@ -16,11 +16,11 @@ import {
   RadarController,
 } from "chart.js";
 import html2pdf from "html2pdf.js";
-import Sidebar from "./Sidebar";
-import dashboardService from "../services/dashboardService";
-import "../styles/common.css";
-import "../styles/dashboard.css";
-import "../styles/sidebar.css";
+import Sidebar from "../../components/Sidebar";
+import dashboardService from "../../services/dashboardService";
+import "../../styles/common.css";
+import "../../styles/dashboard.css";
+import "../../styles/sidebar.css";
 
 // Register Chart.js components
 Chart.register(
@@ -1086,3 +1086,4 @@ function Dashboard() {
 }
 
 export default Dashboard;
+

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import authService from '../services/authService';
-import '../styles/login.css';
-import '../styles/common.css';
+import authService from '../../services/authService';
+import '../../styles/login.css';
+import '../../styles/common.css';
 
 function Login() {
   const navigate = useNavigate();
@@ -229,3 +229,4 @@ function Login() {
 }
 
 export default Login;
+

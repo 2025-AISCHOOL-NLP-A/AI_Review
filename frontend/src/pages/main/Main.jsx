@@ -1,9 +1,10 @@
-// src/pages/Main.jsx
+// src/pages/main/Main.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import authService from "../services/authService";
-import "../styles/main.css";
-import "../styles/common.css";
+import authService from "../../services/authService";
+import Footer from "../../components/Footer";
+import "../../styles/main.css";
+import "../../styles/common.css";
 
 function Main() {
   const navigate = useNavigate();
@@ -152,22 +153,10 @@ function Main() {
       </section>
 
       {/* ===================== FOOTER ===================== */}
-      <footer>
-        <div className="footer-left">
-          <img src="/images/logo.png" alt="logo" className="footer-logo" />
-        </div>
-        <div className="footer-right">
-          <div className="footer-links">
-            <span>문의</span>
-            <span className="divider">|</span>
-            <span>개인정보처리방침</span>
-          </div>
-          <div className="footer-info">© 2025 Team 꿰뚫어뷰</div>
-          <div className="footer-email">이메일(team.kkwaetoolview@gmail.com)</div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
 
 export default Main;
+

@@ -8,7 +8,7 @@
   background-color: #ffffff;
   border-right: 1px solid var(--border-color);
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
-  z-index: 1000;
+  z-index: 10;
   transition: width 0.3s ease;
   display: flex;
   flex-direction: column;
@@ -21,6 +21,8 @@
 }
 .dashboard-sidebar.sidebar-closed {
   width: 64px;
+  overflow: visible; /* ← hidden 때문에 툴팁이 짤리는 문제 해결 */
+  overflow-x: visible !important;
 }
 
 .sidebar-header {
@@ -384,6 +386,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow: visible; /* 서브메뉴 아이콘 툴팁 바깥으로 */
 }
 
 .sidebar-submenu.collapsed .sidebar-submenu-item {
@@ -462,14 +465,8 @@
   width: 1.25rem !important;
   height: 1.25rem !important;
 }
-/* 1) 사이드바/네비에서 가로 스크롤 완전 차단 */
-.dashboard-sidebar,
-.sidebar-nav,
-.sidebar-submenu {
-  overflow-x: hidden !important;
-}
 
-/* 2) 사이드바 내부(특히 메뉴 리스트)의 스크롤바 표시 제거 */
+/* 1) 사이드바 내부(특히 메뉴 리스트)의 스크롤바 표시 제거 */
 .sidebar-nav {
   /* Firefox */
   scrollbar-width: none;
@@ -495,4 +492,223 @@
 }
 .sidebar-submenu.collapsed .sidebar-submenu-item:hover::after {
   transform: translateX(0);
+}
+/* 사이드바가 닫혔을 때 (sidebar-closed) 메뉴 이름 툴팁 구현 */
+
+/* 네비/서브메뉴도 바깥으로 나가도록 열어줌 (이미 있으나, 확실히 덮어쓰기) */
+.dashboard-sidebar.sidebar-closed .sidebar-nav {
+  overflow: visible !important;
+}
+
+/* 1. 메인 메뉴 항목 (sidebar-nav-item) 및 설정 부모 메뉴에 툴팁 적용 */
+/* 툴팁을 relative로 배치하기 위해 부모 요소에 position: relative 적용 */
+.dashboard-sidebar.sidebar-closed .sidebar-nav-item {
+  position: relative;
+}
+
+/* 툴팁 스타일 정의 (::after 가상 요소 사용) */
+.dashboard-sidebar.sidebar-closed .sidebar-nav-item::after {
+  content: attr(data-label); /* data-label 속성 값 사용 */
+  position: absolute;
+  top: 50%;
+  left: 100%; /* 사이드바 폭(64px) 바깥 */
+
+  /* 초기 위치: 오른쪽으로 8px 이동 및 중앙 정렬 */
+  transform: translate(8px, -50%);
+
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+
+  opacity: 0; /* 초기 상태: 숨김 */
+  pointer-events: none; /* 마우스 이벤트 무시 */
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 2000; /* 다른 요소 위에 표시 */
+}
+/* 툴팁은 절대배치로 사이드바 '밖'으로 */
+.dashboard-sidebar.sidebar-closed .sidebar-nav-item,
+.dashboard-sidebar.sidebar-closed .sidebar-footer .fullsize-icon {
+  position: relative;
+}
+
+.dashboard-sidebar.sidebar-closed .sidebar-nav-item::after,
+.dashboard-sidebar.sidebar-closed .sidebar-footer .fullsize-icon::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 10px); /* 사이드바 외부로 */
+  transform: translateY(-50%);
+  white-space: nowrap;
+  background: #111;
+  color: #fff;
+  padding: 8px 10px;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+  z-index: 2000; /* 겹침 방지 */
+}
+.dashboard-sidebar.sidebar-closed .sidebar-nav-item:hover::after,
+.dashboard-sidebar.sidebar-closed .sidebar-footer .fullsize-icon:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* 말풍선 꼬리 */
+.dashboard-sidebar.sidebar-closed .sidebar-nav-item::before,
+.dashboard-sidebar.sidebar-closed .sidebar-footer .fullsize-icon::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-right-color: #111;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+}
+.dashboard-sidebar.sidebar-closed .sidebar-nav-item:hover::before,
+.dashboard-sidebar.sidebar-closed .sidebar-footer .fullsize-icon:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+/* 호버 시 툴팁 표시 */
+.dashboard-sidebar.sidebar-closed .sidebar-nav-item:hover::after {
+  opacity: 1;
+  transform: translate(0, -50%); /* 원래 위치 (왼쪽으로 8px 이동) */
+}
+
+/* 2. 로그아웃 버튼 (sidebar-footer 내 fullsize-icon)에 툴팁 적용 */
+.dashboard-sidebar.sidebar-closed .sidebar-footer .fullsize-icon {
+  position: relative; /* 툴팁 배치를 위한 position: relative 적용 */
+  margin-top: 1rem; /* 푸터 공간 확보 */
+}
+.dashboard-sidebar.sidebar-closed .sidebar-footer .fullsize-icon::after {
+  content: attr(data-label); /* data-label 속성 값 사용 */
+  position: absolute;
+  top: 50%;
+  left: 100%; /* 사이드바 폭(64px) 바깥 */
+
+  /* 초기 위치: 오른쪽으로 8px 이동 및 중앙 정렬 */
+  transform: translate(8px, -50%);
+
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 2000;
+}
+
+/* ===== 사이드바 닫힘 상태에서 메뉴 툴팁 ===== */
+.dashboard-sidebar.sidebar-closed {
+  overflow: visible;
+  overflow-x: visible !important;
+}
+
+/* 네비게이션 전체를 열어둠 */
+.dashboard-sidebar.sidebar-closed .sidebar-nav {
+  overflow: visible !important;
+}
+
+/* 서브메뉴 아이콘 세로 정렬 */
+.sidebar-submenu.collapsed {
+  background-color: transparent;
+  border-left: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: visible;
+  padding: 0.25rem 0;
+}
+.sidebar-submenu.collapsed .sidebar-submenu-item {
+  justify-content: center;
+  border-bottom: none;
+  position: relative;
+  padding: 0.5rem 0;
+}
+
+/* ===== 툴팁 공통 규칙 (메인 메뉴 + 서브메뉴) ===== */
+.dashboard-sidebar.sidebar-closed
+  :is(.sidebar-nav-item, .sidebar-submenu.collapsed .sidebar-submenu-item) {
+  position: relative;
+}
+
+/* 툴팁 본체 */
+.dashboard-sidebar.sidebar-closed
+  :is(
+    .sidebar-nav-item,
+    .sidebar-submenu.collapsed .sidebar-submenu-item
+  )::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 10px);
+  transform: translateY(-50%);
+  white-space: nowrap;
+  background: #111;
+  color: #fff;
+  padding: 8px 10px;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+  z-index: 2000;
+}
+
+/* 말풍선 꼬리 */
+.dashboard-sidebar.sidebar-closed
+  :is(
+    .sidebar-nav-item,
+    .sidebar-submenu.collapsed .sidebar-submenu-item
+  )::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-right-color: #111;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+  z-index: 2000;
+}
+
+/* 호버 시 표시 */
+.dashboard-sidebar.sidebar-closed
+  :is(
+    .sidebar-nav-item,
+    .sidebar-submenu.collapsed .sidebar-submenu-item
+  ):hover::after,
+.dashboard-sidebar.sidebar-closed
+  :is(
+    .sidebar-nav-item,
+    .sidebar-submenu.collapsed .sidebar-submenu-item
+  ):hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ===== 로그아웃 버튼은 툴팁 제외 ===== */
+.dashboard-sidebar.sidebar-closed .sidebar-footer .fullsize-icon::after,
+.dashboard-sidebar.sidebar-closed .sidebar-footer .fullsize-icon::before {
+  display: none !important;
 }

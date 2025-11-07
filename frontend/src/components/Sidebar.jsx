@@ -7,31 +7,31 @@ import "../styles/sidebar.css";
 function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // localStorage에서 사이드바 상태 불러오기 (기본값: true)
   const [sidebarOpen, setSidebarOpen] = useState(() => {
-    const saved = localStorage.getItem('sidebarOpen');
-    return saved !== null ? saved === 'true' : true;
+    const saved = localStorage.getItem("sidebarOpen");
+    return saved !== null ? saved === "true" : true;
   });
-  
+
   // localStorage에서 설정 탭 상태 불러오기 (기본값: false)
   const [settingsOpen, setSettingsOpen] = useState(() => {
-    const saved = localStorage.getItem('settingsOpen');
-    return saved !== null ? saved === 'true' : false;
+    const saved = localStorage.getItem("settingsOpen");
+    return saved !== null ? saved === "true" : false;
   });
-  
+
   const [userInfo, setUserInfo] = useState({ login_id: "", email: "" });
 
   const isActive = (path) => location.pathname === path;
 
   // 사이드바 상태가 변경될 때마다 localStorage에 저장
   useEffect(() => {
-    localStorage.setItem('sidebarOpen', sidebarOpen.toString());
+    localStorage.setItem("sidebarOpen", sidebarOpen.toString());
   }, [sidebarOpen]);
 
   // 설정 탭 상태가 변경될 때마다 localStorage에 저장
   useEffect(() => {
-    localStorage.setItem('settingsOpen', settingsOpen.toString());
+    localStorage.setItem("settingsOpen", settingsOpen.toString());
   }, [settingsOpen]);
 
   useEffect(() => {
@@ -57,13 +57,17 @@ function Sidebar() {
     >
       {/* ===== 사이드바 헤더 ===== */}
       <div className="sidebar-header">
-        <div 
+        <div
           className="sidebar-logo"
-          onClick={!sidebarOpen ? (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setSidebarOpen(true);
-          } : undefined}
+          onClick={
+            !sidebarOpen
+              ? (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSidebarOpen(true);
+                }
+              : undefined
+          }
           style={!sidebarOpen ? { cursor: "pointer" } : {}}
           onMouseDown={(e) => {
             // 로고 클릭 시 이벤트 전파 완전 차단
@@ -118,7 +122,7 @@ function Sidebar() {
       </div>
 
       {/* ===== 사용자 프로필 ===== */}
-      <div 
+      <div
         className="sidebar-user-profile"
         onClick={(e) => {
           // 프로필 영역 클릭 시 사이드바가 열리지 않도록 방지
@@ -173,7 +177,7 @@ function Sidebar() {
       </div>
 
       {/* ===== 네비 ===== */}
-      <nav 
+      <nav
         className="sidebar-nav"
         onClick={(e) => {
           // 네비게이션 영역 클릭 시 사이드바가 열리지 않도록 방지
@@ -182,9 +186,11 @@ function Sidebar() {
           }
         }}
       >
+        {/* 워크플레이스 */}
         <a
           href="#"
           className={`sidebar-nav-item ${isActive("/wp") ? "active" : ""}`}
+          data-label="워크플레이스"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -211,11 +217,13 @@ function Sidebar() {
           {sidebarOpen && <span>워크플레이스</span>}
         </a>
 
+        {/* 대시보드 */}
         <a
           href="#"
           className={`sidebar-nav-item ${
             isActive("/dashboard") ? "active" : ""
           }`}
+          data-label="대시보드"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -239,12 +247,15 @@ function Sidebar() {
               d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
             />
           </svg>
+          {/* ...아이콘... */}
           {sidebarOpen && <span>대시보드</span>}
         </a>
 
+        {/* 분석 리포트 */}
         <a
           href="#"
           className="sidebar-nav-item"
+          data-label="분석 리포트"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -269,10 +280,11 @@ function Sidebar() {
           </svg>
           {sidebarOpen && <span>분석 리포트</span>}
         </a>
-
+        {/* 리뷰 관리 */}
         <a
           href="#"
           className="sidebar-nav-item"
+          data-label="리뷰 관리"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -299,7 +311,7 @@ function Sidebar() {
         </a>
 
         {/* ===== 설정 ===== */}
-        <div 
+        <div
           className="sidebar-nav-item-parent"
           onClick={(e) => {
             // 설정 메뉴 부모 영역 클릭 시 사이드바가 열리지 않도록 방지
@@ -310,6 +322,14 @@ function Sidebar() {
         >
           <a
             href="#"
+            // ★ 사이드바가 닫혔을 때만 툴팁 문구 동적으로 설정
+            data-label={
+              sidebarOpen
+                ? undefined
+                : settingsOpen
+                ? "설정메뉴 닫기"
+                : "설정메뉴 더보기"
+            }
             className={`sidebar-nav-item ${settingsOpen ? "active" : ""} ${
               isActive("/memberupdate") ||
               isActive("/pricingsystem") ||
@@ -475,7 +495,7 @@ function Sidebar() {
       </nav>
 
       {/* ===== 로그아웃 ===== */}
-      <div 
+      <div
         className="sidebar-footer"
         onClick={(e) => {
           // 푸터 영역 클릭 시 사이드바가 열리지 않도록 방지
@@ -486,6 +506,7 @@ function Sidebar() {
       >
         <button
           className="sidebar-logout-button fullsize-icon"
+          data-label="로그아웃"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();

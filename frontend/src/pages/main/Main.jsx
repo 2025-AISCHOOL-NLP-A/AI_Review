@@ -2,8 +2,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import authService from "../../services/authService";
-import Footer from "../../components/Footer";
-import "../../styles/main.css";
+import Footer from "../../components/layout/Footer/Footer";
+import "./main.css";
 import "../../styles/common.css";
 
 function Main() {

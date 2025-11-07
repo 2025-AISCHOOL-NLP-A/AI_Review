@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import authService from '../../services/authService';
-import '../../styles/login_find.css';
+import './login_find.css';
 import '../../styles/common.css';
 
 function LoginFind() {

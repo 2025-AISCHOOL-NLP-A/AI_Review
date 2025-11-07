@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../../components/Sidebar";
+import Sidebar from "../../components/layout/sidebar/Sidebar";
 import authService from "../../services/authService";
-import "../../styles/dashboard.css";
-import "../../styles/sidebar.css";
+import "../dashboard/dashboard.css";
+import "../../components/layout/sidebar/sidebar.css";
 import "../../styles/common.css";
-import "../../styles/memberdrop.css";
+import "./memberdrop.css";
 
 function Memberdrop() {
   const navigate = useNavigate();

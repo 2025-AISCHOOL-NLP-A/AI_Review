@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../../services/authService';
-import '../../styles/login_join.css';
+import './login_join.css';
 import '../../styles/common.css';
 
 function LoginJoin() {

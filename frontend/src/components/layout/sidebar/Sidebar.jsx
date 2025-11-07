@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import authService from "../services/authService";
-import "../styles/common.css";
-import "../styles/sidebar.css";
+import authService from "../../../services/authService";
+import "../../../styles/common.css";
+import "./sidebar.css";
 
 function Sidebar() {
   const navigate = useNavigate();

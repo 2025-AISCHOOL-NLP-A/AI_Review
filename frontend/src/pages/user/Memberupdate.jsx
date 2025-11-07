@@ -2,10 +2,10 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import authService from "../../services/authService";
-import Sidebar from "../../components/Sidebar";
-import "../../styles/memberupdate.css";
-import "../../styles/dashboard.css";
-import "../../styles/sidebar.css";
+import Sidebar from "../../components/layout/sidebar/Sidebar";
+import "./memberupdate.css";
+import "../dashboard/dashboard.css";
+import "../../components/layout/sidebar/sidebar.css";
 import "../../styles/common.css";
 
 function Memberupdate() {

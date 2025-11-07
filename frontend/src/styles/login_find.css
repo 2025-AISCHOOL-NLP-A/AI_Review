@@ -37,7 +37,7 @@
 .find-container {
   width: 100%;
   max-width: 600px;
-  padding: 40px 20px;
+  padding: 24px 20px;
   display: flex;
   flex-direction: column;
   justify-content: center;

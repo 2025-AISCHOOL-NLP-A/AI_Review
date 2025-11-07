@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Chart,
@@ -53,7 +53,6 @@ function Dashboard() {
   // State for dashboard data
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [expandedReviews, setExpandedReviews] = useState(new Set());
 
   // Color constants
   const primaryColor = "#5B8EFF";
@@ -77,16 +76,6 @@ function Dashboard() {
     };
     fetchData();
   }, []);
-
-  // 랜덤 리뷰 10개를 메모이제이션 (dashboardData.reviews가 변경될 때만 재생성)
-  const randomReviews = useMemo(() => {
-    if (!dashboardData?.reviews || dashboardData.reviews.length === 0) {
-      return [];
-    }
-    // 리뷰 배열을 복사하여 랜덤으로 섞고 10개만 선택
-    const shuffled = [...dashboardData.reviews].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 10);
-  }, [dashboardData?.reviews]);
 
   // Process data for charts
   const dailyTrendData = dashboardData?.dailyTrend ? {
@@ -448,95 +437,23 @@ function Dashboard() {
     if (!dashboardContentRef.current) return;
 
     const downloadButton = downloadBtnRef.current;
-    const contentElement = dashboardContentRef.current;
-    
     if (downloadButton) {
       downloadButton.style.display = "none";
     }
 
-    // PDF 변환 전 원본 스타일 저장
-    const originalWidth = contentElement.style.width;
-    const originalMaxWidth = contentElement.style.maxWidth;
-    const originalPadding = contentElement.style.padding;
-    
-    // PDF 변환을 위한 고정 너비 설정
-    contentElement.style.width = "210mm"; // A4 너비
-    contentElement.style.maxWidth = "210mm";
-    contentElement.style.padding = "20px";
-    contentElement.style.boxSizing = "border-box";
-
-    // 모든 카드에 고정 너비 적용
-    const cards = contentElement.querySelectorAll('.card');
-    const originalCardStyles = [];
-    cards.forEach((card, index) => {
-      originalCardStyles[index] = {
-        width: card.style.width,
-        minWidth: card.style.minWidth,
-        maxWidth: card.style.maxWidth,
-        flex: card.style.flex,
-      };
-      card.style.width = "auto";
-      card.style.minWidth = "0";
-      card.style.maxWidth = "100%";
-      card.style.flex = "1 1 auto";
-    });
-
     const opt = {
-      margin: [10, 10, 10, 10],
+      margin: 1,
       filename: "에어팟프로_리뷰_분석_리포트.pdf",
       image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { 
-        scale: 2, 
-        logging: false, 
-        dpi: 192, 
-        letterRendering: true,
-        useCORS: true,
-        width: contentElement.scrollWidth,
-        height: contentElement.scrollHeight,
-        windowWidth: 210 * 3.779527559, // mm to px (210mm = ~794px)
-      },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      html2canvas: { scale: 2, logging: true, dpi: 192, letterRendering: true },
+      jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
     };
 
     html2pdf()
       .set(opt)
-      .from(contentElement)
+      .from(dashboardContentRef.current)
       .save()
       .then(() => {
-        // 원본 스타일 복원
-        contentElement.style.width = originalWidth;
-        contentElement.style.maxWidth = originalMaxWidth;
-        contentElement.style.padding = originalPadding;
-        
-        cards.forEach((card, index) => {
-          if (originalCardStyles[index]) {
-            card.style.width = originalCardStyles[index].width;
-            card.style.minWidth = originalCardStyles[index].minWidth;
-            card.style.maxWidth = originalCardStyles[index].maxWidth;
-            card.style.flex = originalCardStyles[index].flex;
-          }
-        });
-
-        if (downloadButton) {
-          downloadButton.style.display = "flex";
-        }
-      })
-      .catch((error) => {
-        console.error("PDF 다운로드 오류:", error);
-        // 오류 발생 시에도 원본 스타일 복원
-        contentElement.style.width = originalWidth;
-        contentElement.style.maxWidth = originalMaxWidth;
-        contentElement.style.padding = originalPadding;
-        
-        cards.forEach((card, index) => {
-          if (originalCardStyles[index]) {
-            card.style.width = originalCardStyles[index].width;
-            card.style.minWidth = originalCardStyles[index].minWidth;
-            card.style.maxWidth = originalCardStyles[index].maxWidth;
-            card.style.flex = originalCardStyles[index].flex;
-          }
-        });
-
         if (downloadButton) {
           downloadButton.style.display = "flex";
         }
@@ -846,6 +763,7 @@ function Dashboard() {
                   // Parse pos_top_keywords from tb_productInsight (VARCHAR(255), comma-separated)
                   const posKeywords = dashboardData?.insight?.pos_top_keywords 
                     ? dashboardData.insight.pos_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean)
+                    ? dashboardData.insight.pos_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean)
                     : dashboardData?.analysis?.positiveKeywords || [];
                   
                   return posKeywords.length > 0 ? (
@@ -872,6 +790,7 @@ function Dashboard() {
                 ) : (() => {
                   // Parse neg_top_keywords from tb_productInsight (VARCHAR(255), comma-separated)
                   const negKeywords = dashboardData?.insight?.neg_top_keywords 
+                    ? dashboardData.insight.neg_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean)
                     ? dashboardData.insight.neg_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean)
                     : dashboardData?.analysis?.negativeKeywords || [];
                   
@@ -912,64 +831,34 @@ function Dashboard() {
                           로딩 중...
                         </td>
                       </tr>
-                    ) : randomReviews.length > 0 ? (
-                      randomReviews.map((review, idx) => {
-                          const reviewDate = new Date(review.review_date);
-                          const formattedDate = `${reviewDate.getMonth() + 1}/${reviewDate.getDate()}`;
-                          const rating = parseFloat(review.rating) || 0;
-                          const reviewId = review.review_id || idx;
-                          const reviewText = review.review_text || "";
-                          const isExpanded = expandedReviews.has(reviewId);
-                          const isLongText = reviewText.length > 150;
-                          const displayText = isLongText && !isExpanded 
-                            ? reviewText.substring(0, 150) + "..."
-                            : reviewText;
-                          
-                          const toggleExpand = () => {
-                            setExpandedReviews(prev => {
-                              const newSet = new Set(prev);
-                              if (newSet.has(reviewId)) {
-                                newSet.delete(reviewId);
-                              } else {
-                                newSet.add(reviewId);
-                              }
-                              return newSet;
-                            });
-                          };
-                          
-                          return (
-                            <tr key={reviewId} className="hover:bg-gray-50">
-                              <td className="px-3 py-2 whitespace-nowrap text-gray-500">
-                                {formattedDate}
-                              </td>
-                              <td className="px-3 py-2 text-gray-900">
-                                <div>
-                                  {displayText}
-                                  {isLongText && (
-                                    <button
-                                      onClick={toggleExpand}
-                                      className="ml-2 text-blue-600 hover:text-blue-800 text-xs font-medium underline"
-                                    >
-                                      {isExpanded ? "접기" : "더보기"}
-                                    </button>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-3 py-2 whitespace-nowrap">
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                  rating >= 4 ? "bg-pos-light text-pos" : 
-                                  rating <= 2 ? "bg-neg-light text-neg" : 
-                                  "bg-gray-200 text-gray-600"
-                                } mr-1`}>
-                                  {rating >= 4 ? "🟩" : rating <= 2 ? "🟥" : "⚪"} 평점 {rating.toFixed(1)}
-                                </span>
-                                {review.source && (
-                                  <span className="ml-1 text-xs text-gray-400">({review.source})</span>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })
+                    ) : dashboardData?.reviews?.length > 0 ? (
+                      dashboardData.reviews.map((review, idx) => {
+                        const reviewDate = new Date(review.review_date);
+                        const formattedDate = `${reviewDate.getMonth() + 1}/${reviewDate.getDate()}`;
+                        const rating = parseFloat(review.rating) || 0;
+                        return (
+                          <tr key={review.review_id || idx} className="hover:bg-gray-50">
+                            <td className="px-3 py-2 whitespace-nowrap text-gray-500">
+                              {formattedDate}
+                            </td>
+                            <td className="px-3 py-2 text-gray-900">
+                              {review.review_text}
+                            </td>
+                            <td className="px-3 py-2 whitespace-nowrap">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                rating >= 4 ? "bg-pos-light text-pos" : 
+                                rating <= 2 ? "bg-neg-light text-neg" : 
+                                "bg-gray-200 text-gray-600"
+                              } mr-1`}>
+                                {rating >= 4 ? "🟩" : rating <= 2 ? "🟥" : "⚪"} 평점 {rating.toFixed(1)}
+                              </span>
+                              {review.source && (
+                                <span className="ml-1 text-xs text-gray-400">({review.source})</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
                     ) : (
                       <tr>
                         <td colSpan="3" className="px-3 py-2 text-center text-gray-500">
@@ -1014,6 +903,8 @@ function Dashboard() {
                 {loading ? "데이터 로딩 중..." : 
                  dashboardData?.reviews?.length > 0 ?
                  dashboardData.reviews.slice(0, 3).map((review, idx) => 
+                 dashboardData?.reviews?.length > 0 ?
+                 dashboardData.reviews.slice(0, 3).map((review, idx) => 
                    `💬 "${review.review_text}"`
                  ).join(" ") :
                  "리뷰 데이터가 없습니다."}
@@ -1033,8 +924,11 @@ function Dashboard() {
                    // Data from tb_productInsight
                   const posKeywords = dashboardData.insight.pos_top_keywords 
                     ? dashboardData.insight.pos_top_keywords.split(/[|,]/).map(k => k.trim()).slice(0, 3).join(", ")
+                  const posKeywords = dashboardData.insight.pos_top_keywords 
+                    ? dashboardData.insight.pos_top_keywords.split(/[|,]/).map(k => k.trim()).slice(0, 3).join(", ")
                      : "없음";
                    const negKeywords = dashboardData.insight.neg_top_keywords 
+                    ? dashboardData.insight.neg_top_keywords.split(/[|,]/).map(k => k.trim()).slice(0, 2).join(", ")
                     ? dashboardData.insight.neg_top_keywords.split(/[|,]/).map(k => k.trim()).slice(0, 2).join(", ")
                      : "없음";
                    const avgRating = parseFloat(dashboardData.insight.avg_rating || dashboardData.insight.avgRating || 0);

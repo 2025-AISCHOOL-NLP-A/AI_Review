@@ -1,16 +1,38 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import authService from "../services/authService";
+import "../styles/common.css";
 import "../styles/sidebar.css";
 
 function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  
+  // localStorage에서 사이드바 상태 불러오기 (기본값: true)
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem('sidebarOpen');
+    return saved !== null ? saved === 'true' : true;
+  });
+  
+  // localStorage에서 설정 탭 상태 불러오기 (기본값: false)
+  const [settingsOpen, setSettingsOpen] = useState(() => {
+    const saved = localStorage.getItem('settingsOpen');
+    return saved !== null ? saved === 'true' : false;
+  });
+  
   const [userInfo, setUserInfo] = useState({ login_id: "", email: "" });
 
   const isActive = (path) => location.pathname === path;
+
+  // 사이드바 상태가 변경될 때마다 localStorage에 저장
+  useEffect(() => {
+    localStorage.setItem('sidebarOpen', sidebarOpen.toString());
+  }, [sidebarOpen]);
+
+  // 설정 탭 상태가 변경될 때마다 localStorage에 저장
+  useEffect(() => {
+    localStorage.setItem('settingsOpen', settingsOpen.toString());
+  }, [settingsOpen]);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -34,12 +56,22 @@ function Sidebar() {
       }`}
     >
       {/* ===== 사이드바 헤더 ===== */}
-      <div
-        className="sidebar-header"
-        onClick={!sidebarOpen ? () => setSidebarOpen(true) : undefined}
-        style={!sidebarOpen ? { cursor: "pointer" } : {}}
-      >
-        <div className="sidebar-logo">
+      <div className="sidebar-header">
+        <div 
+          className="sidebar-logo"
+          onClick={!sidebarOpen ? (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setSidebarOpen(true);
+          } : undefined}
+          style={!sidebarOpen ? { cursor: "pointer" } : {}}
+          onMouseDown={(e) => {
+            // 로고 클릭 시 이벤트 전파 완전 차단
+            if (!sidebarOpen) {
+              e.stopPropagation();
+            }
+          }}
+        >
           <img
             src="/images/logo.png"
             alt="꿰뚫어뷰 로고"
@@ -50,8 +82,12 @@ function Sidebar() {
         <button
           className="sidebar-toggle"
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             setSidebarOpen(!sidebarOpen);
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
           }}
           aria-label="Toggle sidebar"
           aria-expanded={sidebarOpen}
@@ -82,7 +118,15 @@ function Sidebar() {
       </div>
 
       {/* ===== 사용자 프로필 ===== */}
-      <div className="sidebar-user-profile">
+      <div 
+        className="sidebar-user-profile"
+        onClick={(e) => {
+          // 프로필 영역 클릭 시 사이드바가 열리지 않도록 방지
+          if (!sidebarOpen) {
+            e.stopPropagation();
+          }
+        }}
+      >
         {sidebarOpen ? (
           <div className="sidebar-user">
             <div className="sidebar-user-avatar">
@@ -129,13 +173,25 @@ function Sidebar() {
       </div>
 
       {/* ===== 네비 ===== */}
-      <nav className="sidebar-nav">
+      <nav 
+        className="sidebar-nav"
+        onClick={(e) => {
+          // 네비게이션 영역 클릭 시 사이드바가 열리지 않도록 방지
+          if (!sidebarOpen) {
+            e.stopPropagation();
+          }
+        }}
+      >
         <a
           href="#"
           className={`sidebar-nav-item ${isActive("/wp") ? "active" : ""}`}
           onClick={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             navigate("/wp");
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
           }}
         >
           <svg
@@ -162,7 +218,11 @@ function Sidebar() {
           }`}
           onClick={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             navigate("/dashboard");
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
           }}
         >
           <svg
@@ -185,7 +245,13 @@ function Sidebar() {
         <a
           href="#"
           className="sidebar-nav-item"
-          onClick={(e) => e.preventDefault()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+          }}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -207,7 +273,13 @@ function Sidebar() {
         <a
           href="#"
           className="sidebar-nav-item"
-          onClick={(e) => e.preventDefault()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+          }}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -227,7 +299,15 @@ function Sidebar() {
         </a>
 
         {/* ===== 설정 ===== */}
-        <div className="sidebar-nav-item-parent">
+        <div 
+          className="sidebar-nav-item-parent"
+          onClick={(e) => {
+            // 설정 메뉴 부모 영역 클릭 시 사이드바가 열리지 않도록 방지
+            if (!sidebarOpen) {
+              e.stopPropagation();
+            }
+          }}
+        >
           <a
             href="#"
             className={`sidebar-nav-item ${settingsOpen ? "active" : ""} ${
@@ -239,7 +319,11 @@ function Sidebar() {
             }`}
             onClick={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               setSettingsOpen(!settingsOpen);
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
             }}
             aria-expanded={settingsOpen}
           >
@@ -297,7 +381,11 @@ function Sidebar() {
                 }`}
                 onClick={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
                   navigate("/memberupdate");
+                }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
                 }}
                 data-label="회원정보 수정"
               >
@@ -325,7 +413,11 @@ function Sidebar() {
                 }`}
                 onClick={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
                   navigate("/pricingsystem");
+                }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
                 }}
                 data-label="요금제 관리"
               >
@@ -353,7 +445,11 @@ function Sidebar() {
                 }`}
                 onClick={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
                   navigate("/memberdrop");
+                }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
                 }}
                 data-label="회원 탈퇴"
               >
@@ -379,12 +475,25 @@ function Sidebar() {
       </nav>
 
       {/* ===== 로그아웃 ===== */}
-      <div className="sidebar-footer">
+      <div 
+        className="sidebar-footer"
+        onClick={(e) => {
+          // 푸터 영역 클릭 시 사이드바가 열리지 않도록 방지
+          if (!sidebarOpen) {
+            e.stopPropagation();
+          }
+        }}
+      >
         <button
           className="sidebar-logout-button fullsize-icon"
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             authService.logout();
             navigate("/login");
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
           }}
           aria-label="로그아웃"
         >

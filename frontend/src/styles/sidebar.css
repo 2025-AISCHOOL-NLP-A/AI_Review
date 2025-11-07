@@ -1,10 +1,4 @@
-/* ====== 기존 스타일 유지 (원본 내용) ====== */
-:root {
-  --bg-color: #f9fafb;
-  --border-color: #e5e7eb;
-  --main-color: #5b8eff;
-  --font-color: #333333;
-}
+/* CSS 변수는 common.css로 이동 */
 
 .dashboard-sidebar {
   position: fixed;

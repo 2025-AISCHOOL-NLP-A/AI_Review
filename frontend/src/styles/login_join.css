@@ -64,17 +64,9 @@
   z-index: 1; /* ::before(0) 위 */
 }
 
-/* 로고 */
-.logo {
-  display: flex;
-  justify-content: center;
+/* 로고 스타일은 common.css에 정의됨 */
+.join-page .logo {
   margin-bottom: 10px;
-}
-
-.logo img {
-  width: 60px;
-  height: 60px;
-  object-fit: contain;
 }
 
 /* 회원가입 카드 위로 */
@@ -119,37 +111,18 @@
   box-shadow: 0 0 0 3px rgba(200, 227, 255, 0.2);
 }
 
-.form-icon {
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px;
+/* form-icon과 form-input 기본 스타일은 common.css에 정의됨 */
+.join-page .input-with-icon .form-icon {
   margin-left: 12px;
 }
 
-.form-icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-/* 입력 필드 */
-.form-input {
-  flex: 1;
+.join-page .input-with-icon .form-input {
   padding: 12px 16px 12px 0;
-  border: none;
-  border-radius: 8px;
   background: transparent;
-  font-size: 1rem;
-  font-family: "Pretendard", "Noto Sans KR", sans-serif;
-  outline: none;
+  border-radius: 8px;
 }
 
-.form-input:focus {
+.join-page .input-with-icon .form-input:focus {
   background: transparent;
 }
 
@@ -397,11 +370,8 @@
 }
 
 /* 하단 링크 */
-.form-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+/* form-footer 기본 스타일은 common.css에 정의됨 */
+.join-page .form-footer {
   margin-top: 8px;
   margin-bottom: 10px;
   width: 100%;
@@ -409,15 +379,6 @@
   z-index: 2;
 }
 
-.form-footer a {
-  color: #111;
-  text-decoration: none;
-  font-size: 0.9rem;
+.join-page .form-footer a {
   font-weight: 500;
-  transition: text-decoration 0.2s ease, opacity 0.2s ease;
-}
-
-.form-footer a:hover {
-  text-decoration: underline;
-  opacity: 0.7;
 }

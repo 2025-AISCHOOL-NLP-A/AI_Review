@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import authService from '../services/authService';
-import '../styles/login_find.css';
-import '../styles/common.css';
+import authService from '../../services/authService';
+import './login_find.css';
+import '../../styles/common.css';
 
 function LoginFind() {
   // 아이디 찾기 폼 데이터
@@ -193,3 +193,4 @@ function LoginFind() {
 }
 
 export default LoginFind;
+

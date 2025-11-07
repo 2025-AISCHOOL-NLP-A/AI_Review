@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "./Sidebar";
-import dashboardService from "../services/dashboardService";
-import "../styles/common.css";
-import "../styles/dashboard.css";
-import "../styles/sidebar.css";
-import "../styles/workplace.css";
+import Sidebar from "../../components/layout/sidebar/Sidebar";
+import dashboardService from "../../services/dashboardService";
+import "../../styles/common.css";
+import "./dashboard.css";
+import "../../components/layout/sidebar/sidebar.css";
+import "./workplace.css";
 
 function Workplace() {
   const navigate = useNavigate();
@@ -362,3 +362,4 @@ function Workplace() {
 }
 
 export default Workplace;
+

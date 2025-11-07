@@ -5,15 +5,15 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import Main from "./components/Main";
-import Login from "./components/Login";
-import LoginJoin from "./components/LoginJoin";
-import LoginFind from "./components/LoginFind";
-import Dashboard from "./components/Dashboard";
-import Memberupdate from "./components/Memberupdate";
-import Memberdrop from "./components/Memberdrop";
-import PricingSystem from "./components/PricingSystem";
-import Workplace from "./components/Workplace";
+import Main from "./pages/main/Main";
+import Login from "./pages/auth/Login";
+import LoginJoin from "./pages/auth/LoginJoin";
+import LoginFind from "./pages/auth/LoginFind";
+import Dashboard from "./pages/dashboard/Dashboard";
+import Memberupdate from "./pages/user/Memberupdate";
+import Memberdrop from "./pages/user/Memberdrop";
+import PricingSystem from "./pages/dashboard/PricingSystem";
+import Workplace from "./pages/dashboard/Workplace";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 import "./styles/common.css";

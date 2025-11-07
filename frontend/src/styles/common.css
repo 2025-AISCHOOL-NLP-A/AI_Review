@@ -118,51 +118,6 @@ button {
   margin: 20px 0 30px;
 }
 
-/* ===== 공통 푸터 스타일 ===== */
-footer {
-  background-color: #fafafa;
-  padding: 30px 0;
-  border-top: 1px solid #e5e5e5;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 40px;
-  flex-wrap: wrap;
-}
-
-.footer-left img {
-  width: 60px;
-  height: 60px;
-}
-
-.footer-right {
-  text-align: left;
-  font-size: 0.95rem;
-  line-height: 1.6;
-}
-
-.footer-links {
-  font-weight: 500;
-  margin-bottom: 8px;
-}
-
-.footer-links span {
-  margin: 0 10px;
-  color: #888;
-}
-
-.footer-info {
-  font-size: 0.95rem;
-  color: #888;
-  margin-top: 4px;
-}
-
-.footer-email {
-  font-size: 0.95rem;
-  color: #888;
-  margin-top: 4px;
-}
-
 /* ===== 공통 에러 메시지 ===== */
 .error-message {
   color: #ef4444;

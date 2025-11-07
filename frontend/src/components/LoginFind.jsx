@@ -83,13 +83,16 @@ function LoginFind() {
   };
 
   return (
-    <div className="find-container">
-      <div className="logo">
-        <img src="/images/logo.png" alt="logo" />
-      </div>
+    <div className="find-page">
+      <div className="left-section"></div>
+      <div className="right-section">
+        <div className="find-container">
+          <div className="logo">
+            <img src="/images/logo.png" alt="logo" />
+          </div>
 
-      {/* 🔹 아이디 찾기 */}
-      <div className="find-card">
+          {/* 🔹 아이디 찾기 */}
+          <div className="find-card">
         <h2 className="card-title">아이디 찾기</h2>
         <form className="find-form" onSubmit={handleFindId}>
           <div className="form-group">
@@ -179,8 +182,11 @@ function LoginFind() {
         </form>
       </div>
 
-      <div className="form-footer">
-        <Link to="/login/join">회원가입</Link>
+          <div className="form-footer">
+            <Link to="/login">로그인</Link>
+            <Link to="/login/join">회원가입</Link>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -66,24 +66,30 @@ python main.py
 ```
 
 3. **접속**
-- 웹 애플리케이션: http://localhost:3001
-- Backend API: http://localhost:3000
+- Frontend (React) : http://localhost:5173
+- Backend (Express) : http://localhost:3001
 - AI API 문서: http://localhost:8000/docs
 
 ## 📋 API 엔드포인트
 
 ### 인증 API (/auth)
-- `POST /auth/login` - 로그인
-- `POST /auth/register` - 회원가입
-- `POST /auth/logout` - 로그아웃
-- `PUT /auth/update` - 사용자 정보 수정
-- `DELETE /auth/delete` - 계정 삭제
+- `POST /join` - 회원가입
+- `POST /login` - 로그인
+- `POST /check-duplicate` - 아이디 중복 검사
+- `POST /send-verification` - 이메일 인증번호 발송
+- `POST /verify-code` - 이메일 인증번호 확인
+- `POST /find-id` - 아이디 찾기
+- `POST /find-password` - 비밀번호 찾기
+- `POST /update-profile` - 회원정보 수정
+- `GET /verify` - JWT 토큰 검증(내 정보 확인용)
+- `DELETE /withdraw` - 회원 탈퇴
 
 ### 제품 API (/products)
 - `GET /products` - 제품 목록
 - `GET /products/{product_id}/` - 제품 대시보드
 - `GET /products/{product_id}/reviews` - 제품 리뷰(파라미터로 키워드)
 - `POST /products/{product_id}/reviews/analysis` - 해당 상품 리뷰 분석 요청(Python API)
+- `POST /products/{product_id}/refresh` - 대시보드 새로고침 요청
 - `DELETE /products/{id}` - 제품 삭제
 
 ### 인사이트 API (/insights)

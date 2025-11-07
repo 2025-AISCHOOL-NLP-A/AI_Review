@@ -1,10 +1,10 @@
 // 대시보드 데이터 제공용 컨트롤러
 import db from "../models/db.js";
 
-/** 제품 대시보드 데이터 조회 API (productId 쿼리 ) */
+/** 제품 대시보드 데이터 조회 API (productId URL 파라미터) */
 export const getProductDashboardData = async (req, res) => {
   try {
-    const parsedId = Number.parseInt(req.query.productId, 10);
+    const parsedId = Number.parseInt(req.params.id, 10);
     const productId = Number.isNaN(parsedId) ? undefined : parsedId; //기본값: undefined(productId입력)
 
     // 1) 제품 정보
@@ -82,7 +82,7 @@ export const getProductDashboardData = async (req, res) => {
       [productId]
     );*/
 
-    
+
     const totalCount = Number(sentimentRow?.totalCount || 0);
     const positiveCount = Number(sentimentRow?.positiveCount || 0);
     const negativeCount = Number(sentimentRow?.negativeCount || 0);

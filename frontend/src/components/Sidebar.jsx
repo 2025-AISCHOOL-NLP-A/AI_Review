@@ -1,21 +1,39 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import authService from "../services/authService";
+import "../styles/common.css";
 import "../styles/sidebar.css";
 
 function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  
+  // localStorage에서 사이드바 상태 불러오기 (기본값: true)
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem('sidebarOpen');
+    return saved !== null ? saved === 'true' : true;
+  });
+  
+  // localStorage에서 설정 탭 상태 불러오기 (기본값: false)
+  const [settingsOpen, setSettingsOpen] = useState(() => {
+    const saved = localStorage.getItem('settingsOpen');
+    return saved !== null ? saved === 'true' : false;
+  });
+  
   const [userInfo, setUserInfo] = useState({ login_id: "", email: "" });
 
-  // 현재 경로에 따라 active 상태 결정
-  const isActive = (path) => {
-    return location.pathname === path;
-  };
+  const isActive = (path) => location.pathname === path;
 
-  // 로그인한 사용자 정보 가져오기
+  // 사이드바 상태가 변경될 때마다 localStorage에 저장
+  useEffect(() => {
+    localStorage.setItem('sidebarOpen', sidebarOpen.toString());
+  }, [sidebarOpen]);
+
+  // 설정 탭 상태가 변경될 때마다 localStorage에 저장
+  useEffect(() => {
+    localStorage.setItem('settingsOpen', settingsOpen.toString());
+  }, [settingsOpen]);
+
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
@@ -28,7 +46,6 @@ function Sidebar() {
         console.error("사용자 정보를 가져오는데 실패했습니다:", error);
       }
     };
-
     fetchUserInfo();
   }, []);
 
@@ -38,35 +55,42 @@ function Sidebar() {
         sidebarOpen ? "sidebar-open" : "sidebar-closed"
       }`}
     >
-      <div
-        className="sidebar-header"
-        onClick={!sidebarOpen ? () => setSidebarOpen(true) : undefined}
-        style={!sidebarOpen ? { cursor: "pointer" } : {}}
-      >
-        <div className="sidebar-logo">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-8 w-8 text-main"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-            />
-          </svg>
-          {sidebarOpen && <span className="sidebar-brand">리뷰 분석</span>}
+      {/* ===== 사이드바 헤더 ===== */}
+      <div className="sidebar-header">
+        <div 
+          className="sidebar-logo"
+          onClick={!sidebarOpen ? (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setSidebarOpen(true);
+          } : undefined}
+          style={!sidebarOpen ? { cursor: "pointer" } : {}}
+          onMouseDown={(e) => {
+            // 로고 클릭 시 이벤트 전파 완전 차단
+            if (!sidebarOpen) {
+              e.stopPropagation();
+            }
+          }}
+        >
+          <img
+            src="/images/logo.png"
+            alt="꿰뚫어뷰 로고"
+            className="sidebar-logo-img"
+          />
+          {sidebarOpen && <span className="sidebar-brand">꿰뚫어뷰</span>}
         </div>
         <button
           className="sidebar-toggle"
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             setSidebarOpen(!sidebarOpen);
           }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+          }}
           aria-label="Toggle sidebar"
+          aria-expanded={sidebarOpen}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -93,15 +117,81 @@ function Sidebar() {
         </button>
       </div>
 
-      <nav className="sidebar-nav">
+      {/* ===== 사용자 프로필 ===== */}
+      <div 
+        className="sidebar-user-profile"
+        onClick={(e) => {
+          // 프로필 영역 클릭 시 사이드바가 열리지 않도록 방지
+          if (!sidebarOpen) {
+            e.stopPropagation();
+          }
+        }}
+      >
+        {sidebarOpen ? (
+          <div className="sidebar-user">
+            <div className="sidebar-user-avatar">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+            </div>
+            <div className="sidebar-user-info">
+              <div className="sidebar-user-name">
+                {userInfo.login_id || "사용자"}
+              </div>
+              <div className="sidebar-user-email">{userInfo.email || ""}</div>
+            </div>
+          </div>
+        ) : (
+          <div className="sidebar-user-avatar-only" title={userInfo.login_id}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
+            </svg>
+          </div>
+        )}
+      </div>
+
+      {/* ===== 네비 ===== */}
+      <nav 
+        className="sidebar-nav"
+        onClick={(e) => {
+          // 네비게이션 영역 클릭 시 사이드바가 열리지 않도록 방지
+          if (!sidebarOpen) {
+            e.stopPropagation();
+          }
+        }}
+      >
         <a
           href="#"
-          className={`sidebar-nav-item ${
-            isActive("/dashboard") ? "active" : ""
-          }`}
+          className={`sidebar-nav-item ${isActive("/wp") ? "active" : ""}`}
           onClick={(e) => {
             e.preventDefault();
-            navigate("/dashboard");
+            e.stopPropagation();
+            navigate("/wp");
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
           }}
         >
           <svg
@@ -118,13 +208,22 @@ function Sidebar() {
               d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
             />
           </svg>
-          {sidebarOpen && <span>대시보드</span>}
+          {sidebarOpen && <span>워크플레이스</span>}
         </a>
 
         <a
           href="#"
-          className="sidebar-nav-item"
-          onClick={(e) => e.preventDefault()}
+          className={`sidebar-nav-item ${
+            isActive("/dashboard") ? "active" : ""
+          }`}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            navigate("/dashboard");
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+          }}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -140,13 +239,47 @@ function Sidebar() {
               d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
             />
           </svg>
+          {sidebarOpen && <span>대시보드</span>}
+        </a>
+
+        <a
+          href="#"
+          className="sidebar-nav-item"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2"
+            />
+          </svg>
           {sidebarOpen && <span>분석 리포트</span>}
         </a>
 
         <a
           href="#"
           className="sidebar-nav-item"
-          onClick={(e) => e.preventDefault()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+          }}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -165,7 +298,16 @@ function Sidebar() {
           {sidebarOpen && <span>리뷰 관리</span>}
         </a>
 
-        <div className="sidebar-nav-item-parent">
+        {/* ===== 설정 ===== */}
+        <div 
+          className="sidebar-nav-item-parent"
+          onClick={(e) => {
+            // 설정 메뉴 부모 영역 클릭 시 사이드바가 열리지 않도록 방지
+            if (!sidebarOpen) {
+              e.stopPropagation();
+            }
+          }}
+        >
           <a
             href="#"
             className={`sidebar-nav-item ${settingsOpen ? "active" : ""} ${
@@ -177,8 +319,13 @@ function Sidebar() {
             }`}
             onClick={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               setSettingsOpen(!settingsOpen);
             }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            aria-expanded={settingsOpen}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -221,8 +368,12 @@ function Sidebar() {
               </>
             )}
           </a>
-          {sidebarOpen && settingsOpen && (
-            <div className="sidebar-submenu">
+
+          {/* ⬇ 변경: sidebarOpen 여부와 무관하게 settingsOpen이면 렌더 */}
+          {settingsOpen && (
+            <div
+              className={`sidebar-submenu ${!sidebarOpen ? "collapsed" : ""}`}
+            >
               <a
                 href="#"
                 className={`sidebar-submenu-item ${
@@ -230,8 +381,13 @@ function Sidebar() {
                 }`}
                 onClick={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
                   navigate("/memberupdate");
                 }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                }}
+                data-label="회원정보 수정"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -247,7 +403,7 @@ function Sidebar() {
                     d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                   />
                 </svg>
-                <span>회원정보 수정</span>
+                {sidebarOpen && <span>회원정보 수정</span>}
               </a>
 
               <a
@@ -257,8 +413,13 @@ function Sidebar() {
                 }`}
                 onClick={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
                   navigate("/pricingsystem");
                 }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                }}
+                data-label="요금제 관리"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -274,8 +435,9 @@ function Sidebar() {
                     d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <span>요금제 관리</span>
+                {sidebarOpen && <span>요금제 관리</span>}
               </a>
+
               <a
                 href="#"
                 className={`sidebar-submenu-item ${
@@ -283,8 +445,13 @@ function Sidebar() {
                 }`}
                 onClick={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
                   navigate("/memberdrop");
                 }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                }}
+                data-label="회원 탈퇴"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -300,90 +467,52 @@ function Sidebar() {
                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                   />
                 </svg>
-                <span>회원 탈퇴</span>
+                {sidebarOpen && <span>회원 탈퇴</span>}
               </a>
             </div>
           )}
         </div>
       </nav>
 
-      <div className="sidebar-footer">
-        {sidebarOpen && (
-          <>
-            <div className="sidebar-user">
-              <div className="sidebar-user-avatar">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-              </div>
-              <div className="sidebar-user-info">
-                <div className="sidebar-user-name">
-                  {userInfo.login_id || "사용자"}
-                </div>
-                <div className="sidebar-user-email">{userInfo.email || ""}</div>
-              </div>
-            </div>
-            <button
-              className="sidebar-logout-button"
-              onClick={() => {
-                authService.logout();
-                navigate("/login");
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                />
-              </svg>
-              <span>로그아웃</span>
-            </button>
-          </>
-        )}
-        {!sidebarOpen && (
-          <button
-            className="sidebar-logout-button-icon-only"
-            onClick={() => {
-              authService.logout();
-              navigate("/login");
-            }}
-            aria-label="로그아웃"
+      {/* ===== 로그아웃 ===== */}
+      <div 
+        className="sidebar-footer"
+        onClick={(e) => {
+          // 푸터 영역 클릭 시 사이드바가 열리지 않도록 방지
+          if (!sidebarOpen) {
+            e.stopPropagation();
+          }
+        }}
+      >
+        <button
+          className="sidebar-logout-button fullsize-icon"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            authService.logout();
+            navigate("/login");
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+          }}
+          aria-label="로그아웃"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="2"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
-          </button>
-        )}
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+            />
+          </svg>
+          {sidebarOpen && <span>로그아웃</span>}
+        </button>
       </div>
     </aside>
   );

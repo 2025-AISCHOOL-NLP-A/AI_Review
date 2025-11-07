@@ -13,12 +13,42 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
   const errorRef = useRef(''); // 에러 상태를 ref로도 저장
 
   // 에러 상태를 ref에도 동기화
   useEffect(() => {
     errorRef.current = error;
   }, [error]);
+
+  // 로그인 성공 시 워크플레이스로 이동
+  useEffect(() => {
+    if (loginSuccess) {
+      // 약간의 지연을 두어 상태 업데이트가 완료된 후 이동
+      const timer = setTimeout(() => {
+        navigate('/wp', { replace: true });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loginSuccess, navigate]);
+
+  // 이미 로그인된 사용자가 로그인 페이지에 접근하면 워크플레이스로 리다이렉트
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          await authService.getMe();
+          // 이미 로그인된 상태이면 워크플레이스로 리다이렉트
+          navigate('/wp', { replace: true });
+        } catch (error) {
+          // 토큰이 유효하지 않으면 로그인 페이지에 머무름
+          localStorage.removeItem("token");
+        }
+      }
+    };
+    checkAuth();
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -65,7 +95,8 @@ function Login() {
       if (result.success) {
         setError(''); // 성공 시 에러 초기화
         setLoading(false);
-        navigate('/dashboard');
+        // 로그인 성공 상태 설정하여 useEffect에서 navigate 실행
+        setLoginSuccess(true);
         return;
       } else {
         // 로그인 실패 시 에러 설정 - 항상 표시되도록
@@ -91,11 +122,11 @@ function Login() {
     <div className="login-page">
       <div className="left-section"></div>
       <div className="right-section">
-        <div className="login-container">
-          <div className="logo">
-            <img src="/images/logo.png" alt="logo" />
-          </div>
+        <Link to="/" className="logo">
+          <img src="/images/logo.png" alt="logo" />
+        </Link>
 
+        <div className="login-container">
           <form 
             className="login-form" 
             onSubmit={(e) => {

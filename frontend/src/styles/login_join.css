@@ -2,31 +2,59 @@
    회원가입 페이지 스타일
    ======================================== */
 
-/* 가운데 정렬 */
-
-body {
-  margin: 0; /* 왼쪽 들뜸 방지 */
-  min-height: 100dvh; /* 모바일 주소창 대응 */
-  display: grid;
-  place-items: center; /* 화면 정중앙에 컨테이너 배치 */
-  background: #f6f8ff; /* 필요 시 */
+.join-page {
+  display: flex;
+  min-height: 100vh;
+  height: auto;
+  overflow: auto;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
-.join-container {
-  background: linear-gradient(225deg, #c8e3ff 0%, #f0f4ff 100%);
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-
-  width: min(100%, 660px);
-  min-height: 100dvh;
-  margin: 0 auto;
-  padding: 40px 20px;
-
+/* 왼쪽 섹션 */
+.join-page .left-section {
+  width: 50%;
+  background: url("/images/login_left_section_draw.png") no-repeat left center;
+  background-size: 50% auto;
+  background-position: left center;
+  background-attachment: fixed;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  height: auto;
+}
+
+/* 오른쪽 섹션 */
+.join-page .right-section {
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: linear-gradient(225deg, #c8e3ff 0%, #f0f4ff 100%);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px 0 20px 0;
+  min-height: 100vh;
+  height: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
+
+.join-container {
+  width: 100%;
+  max-width: 660px;
+  padding: 20px 20px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
   align-items: stretch;
+  min-height: fit-content;
+  box-sizing: border-box;
 }
 /* ====== 실제 카드/푸터는 위로 띄우기 ====== */
 .join-card,
@@ -36,17 +64,9 @@ body {
   z-index: 1; /* ::before(0) 위 */
 }
 
-/* 로고 */
-.logo {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 30px;
-}
-
-.logo img {
-  width: 60px;
-  height: 60px;
-  object-fit: contain;
+/* 로고 스타일은 common.css에 정의됨 */
+.join-page .logo {
+  margin-bottom: 10px;
 }
 
 /* 회원가입 카드 위로 */
@@ -56,13 +76,21 @@ body {
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(8px);
   border-radius: 20px;
-  padding: 40px;
+  padding: 30px;
   width: 100%;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 /* 폼 그룹 */
 .form-group {
   margin-bottom: 20px;
+}
+
+/* 이메일 입력이 있는 form-group만 flex column */
+.form-group:has(.email-input-group) {
+  display: flex;
+  flex-direction: column;
 }
 
 /* 아이콘과 입력 필드 함께 */
@@ -83,38 +111,56 @@ body {
   box-shadow: 0 0 0 3px rgba(200, 227, 255, 0.2);
 }
 
-.form-icon {
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px;
+/* form-icon과 form-input 기본 스타일은 common.css에 정의됨 */
+.join-page .input-with-icon .form-icon {
   margin-left: 12px;
 }
 
-.form-icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-/* 입력 필드 */
-.form-input {
-  flex: 1;
+.join-page .input-with-icon .form-input {
   padding: 12px 16px 12px 0;
-  border: none;
-  border-radius: 8px;
   background: transparent;
-  font-size: 1rem;
-  font-family: "Pretendard", "Noto Sans KR", sans-serif;
-  outline: none;
+  border-radius: 8px;
 }
 
-.form-input:focus {
+.join-page .input-with-icon .form-input:focus {
   background: transparent;
+}
+
+/* 비밀번호 입력 래퍼 */
+.password-input-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .form-input {
+  padding-right: 45px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  transition: color 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+  color: #111;
+}
+
+.password-toggle-btn svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* 입력 필드 + 버튼 */
@@ -205,8 +251,30 @@ body {
   font-family: "Pretendard", "Noto Sans KR", sans-serif;
 }
 
-.verify-button:hover {
+.verify-button:hover:not(:disabled) {
   background: #2563eb;
+}
+
+.verify-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* 이메일 타이머 */
+.email-timer {
+  margin-top: 4px;
+  margin-bottom: 0;
+  margin-left: 0;
+  padding-left: 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-weight: 500;
+  display: block;
+  width: 100%;
+  clear: both;
+  flex-shrink: 0;
+  order: 2;
 }
 
 /* 동의 섹션 */
@@ -299,4 +367,18 @@ body {
 .join-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* 하단 링크 */
+/* form-footer 기본 스타일은 common.css에 정의됨 */
+.join-page .form-footer {
+  margin-top: 8px;
+  margin-bottom: 10px;
+  width: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+.join-page .form-footer a {
+  font-weight: 500;
 }

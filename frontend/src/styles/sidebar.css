@@ -1,10 +1,4 @@
-/* Sidebar Styles */
-:root {
-  --bg-color: #f9fafb;
-  --border-color: #e5e7eb;
-  --main-color: #5b8eff;
-  --font-color: #333333;
-}
+/* CSS 변수는 common.css로 이동 */
 
 .dashboard-sidebar {
   position: fixed;
@@ -19,12 +13,12 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .dashboard-sidebar.sidebar-open {
   width: 256px;
 }
-
 .dashboard-sidebar.sidebar-closed {
   width: 64px;
 }
@@ -44,7 +38,6 @@
   gap: 0.75rem;
   color: var(--main-color);
 }
-
 .sidebar-brand {
   font-size: 1.25rem;
   font-weight: 700;
@@ -66,26 +59,18 @@
   min-height: 2.5rem;
   flex-shrink: 0;
 }
-
 .sidebar-toggle:hover {
   background-color: var(--bg-color);
-}
-
-/* 접었을 때 사이드바 헤더 전체를 클릭 가능하게 */
-.dashboard-sidebar.sidebar-closed {
-  width: 64px;
 }
 
 .dashboard-sidebar.sidebar-closed .sidebar-header {
   padding: 1rem 0.5rem;
   justify-content: center;
 }
-
 .dashboard-sidebar.sidebar-closed .sidebar-logo {
   justify-content: center;
   width: 100%;
 }
-
 .dashboard-sidebar.sidebar-closed .sidebar-toggle {
   width: 100%;
   min-width: 100%;
@@ -108,25 +93,21 @@
   border-left: 3px solid transparent;
   border-bottom: 1px solid #e5e7eb;
 }
-
 .sidebar-nav-item:hover {
   background-color: var(--bg-color);
   border-left-color: var(--main-color);
 }
-
 .sidebar-nav-item.active {
   background-color: #eff6ff;
   color: var(--main-color);
   border-left-color: var(--main-color);
   font-weight: 600;
 }
-
 .sidebar-nav-item svg {
   flex-shrink: 0;
   width: 1.25rem;
   height: 1.25rem;
 }
-
 .sidebar-nav-item span {
   white-space: nowrap;
 }
@@ -135,7 +116,6 @@
   position: relative;
   border-bottom: 1px solid #e5e7eb;
 }
-
 .sidebar-nav-item svg:last-child {
   margin-left: auto;
 }
@@ -147,7 +127,6 @@
   margin-left: 1rem;
   animation: slideDown 0.3s ease;
 }
-
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -172,27 +151,22 @@
   font-size: 0.875rem;
   border-bottom: 1px solid #e5e7eb;
 }
-
 .sidebar-submenu-item:last-child {
   border-bottom: none;
 }
-
 .sidebar-submenu-item:hover {
   background-color: #e5e7eb;
   color: var(--main-color);
 }
-
 .sidebar-submenu-item svg {
   flex-shrink: 0;
   width: 1rem;
   height: 1rem;
   color: #6b7280;
 }
-
 .sidebar-submenu-item:hover svg {
   color: var(--main-color);
 }
-
 .sidebar-submenu-item span {
   white-space: nowrap;
 }
@@ -210,7 +184,6 @@
   background-color: var(--bg-color);
   border-radius: 0.5rem;
 }
-
 .sidebar-user-avatar {
   width: 2.5rem;
   height: 2.5rem;
@@ -222,18 +195,15 @@
   color: white;
   flex-shrink: 0;
 }
-
 .sidebar-user-info {
   flex: 1;
   min-width: 0;
 }
-
 .sidebar-user-name {
   font-weight: 600;
   font-size: 0.875rem;
   color: var(--font-color);
 }
-
 .sidebar-user-email {
   font-size: 0.75rem;
   color: #6b7280;
@@ -259,13 +229,11 @@
   transition: all 0.2s;
   font-family: "Inter", "Noto Sans KR", sans-serif;
 }
-
 .sidebar-logout-button:hover {
   background-color: #fee2e2;
   border-color: #fca5a5;
   color: #b91c1c;
 }
-
 .sidebar-logout-button svg {
   flex-shrink: 0;
   width: 1.25rem;
@@ -286,26 +254,245 @@
   cursor: pointer;
   transition: all 0.2s;
 }
-
 .sidebar-logout-button-icon-only:hover {
   background-color: #fee2e2;
   border-color: #fca5a5;
   color: #b91c1c;
 }
-
 .sidebar-logout-button-icon-only svg {
   width: 1.25rem;
   height: 1.25rem;
 }
 
-/* Dashboard Wrapper - 사이드바와 함께 사용되는 레이아웃 */
 .dashboard-wrapper {
   flex: 1;
   margin-left: 256px;
   transition: margin-left 0.3s ease;
   min-height: 100vh;
+  min-width: 0;
+  width: calc(100% - 256px);
+  max-width: calc(100% - 256px);
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+  overflow-x: hidden;
 }
-
 .dashboard-page.sidebar-closed .dashboard-wrapper {
   margin-left: 64px;
+  width: calc(100% - 64px);
+  max-width: calc(100% - 64px);
+}
+
+/* 프로필 아이콘 중앙 정렬(닫힘) */
+.dashboard-sidebar.sidebar-closed .sidebar-user-profile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 0;
+}
+
+/* ===== 로그아웃 버튼 고정 크기 ===== */
+.sidebar-logout-button.fullsize-icon {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin-top: 0.75rem;
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fee2e2;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sidebar-logout-button.fullsize-icon:hover {
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+.sidebar-closed .sidebar-footer .fullsize-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.sidebar-closed .sidebar-footer .fullsize-icon {
+  justify-content: center;
+  padding: 0.75rem;
+}
+
+/* 로고 크기 전환 */
+.sidebar-logo-img {
+  transition: all 0.3s ease;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.dashboard-sidebar.sidebar-open .sidebar-logo-img {
+  width: 32px;
+  height: 32px;
+}
+.dashboard-sidebar.sidebar-closed .sidebar-logo-img {
+  width: 24px;
+  height: 24px;
+  margin: 0 auto;
+  display: block;
+}
+
+/* 닫힘 상태 아이콘 정렬 */
+.dashboard-sidebar.sidebar-closed .sidebar-nav-item {
+  justify-content: center;
+  padding: 0.75rem 0;
+  min-height: 48px;
+}
+.dashboard-sidebar.sidebar-closed .sidebar-nav-item svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+/* 닫힘 상태의 사용자 아바타 */
+.dashboard-sidebar.sidebar-closed .sidebar-user-avatar-only {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background-color: var(--main-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  margin: 0 auto;
+}
+.dashboard-sidebar.sidebar-closed .sidebar-user-avatar-only svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.dashboard-sidebar.sidebar-closed .sidebar-toggle svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* ====== 추가: 닫힘 상태 서브메뉴(아이콘 세로) + 툴팁 ====== */
+.sidebar-submenu.collapsed {
+  background-color: transparent;
+  border-left: none;
+  padding: 0.25rem 0;
+  margin-left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sidebar-submenu.collapsed .sidebar-submenu-item {
+  padding: 0.5rem 0;
+  width: 100%;
+  justify-content: center;
+  border-bottom: none;
+  position: relative;
+}
+
+.sidebar-submenu.collapsed .sidebar-submenu-item svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* 툴팁 */
+.sidebar-submenu.collapsed .sidebar-submenu-item::after {
+  content: attr(data-label);
+  position: absolute;
+  left: 70px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  opacity: 0;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(10px);
+  transition: all 0.2s ease;
+}
+
+.sidebar-submenu.collapsed .sidebar-submenu-item:hover::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+/* ==== 닫힘 상태에서 가로 플라이아웃 완전 차단 ==== */
+.dashboard-sidebar.sidebar-closed .sidebar-submenu {
+  position: static !important; /* 절대/고정 위치 방지 */
+  inset: auto !important; /* 좌표 초기화 */
+  width: 100% !important; /* 64px 내부에서만 표시 */
+  max-width: 100% !important;
+  box-shadow: none !important; /* 플라이아웃 느낌 제거 */
+  background: transparent !important;
+  margin-left: 0 !important; /* 좌측 들여쓰기 제거 */
+  border-left: none !important; /* 좌측 보더 제거 */
+  transform: none !important; /* 외부로 밀려나는 효과 제거 */
+}
+
+/* 닫힘 상태: 아이콘만 세로 정렬 (툴팁은 이미 collapsed 규칙에서 처리) */
+.dashboard-sidebar.sidebar-closed .sidebar-submenu.collapsed {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  padding: 0.25rem 0 !important;
+}
+
+/* 닫힘 상태: 각 아이콘 버튼 형태 */
+.dashboard-sidebar.sidebar-closed
+  .sidebar-submenu.collapsed
+  .sidebar-submenu-item {
+  width: 100% !important;
+  justify-content: center !important;
+  padding: 0.5rem 0 !important;
+  border-bottom: none !important;
+  position: relative !important;
+}
+
+/* 닫힘 상태: 텍스트(스팬) 강제 숨김 — 혹시 JSX가 잘못 렌더되어도 방어 */
+.dashboard-sidebar.sidebar-closed .sidebar-submenu .sidebar-submenu-item span {
+  display: none !important;
+}
+
+/* 닫힘 상태: 아이콘 크기 유지 */
+.dashboard-sidebar.sidebar-closed .sidebar-submenu .sidebar-submenu-item svg {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+}
+/* 1) 사이드바/네비에서 가로 스크롤 완전 차단 */
+.dashboard-sidebar,
+.sidebar-nav,
+.sidebar-submenu {
+  overflow-x: hidden !important;
+}
+
+/* 2) 사이드바 내부(특히 메뉴 리스트)의 스크롤바 표시 제거 */
+.sidebar-nav {
+  /* Firefox */
+  scrollbar-width: none;
+  /* IE/Edge(레거시) */
+  -ms-overflow-style: none;
+}
+.sidebar-nav::-webkit-scrollbar {
+  /* WebKit */
+  width: 0;
+  height: 0;
+}
+
+/* 3) 닫힘 상태 툴팁이 바깥으로 나가도 스크롤 생성되지 않게 */
+.sidebar-submenu.collapsed {
+  overflow: visible; /* 툴팁은 보이고, 스크롤은 생성 안 되게 */
+}
+
+/* 4) 툴팁 위치를 '사이드바 폭 기준'으로 바꿔 가로 오버플로우 억제 */
+.sidebar-submenu.collapsed .sidebar-submenu-item::after {
+  left: 100%; /* 기존 left: 70px 대신 사이드바 폭(=부모 폭) 기준 */
+  margin-left: 8px; /* 살짝 띄우기 */
+  transform: translateX(8px);
+}
+.sidebar-submenu.collapsed .sidebar-submenu-item:hover::after {
+  transform: translateX(0);
 }

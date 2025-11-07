@@ -763,7 +763,6 @@ function Dashboard() {
                   // Parse pos_top_keywords from tb_productInsight (VARCHAR(255), comma-separated)
                   const posKeywords = dashboardData?.insight?.pos_top_keywords 
                     ? dashboardData.insight.pos_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean)
-                    ? dashboardData.insight.pos_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean)
                     : dashboardData?.analysis?.positiveKeywords || [];
                   
                   return posKeywords.length > 0 ? (
@@ -790,7 +789,6 @@ function Dashboard() {
                 ) : (() => {
                   // Parse neg_top_keywords from tb_productInsight (VARCHAR(255), comma-separated)
                   const negKeywords = dashboardData?.insight?.neg_top_keywords 
-                    ? dashboardData.insight.neg_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean)
                     ? dashboardData.insight.neg_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean)
                     : dashboardData?.analysis?.negativeKeywords || [];
                   
@@ -903,8 +901,6 @@ function Dashboard() {
                 {loading ? "데이터 로딩 중..." : 
                  dashboardData?.reviews?.length > 0 ?
                  dashboardData.reviews.slice(0, 3).map((review, idx) => 
-                 dashboardData?.reviews?.length > 0 ?
-                 dashboardData.reviews.slice(0, 3).map((review, idx) => 
                    `💬 "${review.review_text}"`
                  ).join(" ") :
                  "리뷰 데이터가 없습니다."}
@@ -924,13 +920,10 @@ function Dashboard() {
                    // Data from tb_productInsight
                   const posKeywords = dashboardData.insight.pos_top_keywords 
                     ? dashboardData.insight.pos_top_keywords.split(/[|,]/).map(k => k.trim()).slice(0, 3).join(", ")
-                  const posKeywords = dashboardData.insight.pos_top_keywords 
-                    ? dashboardData.insight.pos_top_keywords.split(/[|,]/).map(k => k.trim()).slice(0, 3).join(", ")
-                     : "없음";
+                    : "없음";
                    const negKeywords = dashboardData.insight.neg_top_keywords 
                     ? dashboardData.insight.neg_top_keywords.split(/[|,]/).map(k => k.trim()).slice(0, 2).join(", ")
-                    ? dashboardData.insight.neg_top_keywords.split(/[|,]/).map(k => k.trim()).slice(0, 2).join(", ")
-                     : "없음";
+                    : "없음";
                    const avgRating = parseFloat(dashboardData.insight.avg_rating || dashboardData.insight.avgRating || 0);
                    
                    return `🔍 AI 자동 분석 요약

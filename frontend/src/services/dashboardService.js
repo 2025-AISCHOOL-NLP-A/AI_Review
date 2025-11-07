@@ -2,10 +2,11 @@ import api from "./api";
 
 const dashboardService = {
   /** 📊 대시보드 데이터 조회 */
+  async getDashboardData(productId = 1007) { // 기본값 1001
   async getDashboardData(productId = 1012) { // 기본값 1001
   async getDashboardData(productId = 1007) { // 기본값 1001
     try {
-      const res = await api.get("/dashboard/data", { params: { productId } }); // 쿼리 파라미터 전달
+      const res = await api.get(`/products/${productId}/dashboard`); // 쿼리 파라미터 "/dashboard/data", { params: { productId } }에서 변경
       return { success: true, data: res.data };
       const res = await api.get(`/products/${productId}/dashboard`); // 쿼리 파라미터 "/dashboard/data", { params: { productId } }에서 변경
       return { success: true, data: res.data };

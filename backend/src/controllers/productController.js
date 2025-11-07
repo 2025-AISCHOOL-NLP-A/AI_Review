@@ -1,4 +1,5 @@
 import db from "../models/db.js";
+import { getProductDashboardData as getProductDashboardDataFromDashboard } from "./dashboardController.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -23,34 +24,9 @@ export const productList = async (req, res) => {
   }
 };
 
-// ==============================
-// 제품 대시보드 조회
-// ==============================
-export const dashboard = async (req, res) => {
-  try {
-    const { id: productId } = req.params;
-    
-    if (!productId) {
-      return res.status(400).json({ message: "제품 ID가 필요합니다." });
-    }
-
-    // TODO: 제품 대시보드 데이터 조회 로직 구현
-    // - 제품 기본 정보
-    // - 리뷰 통계
-    // - 감정 분석 결과
-    // - 키워드 분석 결과
-    // - 최근 인사이트
-    
-    res.json({
-      message: "제품 대시보드 조회 성공",
-      productId,
-      dashboard: {}
-    });
-  } catch (err) {
-    console.error("❌ 제품 대시보드 조회 오류:", err);
-    res.status(500).json({ message: "제품 대시보드 조회 중 서버 오류가 발생했습니다." });
-  }
-};
+// 대시보드 조회는 dashboardController.getProductDashboardData를 사용
+// dashboard 별칭: 라우트 체인에서 사용하기 편하도록 동일 동작으로 래핑
+export const dashboard = (req, res) => getProductDashboardDataFromDashboard(req, res);
 
 // ==============================
 // 대시보드 새로고침 (미들웨어)

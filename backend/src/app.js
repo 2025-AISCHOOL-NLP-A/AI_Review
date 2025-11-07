@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
-// import dashboardRoutes from "./routes/dashboardRoutes.js"; // ← 추가
 import productRoutes from "./routes/productRoutes.js";
 import { verifyAuth } from "./middlewares/authMiddleware.js"
 
@@ -25,7 +24,8 @@ app.use((req, _res, next) => {
 app.use(express.json());
 // ✅ 라우트 등록
 app.use("/auth", authRoutes); //로그인 인증 라우트
-app.use("/products", verifyAuth, productRoutes); //대시보드 라우트
+// app.use("/dashboard", verifyAuth, dashboardRoutes); // 제거
+app.use("/products", verifyAuth, productRoutes); //제품과 대시보드 라우트
 
 // ✅ 이메일 인증 라우터 등록
 // app.use("/api/auth", authRoutes);

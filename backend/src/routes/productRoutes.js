@@ -6,17 +6,15 @@ import {
     refreshDashboard,
     keywordReview,
     analysisRequest,
-    test
+    deleteProduct
 } from "../controllers/productController.js";
-import { getProductDashboardData } from "../controllers/dashboardController.js";
-
 
 //엔드포인트 생성
 const router = express.Router();
 
 // 더 구체적인 라우트를 먼저 배치
-//대시보드 새로고침 요청(refreshDashboard 라는 미들웨어를 만들어야함. refreshDashboard 로 대시보드 새로고침 한 뒤 대시보드 로드) 
-router.post("/:id/refresh", refreshDashboard, dashboard);
+// *현재는 미사용*/ 대시보드 새로고침 요청(refreshDashboard 라는 미들웨어를 만들어야함. refreshDashboard 로 대시보드 새로고침 한 뒤 대시보드 로드) 
+//router.post("/:id/dashboard/refresh", refreshDashboard, dashboard);
 
 // 수집된 리뷰들에 대한 감성분석 요청
 router.post("/:id/reviews/analysis", analysisRequest);
@@ -24,10 +22,11 @@ router.post("/:id/reviews/analysis", analysisRequest);
 //특정 키워드에 대한 리뷰 조회
 router.get("/:id/reviews", keywordReview);
 
-//대시보드용 - 가장 일반적인 라우트는 마지막
-router.get("/:id", getProductDashboardData);
+//대시보드 데이터 호출 - 가장 일반적인 라우트는 마지막
+router.get("/:id/dashboard", dashboard); // productController.dashboard 별칭 사용!
 
-router.get("test", test)
+// 제품 삭제
+router.delete("/:id", deleteProduct);
 
 //워크 플레이스용 제품 리스트 
 router.get("/", productList);

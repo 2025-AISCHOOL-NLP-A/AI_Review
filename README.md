@@ -54,11 +54,11 @@ pip install -r requirements.txt
 ```bash
 # Backend API (터미널 1)
 cd backend
-npm start
+npm run dev
 
 # Frontend Web (터미널 2)
 cd frontend
-npm start
+npm run dev
 
 # AI Analysis (터미널 3)
 cd model_server
@@ -86,10 +86,10 @@ python main.py
 
 ### 제품 API (/products)
 - `GET /products` - 제품 목록
-- `GET /products/{product_id}/` - 제품 대시보드
+- `GET /products/{product_id}` - 개별 제품
+- `GET /products/{product_id}/dashboard` - 제품 대시보드
 - `GET /products/{product_id}/reviews` - 제품 리뷰(파라미터로 키워드)
 - `POST /products/{product_id}/reviews/analysis` - 해당 상품 리뷰 분석 요청(Python API)
-- `POST /products/{product_id}/refresh` - 대시보드 새로고침 요청
 - `DELETE /products/{id}` - 제품 삭제
 
 ### 인사이트 API (/insights)

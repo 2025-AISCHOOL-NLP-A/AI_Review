@@ -37,13 +37,13 @@ export const getProductDashboardData = async (req, res) => {
       [productId]
     );
 
-    // 3) 리뷰 통계(리뷰 원문 샘플 & 최신순 정렬)
+    // 4) 리뷰 통계(리뷰 원문 샘플 & 최신순 정렬)
     const [reviews] = await db.query(
       "SELECT * FROM tb_review WHERE product_id = ? ORDER BY review_date ASC",
       [productId]
     );
 
-    // 4) 주요 키워드, 긍/부정 비율 + 속성별 긍·부정 분기형 막대 그래프 //서브 쿼리 조인
+    // 5) 주요 키워드, 긍/부정 비율 + 속성별 긍·부정 분기형 막대 그래프 //서브 쿼리 조인
     const [keywords] = await db.query(
       `SELECT
         k.keyword_text,

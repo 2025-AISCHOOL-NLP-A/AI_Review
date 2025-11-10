@@ -1,5 +1,5 @@
 import db from "../models/db.js";
-import { getProductDashboardData as getProductDashboardDataFromDashboard } from "./dashboardController.js";
+import { getProductDashboardData as getProductDashboard } from "./dashboardController.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -26,7 +26,7 @@ export const productList = async (req, res) => {
 
 // 대시보드 조회는 dashboardController.getProductDashboardData를 사용
 // dashboard 별칭: 라우트 체인에서 사용하기 편하도록 동일 동작으로 래핑
-export const dashboard = (req, res) => getProductDashboardDataFromDashboard(req, res);
+export const dashboard = (req, res) => getProductDashboard(req, res);
 
 // ==============================
 // 대시보드 새로고침 (미들웨어)

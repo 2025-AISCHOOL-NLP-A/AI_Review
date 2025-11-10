@@ -247,11 +247,13 @@
   width: min(100%, 660px);
   min-height: 100dvh;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: stretch;
+  margin-bottom: 30px; /* Footer와의 간격 */
+  border-radius: 15px;
 }
 
 .join-card,

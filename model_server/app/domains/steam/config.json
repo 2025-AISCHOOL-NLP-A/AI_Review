@@ -1,0 +1,8 @@
+{
+  "phase1_model": "Wing4/kcelectra-steam-aspect-classifier-kr",
+  "phase2_model": "Wing4/kcelectra-steam-sentiment-classifier-kr",
+  "aspect_labels": ["스토리", "최적화", "그래픽", "가격", "밸런스", "몰입도"],
+  "boost_value": 0.25,
+  "aspect_threshold": 0.35,
+  "margin": 0.03
+}

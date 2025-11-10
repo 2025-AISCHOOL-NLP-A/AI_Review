@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import { verifyAuth } from "./middlewares/authMiddleware.js"
+import reviewRoutes from "./routes/reviewRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -26,6 +27,9 @@ app.use(express.json());
 app.use("/auth", authRoutes); //로그인 인증 라우트
 // app.use("/dashboard", verifyAuth, dashboardRoutes); // 제거
 app.use("/products", verifyAuth, productRoutes); //제품과 대시보드 라우트
+
+// 리뷰 단독 분석 API (FastAPI 연동 테스트용)
+app.use("/reviews", reviewRoutes);
 
 // ✅ 이메일 인증 라우터 등록
 // app.use("/api/auth", authRoutes);

@@ -1,0 +1,16 @@
+# 환경 변수 파일
+.env
+
+# Node 모듈
+node_modules/
+
+# 로그
+*.log
+
+# 빌드 결과물
+dist/
+build/
+
+# OS 자동파일
+.DS_Store
+Thumbs.db

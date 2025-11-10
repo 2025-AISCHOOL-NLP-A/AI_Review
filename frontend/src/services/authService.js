@@ -169,6 +169,14 @@ const authService = {
       }
       throw new Error("사용자 정보를 가져올 수 없습니다.");
     } catch (err) {
+      // 401 오류는 토큰이 만료되었거나 유효하지 않은 경우이므로 조용히 처리
+      if (err.response && err.response.status === 401) {
+        // 토큰이 이미 api 인터셉터에서 제거되었으므로 에러만 throw
+        const authError = new Error("인증이 필요합니다.");
+        authError.status = 401;
+        throw authError;
+      }
+      // 401이 아닌 다른 오류만 콘솔에 로그
       console.error("사용자 정보 조회 중 오류:", err);
       throw err;
     }

@@ -52,8 +52,18 @@ function Memberupdate() {
         }
       } catch (e) {
         if (isMounted) {
-          console.error("프로필 정보 불러오기 오류:", e);
-          alert("프로필 정보를 불러오지 못했습니다.");
+          // 401 오류는 토큰이 만료되었거나 유효하지 않은 경우
+          if (e.response && e.response.status === 401) {
+            // 인증이 필요한 페이지이므로 로그인 페이지로 리다이렉트
+            navigate("/login");
+          } else if (e.status === 401) {
+            // authService에서 설정한 401 오류
+            navigate("/login");
+          } else {
+            // 401이 아닌 다른 오류만 콘솔에 로그
+            console.error("프로필 정보 불러오기 오류:", e);
+            alert("프로필 정보를 불러오지 못했습니다.");
+          }
         }
       }
     })();
@@ -68,18 +78,20 @@ function Memberupdate() {
   // ✅ 타이머 복원 (페이지 로드 시)
   // -----------------------------
   useEffect(() => {
-    const savedTimerEndTime = localStorage.getItem('emailVerificationTimerEndUpdate');
+    const savedTimerEndTime = localStorage.getItem(
+      "emailVerificationTimerEndUpdate"
+    );
     if (savedTimerEndTime) {
       const endTime = parseInt(savedTimerEndTime, 10);
       const now = Date.now();
       const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
-      
+
       if (remaining > 0) {
         setTimer(remaining);
         setIsEmailSent(true);
       } else {
         // 타이머가 이미 만료된 경우
-        localStorage.removeItem('emailVerificationTimerEndUpdate');
+        localStorage.removeItem("emailVerificationTimerEndUpdate");
       }
     }
   }, []);
@@ -99,15 +111,18 @@ function Memberupdate() {
   useEffect(() => {
     if (timer > 0) {
       // localStorage에 타이머 종료 시간 저장
-      const endTime = Date.now() + (timer * 1000);
-      localStorage.setItem('emailVerificationTimerEndUpdate', endTime.toString());
+      const endTime = Date.now() + timer * 1000;
+      localStorage.setItem(
+        "emailVerificationTimerEndUpdate",
+        endTime.toString()
+      );
 
       timerRef.current = setTimeout(() => {
         setTimer(timer - 1);
       }, 1000);
     } else {
       // 타이머가 0이 되면 localStorage에서 제거
-      localStorage.removeItem('emailVerificationTimerEndUpdate');
+      localStorage.removeItem("emailVerificationTimerEndUpdate");
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
@@ -136,8 +151,11 @@ function Memberupdate() {
         setIsEmailVerified(false);
         setTimer(60); // 1분 타이머 시작
         // 타이머 종료 시간을 localStorage에 저장
-        const endTime = Date.now() + (60 * 1000);
-        localStorage.setItem('emailVerificationTimerEndUpdate', endTime.toString());
+        const endTime = Date.now() + 60 * 1000;
+        localStorage.setItem(
+          "emailVerificationTimerEndUpdate",
+          endTime.toString()
+        );
       } else {
         alert(res.message || "인증 메일 발송에 실패했습니다.");
       }
@@ -160,13 +178,16 @@ function Memberupdate() {
 
     const newEmail = `${formData.new_email_prefix}@${formData.email_domain}`;
     try {
-      const result = await authService.verifyCode(newEmail, formData.email_code);
+      const result = await authService.verifyCode(
+        newEmail,
+        formData.email_code
+      );
       if (result.success) {
         alert("이메일 인증이 완료되었습니다.");
         setIsEmailVerified(true);
         // 인증 완료 시 타이머 초기화
         setTimer(0);
-        localStorage.removeItem('emailVerificationTimerEndUpdate');
+        localStorage.removeItem("emailVerificationTimerEndUpdate");
       } else {
         alert(result.message || "인증번호가 일치하지 않습니다.");
         setIsEmailVerified(false);
@@ -263,7 +284,8 @@ function Memberupdate() {
     } catch (err) {
       setLoading(false);
       console.error("회원정보 수정 중 오류:", err);
-      const errorMessage = err.response?.data?.message || "수정 중 오류가 발생했습니다.";
+      const errorMessage =
+        err.response?.data?.message || "수정 중 오류가 발생했습니다.";
       alert(errorMessage);
     }
   };
@@ -282,254 +304,347 @@ function Memberupdate() {
             </div>
 
             <div className="join-card">
-        <form className="join-form" onSubmit={handleSubmit}>
-          {/* 아이디 (고정) */}
-          <div className="form-group">
-            <div className="input-with-icon">
-              <div className="form-icon">
-                <img src="/images/id_icon.png" alt="아이디 아이콘" />
-              </div>
-              <input
-                type="text"
-                name="user_id"
-                className="form-input"
-                value={formData.user_id}
-                placeholder="아이디(고정)"
-                readOnly
-              />
-            </div>
-          </div>
-
-          {/* 기존 비밀번호 */}
-          <div className="form-group">
-            <div className="input-with-icon">
-              <div className="form-icon">
-                <img
-                  src="/images/password_icon.png"
-                  alt="기존 비밀번호 아이콘"
-                />
-              </div>
-              <div className="password-input-wrapper">
-                <input
-                  type={showCurrentPassword ? "text" : "password"}
-                  name="current_password"
-                  className="form-input"
-                  placeholder="기존 비밀번호"
-                  value={formData.current_password}
-                  onChange={handleChange}
-                  required
-                />
-                <button
-                  type="button"
-                  className="password-toggle-btn"
-                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  aria-label={showCurrentPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
-                >
-                  {showCurrentPassword ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
-                      <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* 새 비밀번호 */}
-          <div className="form-group">
-            <div className="input-with-icon">
-              <div className="form-icon">
-                <img src="/images/password_icon.png" alt="새 비밀번호 아이콘" />
-              </div>
-              <div className="password-input-wrapper">
-                <input
-                  type={showNewPassword ? "text" : "password"}
-                  name="new_password"
-                  className="form-input"
-                  placeholder="비밀번호 수정"
-                  value={formData.new_password}
-                  onChange={handleChange}
-                />
-                <button
-                  type="button"
-                  className="password-toggle-btn"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  aria-label={showNewPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
-                >
-                  {showNewPassword ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
-                      <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* 새 비밀번호 확인 */}
-          <div className="form-group">
-            <div className="input-with-icon">
-              <div className="form-icon">
-                <img
-                  src="/images/password_icon.png"
-                  alt="비밀번호 확인 아이콘"
-                />
-              </div>
-              <div className="password-input-wrapper">
-                <input
-                  type={showNewPasswordConfirm ? "text" : "password"}
-                  name="new_password_confirm"
-                  className="form-input"
-                  placeholder="수정된 비밀번호 확인"
-                  value={formData.new_password_confirm}
-                  onChange={handleChange}
-                />
-                <button
-                  type="button"
-                  className="password-toggle-btn"
-                  onClick={() => setShowNewPasswordConfirm(!showNewPasswordConfirm)}
-                  aria-label={showNewPasswordConfirm ? "비밀번호 숨기기" : "비밀번호 보기"}
-                >
-                  {showNewPasswordConfirm ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
-                      <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="password-hint">
-            • 영문, 숫자, 특수문자를 혼합한 8~20자의 비밀번호를 입력해주세요.
-          </div>
-
-          {/* 기존 이메일 (고정) */}
-          <div className="form-group">
-            <div className="input-with-icon">
-              <div className="form-icon">
-                <img src="/images/email_icon.png" alt="이메일 아이콘" />
-              </div>
-              <input
-                type="text"
-                name="current_email"
-                className="form-input"
-                placeholder="기존 이메일(고정)"
-                value={formData.current_email}
-                readOnly
-              />
-            </div>
-          </div>
-
-          {/* 변경할 이메일 (입력 가능) — 도메인 select는 기존 코드 유지 */}
-          <div className="form-group">
-            <div className="email-input-group">
-              <div className="input-with-icon email-input-wrapper">
-                <div className="form-icon">
-                  <img src="/images/email_icon.png" alt="이메일 아이콘" />
+              <form className="join-form" onSubmit={handleSubmit}>
+                {/* 아이디 (고정) */}
+                <div className="form-group">
+                  <div className="input-with-icon">
+                    <div className="form-icon">
+                      <img src="/images/id_icon.png" alt="아이디 아이콘" />
+                    </div>
+                    <input
+                      type="text"
+                      name="user_id"
+                      className="form-input"
+                      value={formData.user_id}
+                      placeholder="아이디(고정)"
+                      readOnly
+                    />
+                  </div>
                 </div>
-                <input
-                  type="text"
-                  name="new_email_prefix"
-                  className="form-input email-input"
-                  placeholder="변경할 이메일"
-                  value={formData.new_email_prefix}
-                  onChange={handleChange}
-                />
-              </div>
 
-              {/* ==== ⬇️ 이 부분은 요청대로 '그대로' 유지합니다 ⬇️ ==== */}
-              <span className="email-at">@</span>
-              <select
-                name="email_domain"
-                className="form-select"
-                value={formData.email_domain}
-                onChange={handleChange}
-              >
-                <option value="gmail.com">gmail.com</option>
-                <option value="naver.com">naver.com</option>
-                <option value="daum.net">daum.net</option>
-                <option value="kakao.com">kakao.com</option>
-              </select>
-              {/* ==== ⬆️ 그대로 유지 끝 ⬆️ ==== */}
-
-              <button
-                type="button"
-                className="verify-button"
-                onClick={handleSendEmailCode}
-                disabled={timer > 0}
-              >
-                인증하기
-              </button>
-            </div>
-            {timer > 0 && (
-              <div className="email-timer">
-                남은 시간: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}
-              </div>
-            )}
-          </div>
-
-          {/* 🔹 인증 코드 입력 */}
-          <div className="form-group">
-            <div className="input-with-button">
-              <div className="input-with-icon">
-                <div className="form-icon">
-                  <img src="/images/email_icon.png" alt="이메일 코드 아이콘" />
+                {/* 기존 비밀번호 */}
+                <div className="form-group">
+                  <div className="input-with-icon">
+                    <div className="form-icon">
+                      <img
+                        src="/images/password_icon.png"
+                        alt="기존 비밀번호 아이콘"
+                      />
+                    </div>
+                    <div className="password-input-wrapper">
+                      <input
+                        type={showCurrentPassword ? "text" : "password"}
+                        name="current_password"
+                        className="form-input"
+                        placeholder="기존 비밀번호"
+                        value={formData.current_password}
+                        onChange={handleChange}
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="password-toggle-btn"
+                        onClick={() =>
+                          setShowCurrentPassword(!showCurrentPassword)
+                        }
+                        aria-label={
+                          showCurrentPassword
+                            ? "비밀번호 숨기기"
+                            : "비밀번호 보기"
+                        }
+                      >
+                        {showCurrentPassword ? (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                            <path
+                              fillRule="evenodd"
+                              d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        ) : (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
+                              clipRule="evenodd"
+                            />
+                            <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <input
-                  type="text"
-                  name="email_code"
-                  className="form-input"
-                  placeholder={isEmailSent ? "이메일 인증번호 입력" : "인증하기 버튼을 먼저 눌러주세요"}
-                  value={formData.email_code}
-                  onChange={handleChange}
-                  disabled={!isEmailSent}
-                  style={{
-                    backgroundColor: !isEmailSent ? '#f3f4f6' : 'transparent',
-                    cursor: !isEmailSent ? 'not-allowed' : 'text'
-                  }}
-                />
-              </div>
-              <button 
-                type="button" 
-                className="check-button" 
-                onClick={handleVerifyEmailCode}
-                disabled={!isEmailSent || isEmailVerified}
-                style={{ 
-                  backgroundColor: isEmailVerified ? '#10B981' : (!isEmailSent ? '#9ca3af' : '#3b82f6'),
-                  cursor: (!isEmailSent || isEmailVerified) ? 'not-allowed' : 'pointer'
-                }}
-              >
-                {isEmailVerified ? '✓ 인증완료' : '확인'}
-              </button>
+
+                {/* 새 비밀번호 */}
+                <div className="form-group">
+                  <div className="input-with-icon">
+                    <div className="form-icon">
+                      <img
+                        src="/images/password_icon.png"
+                        alt="새 비밀번호 아이콘"
+                      />
+                    </div>
+                    <div className="password-input-wrapper">
+                      <input
+                        type={showNewPassword ? "text" : "password"}
+                        name="new_password"
+                        className="form-input"
+                        placeholder="비밀번호 수정"
+                        value={formData.new_password}
+                        onChange={handleChange}
+                      />
+                      <button
+                        type="button"
+                        className="password-toggle-btn"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        aria-label={
+                          showNewPassword ? "비밀번호 숨기기" : "비밀번호 보기"
+                        }
+                      >
+                        {showNewPassword ? (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                            <path
+                              fillRule="evenodd"
+                              d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        ) : (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
+                              clipRule="evenodd"
+                            />
+                            <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 새 비밀번호 확인 */}
+                <div className="form-group">
+                  <div className="input-with-icon">
+                    <div className="form-icon">
+                      <img
+                        src="/images/password_icon.png"
+                        alt="비밀번호 확인 아이콘"
+                      />
+                    </div>
+                    <div className="password-input-wrapper">
+                      <input
+                        type={showNewPasswordConfirm ? "text" : "password"}
+                        name="new_password_confirm"
+                        className="form-input"
+                        placeholder="수정된 비밀번호 확인"
+                        value={formData.new_password_confirm}
+                        onChange={handleChange}
+                      />
+                      <button
+                        type="button"
+                        className="password-toggle-btn"
+                        onClick={() =>
+                          setShowNewPasswordConfirm(!showNewPasswordConfirm)
+                        }
+                        aria-label={
+                          showNewPasswordConfirm
+                            ? "비밀번호 숨기기"
+                            : "비밀번호 보기"
+                        }
+                      >
+                        {showNewPasswordConfirm ? (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                            <path
+                              fillRule="evenodd"
+                              d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        ) : (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
+                              clipRule="evenodd"
+                            />
+                            <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="password-hint">
+                  • 영문, 숫자, 특수문자를 혼합한 8~20자의 비밀번호를
+                  입력해주세요.
+                </div>
+
+                {/* 기존 이메일 (고정) */}
+                <div className="form-group">
+                  <div className="input-with-icon">
+                    <div className="form-icon">
+                      <img src="/images/email_icon.png" alt="이메일 아이콘" />
+                    </div>
+                    <input
+                      type="text"
+                      name="current_email"
+                      className="form-input"
+                      placeholder="기존 이메일(고정)"
+                      value={formData.current_email}
+                      readOnly
+                    />
+                  </div>
+                </div>
+
+                {/* 변경할 이메일 (입력 가능) — 도메인 select는 기존 코드 유지 */}
+                <div className="form-group">
+                  <div className="email-input-group">
+                    <div className="input-with-icon email-input-wrapper">
+                      <div className="form-icon">
+                        <img src="/images/email_icon.png" alt="이메일 아이콘" />
+                      </div>
+                      <input
+                        type="text"
+                        name="new_email_prefix"
+                        className="form-input email-input"
+                        placeholder="변경할 이메일"
+                        value={formData.new_email_prefix}
+                        onChange={handleChange}
+                      />
+                    </div>
+
+                    {/* ==== ⬇️ 이 부분은 요청대로 '그대로' 유지합니다 ⬇️ ==== */}
+                    <span className="email-at">@</span>
+                    <select
+                      name="email_domain"
+                      className="form-select"
+                      value={formData.email_domain}
+                      onChange={handleChange}
+                    >
+                      <option value="gmail.com">gmail.com</option>
+                      <option value="naver.com">naver.com</option>
+                      <option value="daum.net">daum.net</option>
+                      <option value="kakao.com">kakao.com</option>
+                    </select>
+                    {/* ==== ⬆️ 그대로 유지 끝 ⬆️ ==== */}
+
+                    <button
+                      type="button"
+                      className="verify-button"
+                      onClick={handleSendEmailCode}
+                      disabled={timer > 0}
+                    >
+                      인증하기
+                    </button>
+                  </div>
+                  {timer > 0 && (
+                    <div className="email-timer">
+                      남은 시간: {Math.floor(timer / 60)}:
+                      {String(timer % 60).padStart(2, "0")}
+                    </div>
+                  )}
+                </div>
+
+                {/* 🔹 인증 코드 입력 */}
+                <div className="form-group">
+                  <div className="input-with-button">
+                    <div className="input-with-icon">
+                      <div className="form-icon">
+                        <img
+                          src="/images/email_icon.png"
+                          alt="이메일 코드 아이콘"
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        name="email_code"
+                        className="form-input"
+                        placeholder={
+                          isEmailSent
+                            ? "이메일 인증번호 입력"
+                            : "인증하기 버튼을 먼저 눌러주세요"
+                        }
+                        value={formData.email_code}
+                        onChange={handleChange}
+                        disabled={!isEmailSent}
+                        style={{
+                          backgroundColor: !isEmailSent
+                            ? "#f3f4f6"
+                            : "transparent",
+                          cursor: !isEmailSent ? "not-allowed" : "text",
+                        }}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      className="check-button"
+                      onClick={handleVerifyEmailCode}
+                      disabled={!isEmailSent || isEmailVerified}
+                      style={{
+                        backgroundColor: isEmailVerified
+                          ? "#10B981"
+                          : !isEmailSent
+                          ? "#9ca3af"
+                          : "#3b82f6",
+                        cursor:
+                          !isEmailSent || isEmailVerified
+                            ? "not-allowed"
+                            : "pointer",
+                      }}
+                    >
+                      {isEmailVerified ? "✓ 인증완료" : "확인"}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="join-button"
+                  disabled={loading}
+                >
+                  {loading ? "저장 중..." : "저장"}
+                </button>
+              </form>
             </div>
           </div>
 
-          <button type="submit" className="join-button" disabled={loading}>
-            {loading ? "저장 중..." : "저장"}
-          </button>
-        </form>
-            </div>
-          </div>
-          
           {/* ===================== FOOTER ===================== */}
           <Footer />
         </div>
@@ -539,4 +654,3 @@ function Memberupdate() {
 }
 
 export default Memberupdate;
-

@@ -27,10 +27,14 @@ function ProtectedRoute({ children }) {
           setLoading(false);
         }
       } catch (error) {
+        // 401 오류는 토큰이 만료되었거나 유효하지 않은 정상적인 상황
+        // 콘솔에 로그하지 않음
         if (isMounted) {
           setIsAuthenticated(false);
           setLoading(false);
+          // 토큰은 이미 api 인터셉터에서 제거되었을 수 있음
           localStorage.removeItem("token");
+          localStorage.removeItem("userEmail");
         }
       }
     };

@@ -1,55 +1,21 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  Chart,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  RadialLinearScale,
-  Tooltip,
-  Legend,
-  Filler,
-  BarController,
-  LineController,
-  RadarController,
-} from "chart.js";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import html2pdf from "html2pdf.js";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
 import Footer from "../../components/layout/Footer/Footer";
 import dashboardService from "../../services/dashboardService";
+import DailyTrendChart from "../../components/charts/DailyTrendChart";
+import RadarChart from "../../components/charts/RadarChart";
+import SplitBarChart from "../../components/charts/SplitBarChart";
 import "../../styles/common.css";
 import "./dashboard.css";
 import "../../components/layout/sidebar/sidebar.css";
 
-// Register Chart.js components
-Chart.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  RadialLinearScale,
-  Tooltip,
-  Legend,
-  Filler,
-  BarController,
-  LineController,
-  RadarController
-);
-
 function Dashboard() {
   const navigate = useNavigate();
-  const dailyTrendChartRef = useRef(null);
-  const radarChartRef = useRef(null);
-  const splitBarChartRef = useRef(null);
+  const [searchParams] = useSearchParams();
   const dashboardContentRef = useRef(null);
   const downloadBtnRef = useRef(null);
-
-  const dailyTrendChartInstance = useRef(null);
-  const radarChartInstance = useRef(null);
-  const splitBarChartInstance = useRef(null);
 
   // State for dashboard data
   const [dashboardData, setDashboardData] = useState(null);
@@ -57,13 +23,11 @@ function Dashboard() {
   const [expandedReviews, setExpandedReviews] = useState(new Set());
   const fetchInProgress = useRef(false);
 
-  // Color constants
-  const primaryColor = "#5B8EFF";
-  const neutralColor = "#CBD5E1";
-  const newReviewColor = "#111827";
-  const positiveHighlight = "#10B981";
-  const negativeHighlight = "#EF4444";
-  const fontColor = "#333333";
+  // Get productId from URL query parameter or use default
+  const productId = useMemo(() => {
+    const idFromUrl = searchParams.get("productId");
+    return idFromUrl ? parseInt(idFromUrl, 10) : 1007; // 기본값 1007
+  }, [searchParams]);
 
   // Fetch dashboard data
   useEffect(() => {
@@ -85,16 +49,54 @@ function Dashboard() {
       if (isMounted) {
         setLoading(true);
       }
-      const result = await dashboardService.getDashboardData();
-      if (isMounted) {
-        if (result.success) {
-          setDashboardData(result.data);
-        } else {
-          alert(result.message || "데이터를 불러오는데 실패했습니다.");
+
+      try {
+        // 새로운 API를 사용하여 reviews와 insights를 각각 호출
+        const [reviewsResult, insightsResult] = await Promise.all([
+          dashboardService.getProductReviews(productId),
+          dashboardService.getProductInsights(productId),
+        ]);
+
+        if (!isMounted) {
+          fetchInProgress.current = false;
+          return;
         }
-        setLoading(false);
+
+        if (!reviewsResult.success || !insightsResult.success) {
+          const errorMsg = reviewsResult.message || insightsResult.message || "데이터를 불러오는데 실패했습니다.";
+          alert(errorMsg);
+          setLoading(false);
+          fetchInProgress.current = false;
+          return;
+        }
+
+        // 기존 데이터 구조에 맞게 변환
+        const reviewsData = reviewsResult.data?.reviews || reviewsResult.data || [];
+        const insightsData = insightsResult.data || {};
+
+        const combinedData = {
+          reviews: Array.isArray(reviewsData) ? reviewsData : (Array.isArray(reviewsResult.data) ? reviewsResult.data : []),
+          insights: insightsResult.data?.insights || [],
+          analysis: insightsData?.analysis || {},
+          stats: insightsData?.stats || {},
+          dailyTrend: insightsData?.dailyTrend || [],
+          keywords: insightsData?.keywords || [],
+          insight: insightsData?.insight || insightsData || {},
+        };
+
+        if (isMounted) {
+          setDashboardData(combinedData);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("대시보드 데이터 조회 오류:", error);
+        if (isMounted) {
+          alert("데이터를 불러오는데 실패했습니다.");
+          setLoading(false);
+        }
+      } finally {
+        fetchInProgress.current = false;
       }
-      fetchInProgress.current = false;
     };
     fetchData();
 
@@ -104,7 +106,7 @@ function Dashboard() {
       // cleanup에서 fetchInProgress를 false로 설정하지 않음
       // (요청이 완료된 후에만 false로 설정되어야 함)
     };
-  }, []);
+  }, [productId]);
 
   // 랜덤 리뷰 10개를 메모이제이션 (dashboardData.reviews가 변경될 때만 재생성)
   const randomReviews = useMemo(() => {
@@ -184,358 +186,6 @@ function Dashboard() {
     [];
   
   const correlationMatrix = {}; // 키워드 데이터로부터 계산하거나 빈 객체로 유지
-
-
-  // Initialize and update charts when data changes
-  useEffect(() => {
-    if (loading || !dashboardData) return;
-
-    // Destroy existing charts
-    if (dailyTrendChartInstance.current) {
-      dailyTrendChartInstance.current.destroy();
-      dailyTrendChartInstance.current = null;
-    }
-    if (radarChartInstance.current) {
-      radarChartInstance.current.destroy();
-      radarChartInstance.current = null;
-    }
-    if (splitBarChartInstance.current) {
-      splitBarChartInstance.current.destroy();
-      splitBarChartInstance.current = null;
-    }
-
-    let isMounted = true;
-
-    const initializeCharts = () => {
-      try {
-        if (
-          dailyTrendChartRef.current &&
-          dailyTrendData.dates.length > 0 &&
-          !dailyTrendChartInstance.current &&
-          isMounted
-        ) {
-          const ctx = dailyTrendChartRef.current.getContext("2d");
-          if (ctx) {
-            dailyTrendChartInstance.current = new Chart(ctx, {
-              type: "bar",
-              data: {
-                labels: dailyTrendData.dates,
-                datasets: [
-                  {
-                    label: "긍정 비율 (%)",
-                    data: dailyTrendData.positive,
-                    backgroundColor: primaryColor,
-                    yAxisID: "y",
-                    stack: "Stack 0",
-                  },
-                  {
-                    label: "부정 비율 및 기타 (%)",
-                    data: dailyTrendData.negative,
-                    backgroundColor: neutralColor,
-                    yAxisID: "y",
-                    stack: "Stack 0",
-                  },
-                  {
-                    type: "line",
-                    label: "해당일 신규 리뷰 수 (건수)",
-                    data: dailyTrendData.newReviews,
-                    borderColor: newReviewColor,
-                    borderWidth: 2,
-                    pointBackgroundColor: newReviewColor,
-                    yAxisID: "y1",
-                    fill: false,
-                    tension: 0.3,
-                  },
-                ],
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                aspectRatio: 1.5,
-                layout: {
-                  padding: {
-                    top: 20,
-                  },
-                },
-                plugins: {
-                  legend: {
-                    position: "top",
-                    labels: { color: fontColor },
-                  },
-                  tooltip: {
-                    mode: "index",
-                    intersect: false,
-                  },
-                },
-                scales: {
-                  x: {
-                    stacked: true,
-                    grid: { display: false },
-                    ticks: {
-                      padding: 10,
-                    },
-                  },
-                  y: {
-                    stacked: true,
-                    position: "left",
-                    title: {
-                      display: true,
-                      text: "비율 (%)",
-                      color: primaryColor,
-                    },
-                    max: 100,
-                    ticks: { color: primaryColor },
-                  },
-                  y1: {
-                    position: "right",
-                    title: {
-                      display: true,
-                      text: "신규 리뷰 수 (건수)",
-                      color: newReviewColor,
-                    },
-                    grid: { drawOnChartArea: false },
-                    ticks: { color: newReviewColor },
-                  },
-                },
-              },
-            });
-          }
-        }
-
-        if (
-          radarChartRef.current && 
-          radarData.labels.length > 0 &&
-          !radarChartInstance.current && 
-          isMounted
-        ) {
-          const ctx = radarChartRef.current.getContext("2d");
-          if (ctx) {
-            radarChartInstance.current = new Chart(ctx, {
-              type: "radar",
-              data: {
-                labels: radarData.labels,
-                datasets: [
-                  {
-                    label: "긍정 비율",
-                    data: radarData.positive,
-                    backgroundColor: "rgba(91, 142, 255, 0.4)",
-                    borderColor: primaryColor,
-                    pointBackgroundColor: primaryColor,
-                    pointBorderColor: "#fff",
-                    pointHoverBackgroundColor: "#fff",
-                    pointHoverBorderColor: primaryColor,
-                    borderWidth: 2,
-                  },
-                  {
-                    label: "부정 비율",
-                    data: radarData.negative,
-                    backgroundColor: "rgba(203, 213, 225, 0.4)",
-                    borderColor: neutralColor,
-                    pointBackgroundColor: neutralColor,
-                    pointBorderColor: "#fff",
-                    pointHoverBackgroundColor: "#fff",
-                    pointHoverBorderColor: neutralColor,
-                    borderWidth: 2,
-                  },
-                ],
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: {
-                  duration: 1000,
-                },
-                plugins: {
-                  legend: {
-                    position: "top",
-                    labels: { 
-                      color: fontColor,
-                      font: {
-                        size: 12,
-                      },
-                      usePointStyle: true,
-                      padding: 15,
-                    },
-                  },
-                  tooltip: {
-                    enabled: true,
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: 12,
-                    titleFont: {
-                      size: 14,
-                      weight: 'bold',
-                    },
-                    bodyFont: {
-                      size: 12,
-                    },
-                  },
-                },
-                scales: {
-                  r: {
-                    beginAtZero: true,
-                    angleLines: { 
-                      color: "#E5E7EB",
-                      lineWidth: 1.5,
-                    },
-                    grid: { 
-                      color: "#E5E7EB",
-                      lineWidth: 1,
-                    },
-                    pointLabels: { 
-                      color: fontColor, 
-                      font: { 
-                        size: 13,
-                        weight: 'bold',
-                        family: "'Pretendard', 'Noto Sans KR', sans-serif",
-                      },
-                      padding: 10,
-                    },
-                    min: 0,
-                    max: 100,
-                    ticks: {
-                      stepSize: 20,
-                      backdropColor: "rgba(255, 255, 255, 0.9)",
-                      color: fontColor,
-                      font: {
-                        size: 11,
-                        family: "'Pretendard', 'Noto Sans KR', sans-serif",
-                      },
-                      showLabelBackdrop: true,
-                      z: 10,
-                    },
-                  },
-                },
-              },
-            });
-          }
-        }
-
-        if (
-          splitBarChartRef.current &&
-          !splitBarChartInstance.current &&
-          isMounted
-        ) {
-          const ctx = splitBarChartRef.current.getContext("2d");
-          if (ctx) {
-            const labels = splitBarRawData.map((d) => d.label);
-            const negData = splitBarRawData.map((d) => -d.negRatio);
-            const posData = splitBarRawData.map((d) => d.posRatio);
-
-            splitBarChartInstance.current = new Chart(ctx, {
-              type: "bar",
-              data: {
-                labels: labels,
-                datasets: [
-                  {
-                    label: "부정 비율 (왼쪽)",
-                    data: negData,
-                    backgroundColor: neutralColor,
-                    barPercentage: 0.7,
-                  },
-                  {
-                    label: "긍정 비율 (오른쪽)",
-                    data: posData,
-                    backgroundColor: primaryColor,
-                    barPercentage: 0.7,
-                  },
-                ],
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                indexAxis: "y",
-                plugins: {
-                  legend: {
-                    position: "top",
-                    labels: { color: fontColor },
-                  },
-                  tooltip: {
-                    callbacks: {
-                      label: function (context) {
-                        const rawValue = Math.abs(context.raw);
-                        const count =
-                          context.datasetIndex === 0
-                            ? splitBarRawData[context.dataIndex].negCount
-                            : splitBarRawData[context.dataIndex].posCount;
-                        return `${context.dataset.label}: ${rawValue}% (${count}개)`;
-                      },
-                    },
-                  },
-                },
-                scales: {
-                  x: {
-                    stacked: true,
-                    min: -100,
-                    max: 100,
-                    ticks: {
-                      callback: function (value) {
-                        return Math.abs(value) + "%";
-                      },
-                      color: fontColor,
-                    },
-                    title: {
-                      display: true,
-                      text: "감정 비율",
-                    },
-                    grid: {
-                      color: (context) =>
-                        context.tick.value === 0 ? "#000" : "#E5E7EB",
-                    },
-                  },
-                  y: {
-                    stacked: true,
-                    grid: { display: false },
-                    ticks: { color: fontColor },
-                  },
-                },
-              },
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Chart initialization error:", error);
-      }
-    };
-
-    // Delay initialization slightly to ensure DOM is ready
-    const timeoutId = setTimeout(() => {
-      if (isMounted) {
-        initializeCharts();
-      }
-    }, 500);
-
-    // Cleanup
-    return () => {
-      isMounted = false;
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      if (dailyTrendChartInstance.current) {
-        try {
-          dailyTrendChartInstance.current.destroy();
-        } catch (error) {
-          console.error("Error destroying daily trend chart:", error);
-        }
-        dailyTrendChartInstance.current = null;
-      }
-      if (radarChartInstance.current) {
-        try {
-          radarChartInstance.current.destroy();
-        } catch (error) {
-          console.error("Error destroying radar chart:", error);
-        }
-        radarChartInstance.current = null;
-      }
-      if (splitBarChartInstance.current) {
-        try {
-          splitBarChartInstance.current.destroy();
-        } catch (error) {
-          console.error("Error destroying split bar chart:", error);
-        }
-        splitBarChartInstance.current = null;
-      }
-    };
-  }, [dashboardData, loading, dailyTrendData, radarData]);
 
   const handlePDFDownload = () => {
     if (!dashboardContentRef.current) return;
@@ -846,65 +496,32 @@ function Dashboard() {
               <h2 className="text-xl font-semibold mb-4">
                 📊 일자별 긍·부정 포함 리뷰 비율
               </h2>
-              {dailyTrendData.dates.length > 0 ? (
-                <>
-                  <div className="relative h-96 flex-1">
-                    <canvas
-                      ref={dailyTrendChartRef}
-                      className="chart-canvas"
-                    ></canvas>
-                  </div>
-                  <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
-                    <h4 className="font-bold text-gray-700 mb-1">📈 결과 요약:</h4>
-                    <p>
-                      {loading ? "데이터 로딩 중..." : 
-                       dashboardData?.analysis ? 
-                       `긍정 비율: ${Math.round(dashboardData.analysis.positiveRatio || 0)}%, 부정 비율: ${Math.round(dashboardData.analysis.negativeRatio || 0)}%. 총 리뷰 수: ${dashboardData?.stats?.totalReviews || 0}건.` :
-                       "분석 데이터가 없습니다."}
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <div className="relative flex-1 flex items-center justify-center" style={{ minHeight: '350px', width: '100%' }}>
-                  <div className="text-center text-gray-500">
-                    <p className="text-lg font-medium mb-2">데이터가 없습니다</p>
-                    <p className="text-sm">일자별 트렌드 데이터를 불러올 수 없습니다.</p>
-                  </div>
-                </div>
-              )}
+              <DailyTrendChart data={dailyTrendData} loading={loading} />
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
+                <h4 className="font-bold text-gray-700 mb-1">📈 결과 요약:</h4>
+                <p>
+                  {loading ? "데이터 로딩 중..." : 
+                   dashboardData?.analysis ? 
+                   `긍정 비율: ${Math.round(dashboardData.analysis.positiveRatio || 0)}%, 부정 비율: ${Math.round(dashboardData.analysis.negativeRatio || 0)}%. 총 리뷰 수: ${dashboardData?.stats?.totalReviews || 0}건.` :
+                   "분석 데이터가 없습니다."}
+                </p>
+              </div>
             </div>
 
             <div className="card lg:col-span-1 flex flex-col">
               <h2 className="text-xl font-semibold mb-4">
                 🕸️ 속성별 감정 밸런스
               </h2>
-              {radarData.labels.length > 0 ? (
-                <>
-                  <div className="relative flex-1" style={{ minHeight: '350px', width: '100%' }}>
-                    <canvas
-                      ref={radarChartRef}
-                      className="chart-canvas"
-                      style={{ width: '100%', height: '100%' }}
-                    ></canvas>
-                  </div>
-                  <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
-                    <h4 className="font-bold text-gray-700 mb-1">📈 해석:</h4>
-                    <p>
-                      {loading ? "데이터 로딩 중..." : 
-                       dashboardData?.analysis ?
-                       `긍정 비율: ${Math.round(dashboardData.analysis.positiveRatio || 0)}%, 부정 비율: ${Math.round(dashboardData.analysis.negativeRatio || 0)}%. 평균 평점: ${parseFloat(dashboardData?.insight?.avg_rating || dashboardData.analysis.avgRating || 0).toFixed(1)}/5.0` :
-                       "분석 데이터가 없습니다."}
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <div className="relative flex-1 flex items-center justify-center" style={{ minHeight: '350px', width: '100%' }}>
-                  <div className="text-center text-gray-500">
-                    <p className="text-lg font-medium mb-2">데이터가 없습니다</p>
-                    <p className="text-sm">키워드 데이터를 불러올 수 없습니다.</p>
-                  </div>
-                </div>
-              )}
+              <RadarChart data={radarData} loading={loading} />
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
+                <h4 className="font-bold text-gray-700 mb-1">📈 해석:</h4>
+                <p>
+                  {loading ? "데이터 로딩 중..." : 
+                   dashboardData?.analysis ?
+                   `긍정 비율: ${Math.round(dashboardData.analysis.positiveRatio || 0)}%, 부정 비율: ${Math.round(dashboardData.analysis.negativeRatio || 0)}%. 평균 평점: ${parseFloat(dashboardData?.insight?.avg_rating || dashboardData.analysis.avgRating || 0).toFixed(1)}/5.0` :
+                   "분석 데이터가 없습니다."}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -914,9 +531,7 @@ function Dashboard() {
               <h2 className="text-xl font-semibold mb-4">
                 📊 속성별 긍·부정 분기형 막대 그래프
               </h2>
-              <div className="relative h-96">
-                <canvas ref={splitBarChartRef}></canvas>
-              </div>
+              <SplitBarChart data={splitBarRawData} loading={loading} />
             </div>
 
             <div className="card lg:col-span-1" id="heatmap-card">

@@ -138,3 +138,48 @@
 }
 
 /* result-message 스타일은 common.css로 이동 */
+
+/* ================================
+   공통: 아이콘 + 입력 필드 가로 정렬
+   ================================ */
+
+.input-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  padding: 0;
+  transition: box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input-with-icon:focus-within {
+  background: #ffffff;
+  border-color: #c8e3ff;
+  box-shadow: 0 0 0 3px rgba(200, 227, 255, 0.2);
+}
+
+.input-with-icon .form-icon {
+  margin-left: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.input-with-icon .form-icon img {
+  width: 18px;
+  height: 18px;
+}
+
+.input-with-icon .form-input {
+  padding: 6px 16px;
+  background: transparent;
+  border-radius: 8px;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}

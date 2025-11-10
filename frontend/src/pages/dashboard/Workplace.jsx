@@ -3,7 +3,11 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
 import Footer from "../../components/layout/Footer/Footer";
 import dashboardService from "../../services/dashboardService";
+import ProductModal from "../../components/ProductModal";
+import ProductInfoForm from "../../components/ProductInfoForm";
+import ProductUploadForm from "../../components/ProductUploadForm";
 import "../../styles/common.css";
+import "../../styles/modal.css";
 import "./dashboard.css";
 import "../../components/layout/sidebar/sidebar.css";
 import "./workplace.css";
@@ -20,8 +24,51 @@ function Workplace() {
   const [totalCount, setTotalCount] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const fetchInProgress = useRef(false);
+  const [modalStep, setModalStep] = useState(null); // 'info' | 'upload' | null
+  const [productFormData, setProductFormData] = useState(null);
+  
+  // 사이드바 상태를 localStorage에서 읽어오기
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem("sidebarOpen");
+    return saved !== null ? saved === "true" : true;
+  });
 
   const productsPerPage = 10;
+
+  // 사이드바 상태 변경 감지 (CustomEvent 사용)
+  useEffect(() => {
+    const handleSidebarToggle = (e) => {
+      setSidebarOpen(e.detail.isOpen);
+    };
+
+    // CustomEvent 리스너 등록
+    window.addEventListener("sidebar-toggle", handleSidebarToggle);
+    
+    // localStorage 변경 감지 (다른 탭에서 변경된 경우)
+    const handleStorageChange = (e) => {
+      if (e.key === "sidebarOpen") {
+        setSidebarOpen(e.newValue === "true");
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+
+    // 초기 로드 시 localStorage에서 상태 확인
+    const checkSidebarState = () => {
+      const saved = localStorage.getItem("sidebarOpen");
+      if (saved !== null) {
+        setSidebarOpen(saved === "true");
+      }
+    };
+    
+    // 주기적으로 상태 확인 (같은 탭에서의 변경 감지)
+    const interval = setInterval(checkSidebarState, 200);
+
+    return () => {
+      window.removeEventListener("sidebar-toggle", handleSidebarToggle);
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   // 제품 목록 가져오기 (useEffect)
   useEffect(() => {
@@ -170,9 +217,22 @@ function Workplace() {
     // 선택된 제품 다운로드 로직 구현
   };
 
-  // 분석 버튼 클릭
-  const handleAnalyze = () => {
-    // 분석 페이지로 이동하거나 모달 열기
+  // Add 버튼 클릭 - Step 1 모달 열기
+  const handleAdd = () => {
+    setModalStep("info");
+    setProductFormData(null);
+  };
+
+  // Step 1에서 Next 클릭 - Step 2로 이동
+  const handleNextStep = (formData) => {
+    setProductFormData(formData);
+    setModalStep("upload");
+  };
+
+  // 모달 닫기
+  const handleCloseModal = () => {
+    setModalStep(null);
+    setProductFormData(null);
   };
 
   // 제품 삭제
@@ -191,7 +251,7 @@ function Workplace() {
   };
 
   return (
-    <div className="dashboard-page sidebar-open">
+    <div className={`dashboard-page ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
       <Sidebar />
       <div className="dashboard-wrapper">
         <div className="dashboard-content">
@@ -371,7 +431,7 @@ function Workplace() {
               <button className="download-btn" onClick={handleDownload}>
                 Download
               </button>
-              <button className="analyze-btn" onClick={handleAnalyze}>
+              <button className="add-btn" onClick={handleAdd}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -386,7 +446,7 @@ function Workplace() {
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-                Analyze
+                Add
               </button>
             </div>
           </div>
@@ -396,6 +456,26 @@ function Workplace() {
         <Footer />
       </div>
       </div>
+
+      {/* Step 1: Product Information Modal */}
+      {modalStep === "info" && (
+        <ProductModal onClose={handleCloseModal}>
+          <ProductInfoForm
+            onNext={handleNextStep}
+            onClose={handleCloseModal}
+          />
+        </ProductModal>
+      )}
+
+      {/* Step 2: Upload Files Modal */}
+      {modalStep === "upload" && (
+        <ProductModal onClose={handleCloseModal}>
+          <ProductUploadForm
+            onClose={handleCloseModal}
+            formData={productFormData}
+          />
+        </ProductModal>
+      )}
     </div>
   );
 }

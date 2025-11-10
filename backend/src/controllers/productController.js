@@ -1,5 +1,6 @@
 import db from "../models/db.js";
 import { getProductDashboardData as getProductDashboard } from "./dashboardController.js";
+import { analyzeReviews } from "./reviewController.js"; // ✅ 실제 리뷰 분석 함수 import
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -34,14 +35,24 @@ export const getProductById = async (req, res) => {
 // ==============================
 export const productList = async (req, res) => {
   try {
-    // TODO: 제품 목록 조회 로직 구현
-    // - 카테고리별 필터링
-    // - 페이지네이션
-    // - 검색 기능
-    
-    res.json({ 
+    const [rows] = await db.query(`
+      SELECT 
+        p.product_id,
+        p.product_name,
+        p.brand,
+        c.category_name,
+        IFNULL(d.product_score, 0) AS product_score,
+        IFNULL(d.total_reviews, 0) AS total_reviews,
+        d.updated_at
+      FROM tb_product p
+      LEFT JOIN tb_productCategory c ON p.category_id = c.category_id
+      LEFT JOIN tb_productDashboard d ON p.product_id = d.product_id
+      ORDER BY p.product_id DESC
+    `);
+
+    res.json({
       message: "제품 목록 조회 성공",
-      products: []
+      products: rows
     });
   } catch (err) {
     console.error("❌ 제품 목록 조회 오류:", err);
@@ -49,8 +60,9 @@ export const productList = async (req, res) => {
   }
 };
 
-// 대시보드 조회는 dashboardController.getProductDashboardData를 사용
-// dashboard 별칭: 라우트 체인에서 사용하기 편하도록 동일 동작으로 래핑
+// ==============================
+// 📊 제품 대시보드 조회
+// ==============================
 export const dashboard = (req, res) => getProductDashboard(req, res);
 
 // ==============================
@@ -59,20 +71,15 @@ export const dashboard = (req, res) => getProductDashboard(req, res);
 export const refreshDashboard = async (req, res, next) => {
   try {
     const { id: productId } = req.params;
-    
+
     if (!productId) {
       return res.status(400).json({ message: "제품 ID가 필요합니다." });
     }
 
-    // TODO: 대시보드 새로고침 로직 구현
-    // - 최신 리뷰 데이터 수집
-    // - 캐시 무효화
-    // - 분석 데이터 업데이트
-    
+    // TODO: 향후 캐시 무효화 / 데이터 재갱신 로직 추가
     console.log(`🔄 대시보드 새로고침 완료 (productId=${productId})`);
-    
-    // 다음 미들웨어(dashboard)로 전달
-    next();
+
+    next(); // 다음 미들웨어(dashboard)로 이동
   } catch (err) {
     console.error("❌ 대시보드 새로고침 오류:", err);
     res.status(500).json({ message: "대시보드 새로고침 중 서버 오류가 발생했습니다." });
@@ -86,27 +93,34 @@ export const keywordReview = async (req, res) => {
   try {
     const { id: productId } = req.params;
     const { keyword, page = 1, limit = 20 } = req.query;
-    
+
     if (!productId) {
       return res.status(400).json({ message: "제품 ID가 필요합니다." });
     }
 
-    // TODO: 키워드별 리뷰 조회 로직 구현
-    // - 특정 키워드가 포함된 리뷰 필터링
-    // - 페이지네이션 적용
-    // - 감정별 분류
-    // - 날짜별 정렬
-    
+    const offset = (page - 1) * limit;
+
+    const [rows] = await db.query(`
+      SELECT 
+        r.review_id,
+        r.review_text,
+        ra.sentiment,
+        k.keyword_text
+      FROM tb_review r
+      JOIN tb_reviewAnalysis ra ON r.review_id = ra.review_id
+      JOIN tb_keyword k ON ra.keyword_id = k.keyword_id
+      WHERE r.product_id = ? AND k.keyword_text = ?
+      ORDER BY r.review_id DESC
+      LIMIT ?, ?
+    `, [productId, keyword, offset, parseInt(limit)]);
+
     res.json({
       message: "키워드별 리뷰 조회 성공",
       productId,
       keyword,
-      reviews: [],
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total: 0
-      }
+      count: rows.length,
+      reviews: rows,
+      pagination: { page: parseInt(page), limit: parseInt(limit) }
     });
   } catch (err) {
     console.error("❌ 키워드별 리뷰 조회 오류:", err);
@@ -120,7 +134,7 @@ export const keywordReview = async (req, res) => {
 export const analysisRequest = async (req, res) => {
   try {
     const { id: productId } = req.params;
-    
+
     if (!productId) {
       return res.status(400).json({ message: "제품 ID가 필요합니다." });
     }
@@ -202,20 +216,18 @@ export const analysisRequest = async (req, res) => {
 export const deleteProduct = async (req, res) => {
   try {
     const { id: productId } = req.params;
-    
+
     if (!productId) {
       return res.status(400).json({ message: "제품 ID가 필요합니다." });
     }
 
-    // TODO: 제품 삭제 로직 구현
-    // - 권한 확인 (관리자 또는 소유자)
-    // - 관련 데이터 삭제 (리뷰, 분석 결과, 인사이트 등)
-    // - 외래키 제약 조건 처리
-    
+    await db.query("DELETE FROM tb_product WHERE product_id = ?", [productId]);
+
     res.json({
       message: "제품이 성공적으로 삭제되었습니다.",
       productId
     });
+
   } catch (err) {
     console.error("❌ 제품 삭제 오류:", err);
     res.status(500).json({ message: "제품 삭제 중 서버 오류가 발생했습니다." });
@@ -228,24 +240,21 @@ export const deleteProduct = async (req, res) => {
 export const createProduct = async (req, res) => {
   try {
     const { product_name, brand, category_id } = req.body;
-    
+
     if (!product_name || !category_id) {
       return res.status(400).json({ message: "제품명과 카테고리는 필수입니다." });
     }
 
-    // TODO: 제품 생성 로직 구현
-    // - 제품 정보 검증
-    // - 중복 제품 확인
-    // - 데이터베이스 저장
-    
+    const [result] = await db.query(
+      "INSERT INTO tb_product (product_name, brand, category_id, created_at) VALUES (?, ?, ?, NOW())",
+      [product_name, brand || null, category_id]
+    );
+
     res.status(201).json({
       message: "제품이 성공적으로 생성되었습니다.",
-      product: {
-        product_name,
-        brand,
-        category_id
-      }
+      product: { product_id: result.insertId, product_name, brand, category_id }
     });
+
   } catch (err) {
     console.error("❌ 제품 생성 오류:", err);
     res.status(500).json({ message: "제품 생성 중 서버 오류가 발생했습니다." });
@@ -259,26 +268,24 @@ export const updateProduct = async (req, res) => {
   try {
     const { id: productId } = req.params;
     const { product_name, brand, category_id } = req.body;
-    
+
     if (!productId) {
       return res.status(400).json({ message: "제품 ID가 필요합니다." });
     }
 
-    // TODO: 제품 정보 수정 로직 구현
-    // - 제품 존재 확인
-    // - 권한 확인
-    // - 수정 데이터 검증
-    // - 데이터베이스 업데이트
-    
+    await db.query(
+      `UPDATE tb_product 
+       SET product_name = ?, brand = ?, category_id = ?, updated_at = NOW()
+       WHERE product_id = ?`,
+      [product_name, brand, category_id, productId]
+    );
+
     res.json({
       message: "제품 정보가 성공적으로 수정되었습니다.",
       productId,
-      updated: {
-        product_name,
-        brand,
-        category_id
-      }
+      updated: { product_name, brand, category_id }
     });
+
   } catch (err) {
     console.error("❌ 제품 정보 수정 오류:", err);
     res.status(500).json({ message: "제품 정보 수정 중 서버 오류가 발생했습니다." });
@@ -286,6 +293,5 @@ export const updateProduct = async (req, res) => {
 };
 
 export const test = async (req, res) => {
-
-}
-    
+  res.json({ message: "제품 테스트 API 작동 중" });
+};

@@ -36,20 +36,32 @@ function Memberupdate() {
   const timerRef = useRef(null);
 
   useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+
     // 현재 로그인 사용자 정보 조회
     (async () => {
       try {
         const me = await authService.getMe(); // { id, login_id, email }
-        setFormData((p) => ({
-          ...p,
-          user_id: me?.login_id || "",
-          current_email: me?.email || "",
-        }));
+        if (isMounted) {
+          setFormData((p) => ({
+            ...p,
+            user_id: me?.login_id || "",
+            current_email: me?.email || "",
+          }));
+        }
       } catch (e) {
-        console.error("프로필 정보 불러오기 오류:", e);
-        alert("프로필 정보를 불러오지 못했습니다.");
+        if (isMounted) {
+          console.error("프로필 정보 불러오기 오류:", e);
+          alert("프로필 정보를 불러오지 못했습니다.");
+        }
       }
     })();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
   }, []);
 
   // -----------------------------

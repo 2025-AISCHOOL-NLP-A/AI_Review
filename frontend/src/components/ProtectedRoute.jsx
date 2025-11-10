@@ -7,26 +7,40 @@ function ProtectedRoute({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
       if (!token) {
-        setIsAuthenticated(false);
-        setLoading(false);
+        if (isMounted) {
+          setIsAuthenticated(false);
+          setLoading(false);
+        }
         return;
       }
 
       try {
         await authService.getMe();
-        setIsAuthenticated(true);
+        if (isMounted) {
+          setIsAuthenticated(true);
+          setLoading(false);
+        }
       } catch (error) {
-        setIsAuthenticated(false);
-        localStorage.removeItem("token");
-      } finally {
-        setLoading(false);
+        if (isMounted) {
+          setIsAuthenticated(false);
+          setLoading(false);
+          localStorage.removeItem("token");
+        }
       }
     };
 
     checkAuth();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
   }, []);
 
   if (loading) {

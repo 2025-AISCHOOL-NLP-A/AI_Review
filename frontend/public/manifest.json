@@ -3,20 +3,16 @@
   "name": "AI 리뷰 분석 서비스",
   "icons": [
     {
-      "src": "images/logo.png",
-      "sizes": "any",
+      "src": "logo192.png",
       "type": "image/png",
-      "purpose": "any maskable"
+      "sizes": "192x192",
+      "purpose": "any"
     },
     {
-      "src": "images/logo.png",
+      "src": "logo512.png",
       "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "images/logo.png",
-      "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any"
     }
   ],
   "start_url": ".",

@@ -88,9 +88,9 @@ function LoginFind() {
       <div className="left-section"></div>
       <div className="right-section">
         <div className="find-container">
-          <div className="logo">
+          <Link to="/" className="logo">
             <img src="/images/logo.png" alt="logo" />
-          </div>
+          </Link>
 
           {/* 🔹 아이디 찾기 */}
           <div className="find-card">

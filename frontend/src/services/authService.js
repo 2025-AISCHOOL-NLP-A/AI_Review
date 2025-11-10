@@ -70,11 +70,46 @@ const authService = {
   /** ✉️ 이메일 인증번호 발송 */
   async sendVerification(email) {
     try {
+      // 이메일 형식 검증
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || !emailRegex.test(email)) {
+        return { success: false, message: "올바른 이메일 형식이 아닙니다." };
+      }
+
       const res = await api.post("/auth/send-verification", { email });
-      return { success: true, message: res.data.message };
+      
+      if (res.data && res.data.success !== false) {
+        return { success: true, message: res.data.message || "이메일로 인증번호를 전송했습니다." };
+      } else {
+        return { success: false, message: res.data?.message || "이메일 발송에 실패했습니다." };
+      }
     } catch (err) {
-      const msg = err.response?.data?.message || "이메일 발송 중 오류가 발생했습니다.";
-      return { success: false, message: msg };
+      console.error("이메일 발송 오류:", err);
+      console.error("에러 응답:", err.response?.data);
+      
+      // 에러 응답이 있는 경우
+      if (err.response) {
+        const status = err.response.status;
+        const errorMessage = err.response?.data?.message || err.response?.data?.error;
+        
+        if (status === 400) {
+          return { success: false, message: errorMessage || "이메일을 올바르게 입력해주세요." };
+        } else if (status === 500) {
+          return { 
+            success: false, 
+            message: errorMessage || "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요." 
+          };
+        } else {
+          return { success: false, message: errorMessage || "이메일 발송 중 오류가 발생했습니다." };
+        }
+      }
+      
+      // 네트워크 오류 등
+      if (err.request) {
+        return { success: false, message: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요." };
+      }
+      
+      return { success: false, message: "이메일 발송 중 오류가 발생했습니다." };
     }
   },
 

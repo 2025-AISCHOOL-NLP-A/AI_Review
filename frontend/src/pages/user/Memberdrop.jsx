@@ -15,20 +15,32 @@ function Memberdrop() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+
     // 현재 로그인 사용자 정보 조회
     const fetchUserInfo = async () => {
       try {
         const me = await authService.getMe();
-        setUserInfo({
-          login_id: me?.login_id || "",
-        });
+        if (isMounted) {
+          setUserInfo({
+            login_id: me?.login_id || "",
+          });
+        }
       } catch (error) {
-        console.error("사용자 정보를 가져오는데 실패했습니다:", error);
-        alert("사용자 정보를 불러오는데 실패했습니다.");
+        if (isMounted) {
+          console.error("사용자 정보를 가져오는데 실패했습니다:", error);
+          alert("사용자 정보를 불러오는데 실패했습니다.");
+        }
       }
     };
 
     fetchUserInfo();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
   }, []);
 
   const handleWithdraw = async () => {

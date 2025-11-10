@@ -147,19 +147,42 @@ function LoginJoin() {
       return;
     }
 
-    const email = `${formData.email_prefix}@${formData.email_domain}`;
-    const result = await authService.sendVerification(email);
+    // 이메일 형식 검증
+    const emailPrefix = formData.email_prefix.trim();
+    if (emailPrefix.length === 0) {
+      alert('이메일을 입력해주세요.');
+      return;
+    }
 
-    if (result.success) {
-      alert('인증 메일이 발송되었습니다. 이메일을 확인해주세요.');
-      setIsEmailSent(true);
-      setIsEmailVerified(false);
-      setTimer(60); // 1분 타이머 시작
-      // 타이머 종료 시간을 localStorage에 저장
-      const endTime = Date.now() + (60 * 1000);
-      localStorage.setItem('emailVerificationTimerEnd', endTime.toString());
-    } else {
-      alert(result.message);
+    const email = `${emailPrefix}@${formData.email_domain}`;
+    
+    // 로딩 상태 설정
+    setLoading(true);
+    setErrorMsg('');
+    
+    try {
+      const result = await authService.sendVerification(email);
+
+      if (result.success) {
+        alert('인증 메일이 발송되었습니다. 이메일을 확인해주세요.');
+        setIsEmailSent(true);
+        setIsEmailVerified(false);
+        setTimer(60); // 1분 타이머 시작
+        // 타이머 종료 시간을 localStorage에 저장
+        const endTime = Date.now() + (60 * 1000);
+        localStorage.setItem('emailVerificationTimerEnd', endTime.toString());
+      } else {
+        alert(result.message || '이메일 발송에 실패했습니다.');
+        setErrorMsg(result.message || '이메일 발송에 실패했습니다.');
+        setIsEmailSent(false);
+      }
+    } catch (error) {
+      console.error('이메일 발송 처리 중 오류:', error);
+      alert('이메일 발송 중 오류가 발생했습니다. 다시 시도해주세요.');
+      setErrorMsg('이메일 발송 중 오류가 발생했습니다.');
+      setIsEmailSent(false);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -248,9 +271,9 @@ function LoginJoin() {
       <div className="left-section"></div>
       <div className="right-section">
         <div className="join-container">
-          <div className="logo">
+          <Link to="/" className="logo">
             <img src="/images/logo.png" alt="logo" />
-          </div>
+          </Link>
 
           <div className="join-card">
         <form className="join-form" onSubmit={handleSubmit}>
@@ -461,9 +484,77 @@ function LoginJoin() {
                 />
                 <label htmlFor="agreeTerms" className="checkbox-label">[필수] 이용약관 동의</label>
               </div>
-              <textarea className="terms-textarea" readOnly>
-                이용약관 내용이 여기에 표시됩니다.
-              </textarea>
+              <div className="terms-textarea">
+                <strong>이용약관</strong>
+                <br /><br />
+                <strong>제1조 (목적)</strong>
+                <br />
+                본 약관은 AI 기반 고객 리뷰 분석 서비스(이하 "서비스")의 이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
+                <br /><br />
+                <strong>제2조 (용어의 정의)</strong>
+                <br />
+                "서비스"란 회원이 제공한 고객 리뷰 데이터를 AI 기술로 분석하여 제품 개선 인사이트를 제공하는 플랫폼을 말합니다.
+                <br />
+                "회원"이란 본 약관에 동의하고 회사와 서비스 이용계약을 체결한 자를 말합니다.
+                <br />
+                "아이디(ID)"란 회원의 식별과 서비스 이용을 위하여 회원이 설정하고 회사가 승인한 문자 또는 숫자의 조합을 말합니다.
+                <br /><br />
+                <strong>제3조 (약관의 효력 및 변경)</strong>
+                <br />
+                본 약관은 서비스 화면에 게시하거나 기타의 방법으로 회원에게 공지함으로써 효력이 발생합니다.
+                <br />
+                회사는 필요한 경우 관련 법령을 위배하지 않는 범위에서 본 약관을 변경할 수 있으며, 변경된 약관은 시행일자 7일 전부터 공지합니다.
+                <br /><br />
+                <strong>제4조 (서비스의 제공)</strong>
+                <br />
+                회사는 다음과 같은 서비스를 제공합니다.
+                <br />
+                - 고객 리뷰 데이터 수집 및 관리
+                <br />
+                - AI 기반 감성 분석 및 키워드 추출
+                <br />
+                - 제품 개선 인사이트 리포트 생성
+                <br />
+                - 데이터 시각화 및 통계 분석
+                <br />
+                서비스는 연중무휴 1일 24시간 제공함을 원칙으로 합니다. 다만, 시스템 점검 등 불가피한 사유가 있는 경우 서비스 제공을 일시 중단할 수 있습니다.
+                <br /><br />
+                <strong>제5조 (회원가입)</strong>
+                <br />
+                이용자는 회사가 정한 가입 양식에 따라 회원정보를 기입한 후 본 약관에 동의한다는 의사표시를 함으로써 회원가입을 신청합니다.
+                <br />
+                회사는 제1항과 같이 회원으로 가입할 것을 신청한 이용자 중 다음 각 호에 해당하지 않는 한 회원으로 등록합니다.
+                <br />
+                - 타인의 명의를 이용한 경우
+                <br />
+                - 허위 정보를 기재한 경우
+                <br />
+                - 사회의 안녕질서 또는 미풍양속을 저해할 목적으로 신청한 경우
+                <br /><br />
+                <strong>제6조 (회원 탈퇴 및 자격 상실)</strong>
+                <br />
+                회원은 언제든지 서비스 내 회원탈퇴 메뉴를 통해 이용계약 해지를 요청할 수 있으며, 회사는 관련 법령이 정하는 바에 따라 즉시 처리합니다.
+                <br />
+                회원이 다음 각 호의 사유에 해당하는 경우, 회사는 회원자격을 제한 및 정지시킬 수 있습니다.
+                <br />
+                - 가입 시 허위 내용을 등록한 경우
+                <br />
+                - 다른 사람의 서비스 이용을 방해하거나 그 정보를 도용하는 경우
+                <br />
+                - 서비스를 이용하여 법령과 본 약관이 금지하는 행위를 하는 경우
+                <br /><br />
+                <strong>제7조 (회원에 대한 통지)</strong>
+                <br />
+                회사는 회원에 대한 통지를 하는 경우 회원이 제공한 전자우편 주소로 할 수 있습니다.
+                <br /><br />
+                <strong>제8조 (면책조항)</strong>
+                <br />
+                회사는 천재지변 또는 이에 준하는 불가항력으로 인하여 서비스를 제공할 수 없는 경우에는 서비스 제공에 관한 책임이 면제됩니다.
+                <br />
+                회사는 회원의 귀책사유로 인한 서비스 이용의 장애에 대하여는 책임을 지지 않습니다.
+                <br /><br />
+                본 약관에 동의하시면 회원가입이 가능합니다.
+              </div>
             </div>
 
             <div className="agreement-item">
@@ -478,9 +569,49 @@ function LoginJoin() {
                 />
                 <label htmlFor="agreePrivacy" className="checkbox-label">[필수] 개인정보 수집 및 이용 동의</label>
               </div>
-              <textarea className="terms-textarea" readOnly>
-                개인정보 수집 및 이용 동의 내용이 여기에 표시됩니다.
-              </textarea>
+              <div className="terms-textarea">
+                <strong>개인정보 수집 및 이용 동의</strong>
+                <br /><br />
+                회사는 「개인정보 보호법」 제15조 및 제22조에 따라 귀하의 개인정보 수집 및 이용에 관하여 다음과 같이 고지하고 동의를 받습니다.
+                <br /><br />
+                <strong>개인정보의 수집 및 이용 목적</strong>
+                <br />
+                <strong>회원 가입 및 관리:</strong> 회원 가입 의사 확인, 회원제 서비스 제공, 본인 확인, 불량회원의 부정 이용 방지
+                <br />
+                <strong>서비스 제공:</strong> 리뷰 분석 결과 제공, 맞춤형 인사이트 리포트 생성, 고객 문의 대응
+                <br />
+                <strong>서비스 개선 및 통계 분석:</strong> 서비스 이용 통계 분석, 신규 서비스 개발 및 기존 서비스 개선
+                <br /><br />
+                <strong>수집하는 개인정보 항목</strong>
+                <br />
+                <strong>필수항목:</strong> 이름, 이메일 주소, 비밀번호
+                <br />
+                <strong>자동 수집 항목:</strong> 서비스 이용기록, 접속 로그, 쿠키, 접속 IP 정보
+                <br /><br />
+                <strong>개인정보의 보유 및 이용기간</strong>
+                <br />
+                회원의 개인정보는 원칙적으로 개인정보의 수집 및 이용목적이 달성되면 지체없이 파기합니다. 단, 다음의 정보에 대해서는 아래의 이유로 명시한 기간 동안 보존합니다.
+                <br /><br />
+                <strong>회사 내부 방침에 의한 정보보유</strong>
+                <br />
+                <strong>부정 이용 기록:</strong> 1년 (부정 이용 방지)
+                <br /><br />
+                <strong>관련 법령에 의한 정보보유</strong>
+                <br />
+                <strong>계약 또는 청약철회 등에 관한 기록:</strong> 5년 (전자상거래 등에서의 소비자보호에 관한 법률)
+                <br />
+                <strong>대금결제 및 재화 등의 공급에 관한 기록:</strong> 5년 (전자상거래 등에서의 소비자보호에 관한 법률)
+                <br />
+                <strong>소비자의 불만 또는 분쟁처리에 관한 기록:</strong> 3년 (전자상거래 등에서의 소비자보호에 관한 법률)
+                <br />
+                <strong>웹사이트 방문기록:</strong> 3개월 (통신비밀보호법)
+                <br /><br />
+                <strong>동의를 거부할 권리 및 불이익</strong>
+                <br />
+                귀하는 위와 같은 개인정보 수집 및 이용에 대한 동의를 거부할 권리가 있습니다. 다만, 필수항목에 대한 동의를 거부할 경우 회원가입이 제한됩니다.
+                <br /><br />
+                위 내용을 확인하였으며, 개인정보 수집 및 이용에 동의합니다.
+              </div>
             </div>
           </div>
 

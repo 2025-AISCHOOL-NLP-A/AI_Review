@@ -16,20 +16,32 @@ function Main() {
 
   // 이미 로그인된 사용자가 메인 페이지에 접근하면 워크플레이스로 리다이렉트
   useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
       if (token) {
         try {
           await authService.getMe();
           // 이미 로그인된 상태이면 워크플레이스로 리다이렉트
-          navigate('/wp', { replace: true });
+          if (isMounted) {
+            navigate('/wp', { replace: true });
+          }
         } catch (error) {
           // 토큰이 유효하지 않으면 메인 페이지에 머무름
-          localStorage.removeItem("token");
+          if (isMounted) {
+            localStorage.removeItem("token");
+          }
         }
       }
     };
     checkAuth();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
   }, [navigate]);
 
   // 페이지 진입 시 맨 위로 이동

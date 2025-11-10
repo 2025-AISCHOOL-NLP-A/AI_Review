@@ -55,6 +55,7 @@ function Dashboard() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedReviews, setExpandedReviews] = useState(new Set());
+  const fetchInProgress = useRef(false);
 
   // Color constants
   const primaryColor = "#5B8EFF";
@@ -66,17 +67,43 @@ function Dashboard() {
 
   // Fetch dashboard data
   useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+
+    // 이미 요청이 진행 중이면 중복 요청 방지
+    if (fetchInProgress.current) {
+      return () => {
+        isMounted = false;
+        abortController.abort();
+      };
+    }
+
     const fetchData = async () => {
-      setLoading(true);
-      const result = await dashboardService.getDashboardData();
-      if (result.success) {
-        setDashboardData(result.data);
-      } else {
-        alert(result.message || "데이터를 불러오는데 실패했습니다.");
+      if (fetchInProgress.current || !isMounted) return;
+      fetchInProgress.current = true;
+
+      if (isMounted) {
+        setLoading(true);
       }
-      setLoading(false);
+      const result = await dashboardService.getDashboardData();
+      if (isMounted) {
+        if (result.success) {
+          setDashboardData(result.data);
+        } else {
+          alert(result.message || "데이터를 불러오는데 실패했습니다.");
+        }
+        setLoading(false);
+      }
+      fetchInProgress.current = false;
     };
     fetchData();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+      // cleanup에서 fetchInProgress를 false로 설정하지 않음
+      // (요청이 완료된 후에만 false로 설정되어야 함)
+    };
   }, []);
 
   // 랜덤 리뷰 10개를 메모이제이션 (dashboardData.reviews가 변경될 때만 재생성)

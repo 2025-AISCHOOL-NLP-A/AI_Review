@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
 import Footer from "../../components/layout/Footer/Footer";
@@ -18,75 +18,109 @@ function Workplace() {
   const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const fetchInProgress = useRef(false);
 
   const productsPerPage = 10;
 
-  // 제품 목록 가져오기
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      const result = await dashboardService.getProducts(
-        currentPage,
-        productsPerPage,
-        searchQuery,
-        selectedCategoryFilter || null
-      );
-      
-      if (result.success && result.data) {
-        // 백엔드 응답 구조에 맞게 변환
-        let products = [];
-        let total = 0;
-        
-        // 백엔드가 { message: "...", products: [] } 형태로 보내는 경우
-        if (result.data.products && Array.isArray(result.data.products)) {
-          products = result.data.products;
-          total = result.data.total !== undefined ? result.data.total : result.data.products.length;
-        }
-        // 배열로 직접 반환하는 경우
-        else if (Array.isArray(result.data)) {
-          products = result.data;
-          total = result.data.length;
-        }
-        // { data: [] } 형태
-        else if (result.data.data && Array.isArray(result.data.data)) {
-          products = result.data.data;
-          total = result.data.total !== undefined ? result.data.total : result.data.data.length;
-        }
-        // 기타 객체 형태 - 모든 키를 확인
-        else if (typeof result.data === 'object') {
-          // 객체의 모든 키를 확인하여 배열을 찾음
-          for (const key in result.data) {
-            if (Array.isArray(result.data[key])) {
-              products = result.data[key];
-              total = result.data.total !== undefined ? result.data.total : result.data[key].length;
-              break;
-            }
-          }
-        }
-        
-        setWorkplaceData(products);
-        setTotalCount(total);
-        setTotalPages(Math.ceil(total / productsPerPage));
-      } else {
-        setWorkplaceData([]);
-        setTotalCount(0);
-        setTotalPages(1);
-      }
-    } catch (error) {
-      console.error("제품 목록 조회 중 오류:", error);
-      setWorkplaceData([]);
-      setTotalCount(0);
-      setTotalPages(1);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // 제품 목록 가져오기 (useEffect)
   useEffect(() => {
+    let isMounted = true;
+    const abortController = new AbortController();
+
+    // 이미 요청이 진행 중이면 중복 요청 방지
+    if (fetchInProgress.current) {
+      return () => {
+        isMounted = false;
+        abortController.abort();
+      };
+    }
+
+    const fetchProducts = async () => {
+      if (fetchInProgress.current || !isMounted) return;
+      fetchInProgress.current = true;
+
+      if (isMounted) {
+        setLoading(true);
+      }
+
+      try {
+        const result = await dashboardService.getProducts(
+          currentPage,
+          productsPerPage,
+          searchQuery,
+          selectedCategoryFilter || null
+        );
+
+        if (!isMounted) {
+          fetchInProgress.current = false;
+          return;
+        }
+
+        if (result.success && result.data) {
+          // 백엔드 응답 구조에 맞게 변환
+          let products = [];
+          let total = 0;
+
+          // 백엔드가 { message: "...", products: [] } 형태로 보내는 경우
+          if (result.data.products && Array.isArray(result.data.products)) {
+            products = result.data.products;
+            total = result.data.total !== undefined ? result.data.total : result.data.products.length;
+          }
+          // 배열로 직접 반환하는 경우
+          else if (Array.isArray(result.data)) {
+            products = result.data;
+            total = result.data.length;
+          }
+          // { data: [] } 형태
+          else if (result.data.data && Array.isArray(result.data.data)) {
+            products = result.data.data;
+            total = result.data.total !== undefined ? result.data.total : result.data.data.length;
+          }
+          // 기타 객체 형태 - 모든 키를 확인
+          else if (typeof result.data === 'object') {
+            // 객체의 모든 키를 확인하여 배열을 찾음
+            for (const key in result.data) {
+              if (Array.isArray(result.data[key])) {
+                products = result.data[key];
+                total = result.data.total !== undefined ? result.data.total : result.data[key].length;
+                break;
+              }
+            }
+          }
+
+          setWorkplaceData(products);
+          setTotalCount(total);
+          setTotalPages(Math.ceil(total / productsPerPage));
+        } else {
+          setWorkplaceData([]);
+          setTotalCount(0);
+          setTotalPages(1);
+        }
+      } catch (error) {
+        if (isMounted) {
+          console.error("제품 목록 조회 중 오류:", error);
+          setWorkplaceData([]);
+          setTotalCount(0);
+          setTotalPages(1);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+        fetchInProgress.current = false;
+      }
+    };
+
     fetchProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, searchQuery, selectedCategoryFilter]);
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+      // cleanup에서 fetchInProgress를 false로 설정하지 않음
+      // (요청이 완료된 후에만 false로 설정되어야 함)
+    };
+  }, [currentPage, searchQuery, selectedCategoryFilter, productsPerPage, refreshTrigger]);
 
   // 날짜 포맷팅
   const formatDate = (dateString) => {
@@ -126,9 +160,8 @@ function Workplace() {
 
   // 검색 처리
   const handleSearch = (e) => {
-    if (e.key === "Enter" || e.type === "click") {
+    if (e.key === "Enter") {
       setCurrentPage(1);
-      fetchProducts();
     }
   };
 
@@ -147,8 +180,10 @@ function Workplace() {
     if (window.confirm("정말 이 제품을 삭제하시겠습니까?")) {
       const result = await dashboardService.deleteProduct(productId);
       if (result.success) {
-        fetchProducts(); // 목록 새로고침
+        // 선택된 제품 목록에서 제거
         setSelectedProducts(selectedProducts.filter(id => id !== productId));
+        // refreshTrigger를 변경하여 useEffect가 다시 실행되도록 함
+        setRefreshTrigger(prev => prev + 1);
       } else {
         alert(result.message || "제품 삭제에 실패했습니다.");
       }

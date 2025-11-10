@@ -25,12 +25,8 @@ export const getProductDashboardData = async (req, res) => {
       [productId]
     );
 
-    // 2) 총 리뷰 수
-    const [[reviewCountRow]] = await db.query(
-      "SELECT COUNT(*) AS totalReviews FROM tb_review WHERE product_id = ?",
-      [productId]
-    );
-    
+    // 2) 총 리뷰 수 [reviewCountRow] tb_productDashboard 테이블의 total_reviews가 대체
+
     // 3) 최근 인사이트 (제품별)
     const [insights] = await db.query(
       "SELECT * FROM tb_productInsight WHERE product_id = ?",
@@ -43,7 +39,8 @@ export const getProductDashboardData = async (req, res) => {
       [productId]
     );
 
-    // 5) 주요 키워드, 긍/부정 비율 + 속성별 긍·부정 분기형 막대 그래프 //서브 쿼리 조인
+    // 5) 주요 키워드, 긍/부정 비율 + 속성별 긍·부정 분기형 막대 그래프 //서브 쿼리 조인, keyword_summary만 사용시 삭제
+    // - keyword_summary(JSON)만 사용할 계획이라면 이 조인 쿼리는 제거해도 됩니다.
     const [keywords] = await db.query(
       `SELECT
         k.keyword_text,
@@ -73,21 +70,11 @@ export const getProductDashboardData = async (req, res) => {
       [productId]
     );
 
-
-    // 6) 감정 분석 결과(긍/부정 비율, 일자별 긍·부정 포함 리뷰 비율, 
-    const [[sentimentRow]] = await db.query(
-      `SELECT
-         SUM(CASE WHEN ra.sentiment = 'positive' THEN 1 ELSE 0 END) AS positiveCount,
-         SUM(CASE WHEN ra.sentiment = 'negative' THEN 1 ELSE 0 END) AS negativeCount,
-         COUNT(*) AS totalCount
-       FROM tb_reviewAnalysis ra
-       JOIN tb_review r ON ra.review_id = r.review_id
-       WHERE r.product_id = ?`,
-      [productId]
-    );
+    /*// 6) (삭제 가능) 감정 분석 집계 쿼리
+    // - 아래 tb_productDashboard.sentiment_distribution(JSON)을 우선 사용 해서 제거함
 
     // 7) 일자별 통계 데이터
-    /*const [dailyTrend] = await db.query(
+    const [dailyTrend] = await db.query(
       `SELECT date, positive_ratio, negative_ratio, reviewCount
        FROM v_product_daily_trend
        WHERE product_id = ?
@@ -95,25 +82,92 @@ export const getProductDashboardData = async (req, res) => {
       [productId]
     );*/
 
-    const totalCount = Number(sentimentRow?.totalCount || 0);
-    const positiveCount = Number(sentimentRow?.positiveCount || 0); //감정 워드클라우드
-    const negativeCount = Number(sentimentRow?.negativeCount || 0); //감정 워드클라우드
-    const positiveRatio = totalCount > 0 ? (positiveCount / totalCount) * 100 : 0; //일자별 긍·부정 포함 리뷰 비율,속성별 긍·부정 분기형 막대 그래프
-    const negativeRatio = totalCount > 0 ? (negativeCount / totalCount) * 100 : 0; //일자별 긍·부정 포함 리뷰 비율,속성별 긍·부정 분기형 막대 그래프
+    // 8) tb_productDashboard 집계 사용 (최신 1건)
+    const [[dashboard]] = await db.query(
+      `SELECT 
+         total_reviews,
+         sentiment_distribution,
+         product_score,
+         date_sentimental,
+         keyword_summary,
+         heatmap,
+         wordcloud_path,
+         insight_id,
+         updated_at
+       FROM tb_productDashboard
+       WHERE product_id = ?
+       ORDER BY updated_at DESC
+       LIMIT 1`,
+      [productId]
+    );
+
+    // tb_productDashboard의 JSON 컬럼 안전하게 파싱하기
+    const parseJson = v => !v ? null : (typeof v === "object" ? v : (()=>{try{return JSON.parse(v)}catch{return null}})());
+    const sentimentDist = parseJson(dashboard?.sentiment_distribution);  // {positive, negative, neutral}
+    const dateSentimental = parseJson(dashboard?.date_sentimental);      // [{week_start, positive, negative, reviewCount}]
+    const keywordSummary = parseJson(dashboard?.keyword_summary);
+
+    //총 리뷰 수, 긍정비율, 부정비율
+    const totalReviews = dashboard?.total_reviews ?? (Array.isArray(reviews) ? reviews.length : 0);
+    let positiveRatio = sentimentDist ? (sentimentDist.positive || 0) * 100 : 0;
+    let negativeRatio = sentimentDist ? (sentimentDist.negative || 0) * 100 : 0;
+
+    // 폴백: tb_productDashboard에 감정 분포가 없을 때 DB 집계로 계산
+    if (!sentimentDist) {
+      const [[sentimentRow]] = await db.query(
+        `SELECT
+           SUM(CASE WHEN ra.sentiment = 'positive' THEN 1 ELSE 0 END) AS positiveCount,
+           SUM(CASE WHEN ra.sentiment = 'negative' THEN 1 ELSE 0 END) AS negativeCount,
+           COUNT(*) AS totalCount
+         FROM tb_reviewAnalysis ra
+         JOIN tb_review r ON ra.review_id = r.review_id
+         WHERE r.product_id = ?`,
+        [productId]
+      );
+      const totalCount = Number(sentimentRow?.totalCount || 0);
+      const posCount = Number(sentimentRow?.positiveCount || 0);
+      const negCount = Number(sentimentRow?.negativeCount || 0);
+      positiveRatio = totalCount > 0 ? (posCount / totalCount) * 100 : 0;
+      negativeRatio = totalCount > 0 ? (negCount / totalCount) * 100 : 0;
+    }
+
+    // 일자별 트렌드 변환(프론트 포맷) - tb_productDashboard.date_sentimental 기반
+    const dailyTrend = Array.isArray(dateSentimental) ? dateSentimental.map(w => ({
+      date: w.week_start,
+      positive_ratio: Math.round((w.positive || 0) * 100),
+      negative_ratio: Math.round((w.negative || 0) * 100),
+      reviewCount: w.reviewCount || 0,
+    })) : [];
+
+    // 키워드 폴백(JSON 요약 사용)
+    const keywordFromSummary = Array.isArray(keywordSummary)
+      ? keywordSummary.map(k => ({
+          keyword_text: k.keyword,
+          positive_ratio: Math.round((k.pos || 0) * 100),
+          negative_ratio: Math.round((k.neg || 0) * 100),
+          positive_count: Math.round((k.pos || 0) * (k.mention || 0)),
+          negative_count: Math.round((k.neg || 0) * (k.mention || 0)),
+        }))
+      : [];
+
 
     // 프론트엔드에 데이터 전달
     res.json({
       product: products[0] || null,
-      insight: insights[0] || null,
+      // 인사이트 평균 평점이 없으면 대시보드의 product_score로 폴백
+      insight: insights[0] || (dashboard?.product_score ? { avg_rating: dashboard.product_score } : null),
       reviews,
-      keywords, // 각 항목에 positive_count, negative_count 포함
+      // DB 조인 결과가 없으면 keyword_summary(JSON) 변환 결과 사용
+      keywords: (Array.isArray(keywords) && keywords.length > 0) ? keywords : keywordFromSummary,
       stats: {
-        totalReviews: Number(reviewCountRow?.totalReviews || 0),
+        // 총 리뷰 수: 대시보드 total_reviews 우선, 폴백 reviews.length
+        totalReviews,
         positiveRatio,
         negativeRatio,
-        avgRating: insights[0]?.avg_rating ?? null,
+        avgRating: insights[0]?.avg_rating ?? (dashboard?.product_score ?? null),
       },
-      //  dailyTrend, // 일자별 통계 데이터
+      // 일자별(주간) 트렌드 데이터
+      dailyTrend,
 
       //
       /*if (!productId) {

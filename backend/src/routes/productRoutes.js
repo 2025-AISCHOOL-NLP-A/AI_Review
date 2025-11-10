@@ -6,7 +6,9 @@ import {
     //refreshDashboard,
     keywordReview,
     analysisRequest,
-    deleteProduct
+    deleteProduct,
+    getProductById,
+    //getAnalysisStatus
 } from "../controllers/productController.js";
 
 //엔드포인트 생성
@@ -31,7 +33,11 @@ router.delete("/:id", deleteProduct);
 //워크 플레이스용 제품 리스트 
 router.get("/", productList);
 
+// 개별 제품 조회
+router.get("/:id", getProductById);
 
+// 분석 요청 이력 조회(선택): history_id 사용, (추후 사용 여부 판단)
+// router.get("/:id/review-analyses/:analysisId", getAnalysisStatus);
 
 export default router;
 

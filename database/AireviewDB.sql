@@ -1,4 +1,5 @@
 --SQL테이블 생성
+--대시보드 테이블 추가 반영
 
 -- 1) 사용자 (부모)
 CREATE TABLE tb_user (
@@ -142,3 +143,23 @@ CREATE TABLE tb_log (
     FOREIGN KEY (`user_id`) REFERENCES tb_user(`user_id`)
     ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 11) 대시보드 카테고리를 명시화한 테이블
+CREATE TABLE `tb_productDashboard` (
+   `dashboard_id` int NOT NULL AUTO_INCREMENT,
+   `product_id` int NOT NULL,
+   `total_reviews` int DEFAULT '0',
+   `sentiment_distribution` json DEFAULT NULL,
+   `product_score` decimal(2,1) DEFAULT '0.0',
+   `date_sentimental` json DEFAULT NULL,
+   `keyword_summary` json DEFAULT NULL,
+   `heatmap` json DEFAULT NULL,
+   `wordcloud_path` varchar(255) DEFAULT NULL,
+   `insight_id` int DEFAULT NULL,
+   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+   PRIMARY KEY (`dashboard_id`),
+   KEY `product_id` (`product_id`),
+   KEY `insight_id` (`insight_id`),
+   CONSTRAINT `tb_productDashboard_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `tb_product` (`product_id`),
+   CONSTRAINT `tb_productDashboard_ibfk_2` FOREIGN KEY (`insight_id`) REFERENCES `tb_productInsight` (`insight_id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci

@@ -5,7 +5,32 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // ==============================
-// 제품 목록 조회
+// 1. 개별 제품 조회
+// ==============================
+export const getProductById = async (req, res) => {
+  try {
+    const { id: productId } = req.params;
+    if (!productId) {
+      return res.status(400).json({ message: "제품 ID가 필요합니다." });
+    }
+
+    const [rows] = await db.query(
+      "SELECT * FROM tb_product WHERE product_id = ?",
+      [productId]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "제품을 찾을 수 없습니다." });
+    }
+
+    return res.json({ data: rows[0] });
+  } catch (err) {
+    console.error("❌ 제품 조회 오류:", err);
+    return res.status(500).json({ message: "제품 조회 중 서버 오류가 발생했습니다." });
+  }
+};
+
+// ==============================
+// 2. 제품 목록 조회
 // ==============================
 export const productList = async (req, res) => {
   try {
@@ -29,7 +54,7 @@ export const productList = async (req, res) => {
 export const dashboard = (req, res) => getProductDashboard(req, res);
 
 // ==============================
-// 대시보드 새로고침 (미들웨어)
+// 3. 대시보드 새로고침 (미들웨어)
 // ==============================
 export const refreshDashboard = async (req, res, next) => {
   try {
@@ -55,7 +80,7 @@ export const refreshDashboard = async (req, res, next) => {
 };
 
 // ==============================
-// 키워드별 리뷰 조회
+// 4. 키워드별 리뷰 조회
 // ==============================
 export const keywordReview = async (req, res) => {
   try {
@@ -90,7 +115,7 @@ export const keywordReview = async (req, res) => {
 };
 
 // ==============================
-// 리뷰 분석 요청 (Python API 호출)
+// 5. 리뷰 분석 요청 (Python API 호출)
 // ==============================
 export const analysisRequest = async (req, res) => {
   try {
@@ -100,6 +125,21 @@ export const analysisRequest = async (req, res) => {
       return res.status(400).json({ message: "제품 ID가 필요합니다." });
     }
 
+    /*
+    // 사용자의 인증정보 확인(JWT payload: { id, login_id })
+    const userId = req.user?.id; // JWT payload: { id, login_id }
+    if (!userId) {
+      return res.status(401).json({ message: "인증 정보가 없습니다." });
+    }
+    // 분석 이력 생성 (status: 'process' 로 접수)
+    const [result] = await db.query(
+      `INSERT INTO tb_analysisHistory (user_id, status, uploaded_at)
+       VALUES (?, 'process', NOW())`,
+      [userId]
+    );
+    const analysisId = result.insertId; // = history_id
+    */
+
     // TODO: 리뷰 분석 요청 로직 구현
     // - 중복 분석 요청 방지 체크
     // - 제품 리뷰 데이터 수집
@@ -107,7 +147,13 @@ export const analysisRequest = async (req, res) => {
     // - 분석 상태 업데이트
     // - 결과 저장
     
-    res.json({
+    // TODO: 분석 작업 생성 후 고유 ID 획득 (DB insert 등)
+    // const analysisId = Date.now().toString(); // 예시
+
+    res
+      //.status(202) //// 요청을 정상 수신했지만 처리(분석)가 아직 완료되지 않음을 타냄
+      //.set("Location", `/products/${productId}/review/analyses/${analysisId}`)
+      .json({
       message: "리뷰 분석 요청이 접수되었습니다.",
       productId,
       status: "processing",
@@ -120,7 +166,38 @@ export const analysisRequest = async (req, res) => {
 };
 
 // ==============================
-// 제품 삭제
+// 5-1. 분석 요청 상태 조회(분석 이력 조회) — history_id로 조회
+// ==============================
+/*export const getAnalysisStatus = async (req, res) => {
+  try {
+    const { analysisId } = req.params;
+
+    const [[row]] = await db.query(
+      `SELECT 
+         history_id AS analysisId,
+         status,
+         review_count,
+         uploaded_at,
+         analyzed_at,
+         model
+       FROM tb_analysisHistory
+        WHERE history_id = ?`,
+      [analysisId]
+    );
+
+    if (!row) {
+      return res.status(404).json({ message: "분석 이력을 찾을 수 없습니다." });
+    }
+
+    return res.json(row);
+  } catch (err) {
+    console.error("❌ 분석 상태 조회 오류:", err);
+    return res.status(500).json({ message: "분석 상태 조회 중 서버 오류가 발생했습니다." });
+  }
+};*/
+
+// ==============================
+// 6. 제품 삭제
 // ==============================
 export const deleteProduct = async (req, res) => {
   try {
@@ -146,7 +223,7 @@ export const deleteProduct = async (req, res) => {
 };
 
 // ==============================
-// 제품 생성 (추가 기능)
+// 7. 제품 생성 (추가 기능)
 // ==============================
 export const createProduct = async (req, res) => {
   try {
@@ -176,7 +253,7 @@ export const createProduct = async (req, res) => {
 };
 
 // ==============================
-// 제품 정보 수정 (추가 기능)
+// 8. 제품 정보 수정 (추가 기능)
 // ==============================
 export const updateProduct = async (req, res) => {
   try {

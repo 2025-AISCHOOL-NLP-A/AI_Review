@@ -20,6 +20,8 @@
   background-color: var(--bg-color);
   max-width: 1280px;
   margin: 0 auto;
+  margin-left: auto;
+  margin-right: auto;
   width: 100%;
   box-sizing: border-box;
   overflow-x: auto;
@@ -30,6 +32,14 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
+}
+
+/* 사이드바가 열려있을 때 workplace 영역을 닫혀있을 때 기준으로 중앙 정렬 */
+/* 사이드바가 열려있을 때(256px)와 닫혀있을 때(64px)의 차이: 192px */
+/* 콘텐츠를 닫혀있을 때와 같은 화면상 위치에 오도록 하려면 왼쪽으로 96px 이동 */
+.dashboard-page.sidebar-open .dashboard-content {
+  transform: translateX(-96px);
+  transition: transform 0.3s ease;
 }
 
 @media (min-width: 1024px) {

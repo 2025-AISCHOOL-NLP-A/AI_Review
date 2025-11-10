@@ -142,3 +142,33 @@ CREATE TABLE tb_log (
     FOREIGN KEY (`user_id`) REFERENCES tb_user(`user_id`)
     ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `tb_email_verification` (
+   `verification_id` int NOT NULL AUTO_INCREMENT,
+   `email` varchar(100) NOT NULL,
+   `code` varchar(6) NOT NULL,
+   `verified` tinyint(1) DEFAULT '0',
+   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+   PRIMARY KEY (`verification_id`),
+   KEY `idx_email` (`email`)
+ ) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+ CREATE TABLE `tb_productDashboard` (
+   `dashboard_id` int NOT NULL AUTO_INCREMENT,
+   `product_id` int NOT NULL,
+   `total_reviews` int DEFAULT '0',
+   `sentiment_distribution` json DEFAULT NULL,
+   `product_score` decimal(2,1) DEFAULT '0.0',
+   `date_sentimental` json DEFAULT NULL,
+   `keyword_summary` json DEFAULT NULL,
+   `heatmap` json DEFAULT NULL,
+   `wordcloud_path` varchar(255) DEFAULT NULL,
+   `insight_id` int DEFAULT NULL,
+   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+   PRIMARY KEY (`dashboard_id`),
+   KEY `product_id` (`product_id`),
+   KEY `insight_id` (`insight_id`),
+   CONSTRAINT `tb_productDashboard_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `tb_product` (`product_id`),
+   CONSTRAINT `tb_productDashboard_ibfk_2` FOREIGN KEY (`insight_id`) REFERENCES `tb_productInsight` (`insight_id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+ 

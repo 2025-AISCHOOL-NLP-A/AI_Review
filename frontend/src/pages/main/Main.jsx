@@ -13,6 +13,11 @@ function Main() {
   const priceRef = useRef(null);
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [showControls, setShowControls] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+  const controlsTimeoutRef = useRef(null);
 
   // 이미 로그인된 사용자가 메인 페이지에 접근하면 워크플레이스로 리다이렉트
   useEffect(() => {
@@ -29,9 +34,12 @@ function Main() {
             navigate('/wp', { replace: true });
           }
         } catch (error) {
-          // 토큰이 유효하지 않으면 메인 페이지에 머무름
+          // 401 오류는 토큰이 만료되었거나 유효하지 않은 정상적인 상황
+          // 콘솔에 로그하지 않고 조용히 처리
           if (isMounted) {
+            // 토큰은 이미 api 인터셉터에서 제거되었을 수 있음
             localStorage.removeItem("token");
+            localStorage.removeItem("userEmail");
           }
         }
       }
@@ -48,6 +56,116 @@ function Main() {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, []);
+
+  // 비디오 이벤트 핸들러
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleTimeUpdate = () => {
+      setCurrentTime(video.currentTime);
+    };
+
+    const handleLoadedMetadata = () => {
+      setDuration(video.duration);
+    };
+
+    const handleDurationChange = () => {
+      setDuration(video.duration);
+    };
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('durationchange', handleDurationChange);
+
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('durationchange', handleDurationChange);
+    };
+  }, []);
+
+  // 재생 중일 때 컨트롤러 자동 숨김
+  useEffect(() => {
+    if (isPlaying && !isDragging) {
+      // 재생 중일 때 3초 후 컨트롤러 숨김
+      controlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+    } else {
+      // 일시정지이거나 드래그 중일 때는 컨트롤러 표시
+      setShowControls(true);
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    }
+
+    return () => {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    };
+  }, [isPlaying, isDragging]);
+
+  // 시간 포맷팅 함수
+  const formatTime = (seconds) => {
+    if (isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // 타임라인 클릭/드래그 핸들러
+  const handleTimelineClick = (e) => {
+    const video = videoRef.current;
+    if (!video || !duration) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+    const newTime = percentage * duration;
+    video.currentTime = newTime;
+    setCurrentTime(newTime);
+  };
+
+  // 타임라인 드래그 시작
+  const handleTimelineMouseDown = (e) => {
+    setIsDragging(true);
+    handleTimelineClick(e);
+  };
+
+  // 타임라인 드래그 중
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDragging) return;
+      const timeline = document.querySelector('.video-timeline');
+      if (!timeline) return;
+      
+      const rect = timeline.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+      const newTime = percentage * duration;
+      
+      if (videoRef.current) {
+        videoRef.current.currentTime = newTime;
+        setCurrentTime(newTime);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, duration]);
 
   // 스무스 스크롤 함수
   const smoothScrollTo = (el) => {
@@ -96,10 +214,30 @@ function Main() {
               ref={videoRef}
               muted 
               loop
+              controls={false}
               controlsList="nodownload"
               onContextMenu={(e) => e.preventDefault()}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
+              onPlay={() => {
+                setIsPlaying(true);
+                setShowControls(true);
+              }}
+              onPause={() => {
+                setIsPlaying(false);
+                setShowControls(true);
+              }}
+              onMouseEnter={() => {
+                setShowControls(true);
+                if (controlsTimeoutRef.current) {
+                  clearTimeout(controlsTimeoutRef.current);
+                }
+              }}
+              onMouseLeave={() => {
+                if (isPlaying && !isDragging) {
+                  controlsTimeoutRef.current = setTimeout(() => {
+                    setShowControls(false);
+                  }, 3000);
+                }
+              }}
             >
               <source src="/videos/test.mp4" type="video/mp4" />
               브라우저가 비디오 태그를 지원하지 않습니다.
@@ -118,6 +256,50 @@ function Main() {
                 </svg>
               </button>
             )}
+            {/* 커스텀 비디오 컨트롤러 */}
+            <div className={`video-controls ${showControls || !isPlaying ? 'show' : 'hide'}`}>
+              <div className="video-controls-top">
+                <button
+                  className="video-control-btn"
+                  onClick={() => {
+                    if (isPlaying) {
+                      videoRef.current?.pause();
+                      setIsPlaying(false);
+                    } else {
+                      videoRef.current?.play();
+                      setIsPlaying(true);
+                    }
+                  }}
+                  aria-label={isPlaying ? "일시정지" : "재생"}
+                >
+                  {isPlaying ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="24" height="24">
+                      <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="24" height="24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  )}
+                </button>
+                <span className="video-time">{formatTime(currentTime)} / {formatTime(duration)}</span>
+              </div>
+              {/* 타임라인 (프로그레스 바) */}
+              <div 
+                className="video-timeline" 
+                onClick={handleTimelineClick}
+                onMouseDown={handleTimelineMouseDown}
+              >
+                <div 
+                  className="video-timeline-progress" 
+                  style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+                ></div>
+                <div 
+                  className="video-timeline-handle"
+                  style={{ left: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+                ></div>
+              </div>
+            </div>
           </div>
         </div>
       </section>

@@ -52,8 +52,18 @@ function Memberupdate() {
         }
       } catch (e) {
         if (isMounted) {
-          console.error("프로필 정보 불러오기 오류:", e);
-          alert("프로필 정보를 불러오지 못했습니다.");
+          // 401 오류는 토큰이 만료되었거나 유효하지 않은 경우
+          if (e.response && e.response.status === 401) {
+            // 인증이 필요한 페이지이므로 로그인 페이지로 리다이렉트
+            navigate("/login");
+          } else if (e.status === 401) {
+            // authService에서 설정한 401 오류
+            navigate("/login");
+          } else {
+            // 401이 아닌 다른 오류만 콘솔에 로그
+            console.error("프로필 정보 불러오기 오류:", e);
+            alert("프로필 정보를 불러오지 못했습니다.");
+          }
         }
       }
     })();

@@ -14,6 +14,7 @@
 /* 왼쪽 섹션 */
 .find-page .left-section {
   width: 50%;
+  height: 100%;
   background: url("/images/login_left_section_draw.png") no-repeat center center;
   background-size: cover;
   display: flex;
@@ -22,26 +23,43 @@
   align-items: center;
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 /* 오른쪽 섹션 */
 .find-page .right-section {
   width: 50%;
+  height: 100%;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
   background: linear-gradient(225deg, #c8e3ff 0%, #f0f4ff 100%);
+  overflow-x: visible;
   overflow-y: auto;
+  padding: 40px 40px 0 40px;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
-.find-container {
-  width: 100%;
-  max-width: 600px;
-  padding: 24px 20px;
+.find-page .find-container {
+  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: stretch;
+  width: 100%;
+  max-width: 600px;
+  padding: 24px 20px;
+  box-sizing: border-box;
+  margin-bottom: 20px;
+}
+
+.find-page .right-section > footer {
+  flex-shrink: 0;
+  margin-top: auto;
+  width: calc(100% + 80px);
+  margin-left: -40px;
+  margin-right: -40px;
+  margin-bottom: 0;
 }
 
 /* ====== 실제 카드/푸터는 위로 띄우기 ====== */

@@ -278,6 +278,8 @@
   position: relative;
   z-index: 1;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
 }
 .dashboard-page.sidebar-closed .dashboard-wrapper {
   margin-left: 64px;

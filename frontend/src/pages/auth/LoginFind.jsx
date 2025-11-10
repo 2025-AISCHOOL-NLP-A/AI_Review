@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import authService from '../../services/authService';
+import Footer from '../../components/layout/Footer/Footer';
 import './login_find.css';
 import '../../styles/common.css';
 
@@ -187,6 +188,9 @@ function LoginFind() {
             <Link to="/login/join">회원가입</Link>
           </div>
         </div>
+        
+        {/* ===================== FOOTER ===================== */}
+        <Footer />
       </div>
     </div>
   );

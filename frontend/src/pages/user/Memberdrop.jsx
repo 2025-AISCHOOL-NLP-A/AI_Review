@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
+import Footer from "../../components/layout/Footer/Footer";
 import authService from "../../services/authService";
 import "../dashboard/dashboard.css";
 import "../../components/layout/sidebar/sidebar.css";
@@ -196,6 +197,9 @@ function Memberdrop() {
             </div>
           </div>
         </div>
+        
+        {/* ===================== FOOTER ===================== */}
+        <Footer />
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import authService from "../../services/authService";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
+import Footer from "../../components/layout/Footer/Footer";
 import "./memberupdate.css";
 import "../dashboard/dashboard.css";
 import "../../components/layout/sidebar/sidebar.css";
@@ -516,6 +517,9 @@ function Memberupdate() {
         </form>
             </div>
           </div>
+          
+          {/* ===================== FOOTER ===================== */}
+          <Footer />
         </div>
       </div>
     </div>

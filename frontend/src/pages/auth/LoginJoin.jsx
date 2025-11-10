@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../../services/authService';
+import Footer from '../../components/layout/Footer/Footer';
 import './login_join.css';
 import '../../styles/common.css';
 
@@ -495,6 +496,9 @@ function LoginJoin() {
         <Link to="/login/find">아이디 / 비밀번호 찾기</Link>
       </div>
         </div>
+        
+        {/* ===================== FOOTER ===================== */}
+        <Footer />
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../../services/authService';
+import Footer from '../../components/layout/Footer/Footer';
 import './login.css';
 import '../../styles/common.css';
 
@@ -223,6 +224,9 @@ function Login() {
             </div>
           </form>
         </div>
+        
+        {/* ===================== FOOTER ===================== */}
+        <Footer />
       </div>
     </div>
   );

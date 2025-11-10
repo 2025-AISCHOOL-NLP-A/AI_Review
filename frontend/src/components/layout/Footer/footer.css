@@ -11,6 +11,8 @@ footer {
   align-items: center;
   gap: 40px;
   flex-wrap: wrap;
+  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .footer-left img {

@@ -33,19 +33,20 @@
 .join-page .right-section {
   width: 50%;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
   background: linear-gradient(225deg, #c8e3ff 0%, #f0f4ff 100%);
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 20px 0 20px 0;
+  padding: 20px 40px 0 40px;
   min-height: 100vh;
   height: auto;
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
 }
 
-.join-container {
+.join-page .join-container {
+  flex: 1;
   width: 100%;
   max-width: 660px;
   padding: 20px;
@@ -55,6 +56,7 @@
   align-items: stretch;
   min-height: fit-content;
   box-sizing: border-box;
+  margin-bottom: 20px;
 }
 /* ====== 실제 카드/푸터는 위로 띄우기 ====== */
 .join-card,
@@ -67,6 +69,16 @@
 /* 로고 스타일은 common.css에 정의됨 */
 .join-page .logo {
   margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.join-page .right-section > footer {
+  flex-shrink: 0;
+  margin-top: auto;
+  width: calc(100% + 80px);
+  margin-left: -40px;
+  margin-right: -40px;
+  margin-bottom: 0;
 }
 
 /* 회원가입 카드 위로 */

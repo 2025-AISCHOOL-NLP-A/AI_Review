@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
+import Footer from "../../components/layout/Footer/Footer";
 import dashboardService from "../../services/dashboardService";
 import "../../styles/common.css";
 import "./dashboard.css";
@@ -355,7 +356,10 @@ function Workplace() {
             </div>
           </div>
         </div>
-        </div>
+        
+        {/* ===================== FOOTER ===================== */}
+        <Footer />
+      </div>
       </div>
     </div>
   );

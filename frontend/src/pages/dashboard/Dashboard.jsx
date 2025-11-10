@@ -17,6 +17,7 @@ import {
 } from "chart.js";
 import html2pdf from "html2pdf.js";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
+import Footer from "../../components/layout/Footer/Footer";
 import dashboardService from "../../services/dashboardService";
 import "../../styles/common.css";
 import "./dashboard.css";
@@ -89,7 +90,7 @@ function Dashboard() {
   }, [dashboardData?.reviews]);
 
   // Process data for charts
-  const dailyTrendData = dashboardData?.dailyTrend ? {
+  const dailyTrendData = dashboardData?.dailyTrend && dashboardData.dailyTrend.length > 0 ? {
     dates: dashboardData.dailyTrend.map(item => {
       const date = new Date(item.date);
       return `${date.getMonth() + 1}/${date.getDate()}`;
@@ -102,23 +103,37 @@ function Dashboard() {
     ).reverse(),
     newReviews: dashboardData.dailyTrend.map(item => item.reviewCount || 0).reverse(),
   } : {
-    dates: ["1/15", "1/18", "1/21", "1/24", "1/27", "1/30", "2/02", "2/07"],
-    positive: [62, 65, 68, 70, 72, 75, 77, 78],
-    negative: [38, 35, 32, 30, 28, 25, 23, 22],
-    newReviews: [120, 150, 200, 250, 280, 300, 305, 310],
+    dates: [],
+    positive: [],
+    negative: [],
+    newReviews: [],
   };
 
   // Process keyword data for charts using positive_ratio and negative_ratio from DB
   // Data comes from tb_productKeyword (product_id, keyword_id, positive_ratio DECIMAL(5,2), negative_ratio DECIMAL(5,2))
   // Joined with tb_keyword to get keyword_text for display (VARCHAR(50))
-  const radarData = dashboardData?.keywords ? (() => {
+  const radarData = dashboardData?.keywords && dashboardData.keywords.length > 0 ? (() => {
     const keywordData = dashboardData.keywords.slice(0, 6);
+    const labels = keywordData.map(kw => kw.keyword_text || kw.keyword || kw.keyword_id || '').filter(Boolean);
+    const positive = keywordData.map(kw => parseFloat(kw.positive_ratio || kw.positiveRatio || 0));
+    const negative = keywordData.map(kw => parseFloat(kw.negative_ratio || kw.negativeRatio || 0));
+    
+    // 데이터가 유효할 때만 반환
+    if (labels.length > 0) {
+      return {
+        labels,
+        positive: positive.slice(0, labels.length),
+        negative: negative.slice(0, labels.length),
+      };
+    }
+    // 데이터가 없으면 빈 배열 반환
     return {
-      labels: keywordData.map(kw => kw.keyword_text || kw.keyword || kw.keyword_id || ''),
-      positive: keywordData.map(kw => parseFloat(kw.positive_ratio || kw.positiveRatio || 0)),
-      negative: keywordData.map(kw => parseFloat(kw.negative_ratio || kw.negativeRatio || 0)),
+      labels: [],
+      positive: [],
+      negative: [],
     };
   })() : {
+    // 데이터가 없을 때 빈 배열
     labels: [],
     positive: [],
     negative: [],
@@ -168,6 +183,7 @@ function Dashboard() {
       try {
         if (
           dailyTrendChartRef.current &&
+          dailyTrendData.dates.length > 0 &&
           !dailyTrendChartInstance.current &&
           isMounted
         ) {
@@ -259,7 +275,12 @@ function Dashboard() {
           }
         }
 
-        if (radarChartRef.current && !radarChartInstance.current && isMounted) {
+        if (
+          radarChartRef.current && 
+          radarData.labels.length > 0 &&
+          !radarChartInstance.current && 
+          isMounted
+        ) {
           const ctx = radarChartRef.current.getContext("2d");
           if (ctx) {
             radarChartInstance.current = new Chart(ctx, {
@@ -276,6 +297,7 @@ function Dashboard() {
                     pointBorderColor: "#fff",
                     pointHoverBackgroundColor: "#fff",
                     pointHoverBorderColor: primaryColor,
+                    borderWidth: 2,
                   },
                   {
                     label: "부정 비율",
@@ -286,29 +308,73 @@ function Dashboard() {
                     pointBorderColor: "#fff",
                     pointHoverBackgroundColor: "#fff",
                     pointHoverBorderColor: neutralColor,
+                    borderWidth: 2,
                   },
                 ],
               },
               options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: {
+                  duration: 1000,
+                },
                 plugins: {
                   legend: {
                     position: "top",
-                    labels: { color: fontColor },
+                    labels: { 
+                      color: fontColor,
+                      font: {
+                        size: 12,
+                      },
+                      usePointStyle: true,
+                      padding: 15,
+                    },
+                  },
+                  tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: {
+                      size: 14,
+                      weight: 'bold',
+                    },
+                    bodyFont: {
+                      size: 12,
+                    },
                   },
                 },
                 scales: {
                   r: {
-                    angleLines: { color: "#E5E7EB" },
-                    grid: { color: "#E5E7EB" },
-                    pointLabels: { color: fontColor, font: { size: 14 } },
-                    suggestedMin: 0,
-                    suggestedMax: 100,
+                    beginAtZero: true,
+                    angleLines: { 
+                      color: "#E5E7EB",
+                      lineWidth: 1.5,
+                    },
+                    grid: { 
+                      color: "#E5E7EB",
+                      lineWidth: 1,
+                    },
+                    pointLabels: { 
+                      color: fontColor, 
+                      font: { 
+                        size: 13,
+                        weight: 'bold',
+                        family: "'Pretendard', 'Noto Sans KR', sans-serif",
+                      },
+                      padding: 10,
+                    },
+                    min: 0,
+                    max: 100,
                     ticks: {
                       stepSize: 20,
-                      backdropColor: "rgba(255, 255, 255, 0.7)",
+                      backdropColor: "rgba(255, 255, 255, 0.9)",
                       color: fontColor,
+                      font: {
+                        size: 11,
+                        family: "'Pretendard', 'Noto Sans KR', sans-serif",
+                      },
+                      showLabelBackdrop: true,
+                      z: 10,
                     },
                   },
                 },
@@ -442,7 +508,7 @@ function Dashboard() {
         splitBarChartInstance.current = null;
       }
     };
-  }, [dashboardData, loading, dailyTrendData]);
+  }, [dashboardData, loading, dailyTrendData, radarData]);
 
   const handlePDFDownload = () => {
     if (!dashboardContentRef.current) return;
@@ -483,7 +549,6 @@ function Dashboard() {
 
     const opt = {
       margin: [10, 10, 10, 10],
-      margin: 1,
       filename: "에어팟프로_리뷰_분석_리포트.pdf",
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: { 
@@ -754,42 +819,65 @@ function Dashboard() {
               <h2 className="text-xl font-semibold mb-4">
                 📊 일자별 긍·부정 포함 리뷰 비율
               </h2>
-              <div className="relative h-96 flex-1">
-                <canvas
-                  ref={dailyTrendChartRef}
-                  className="chart-canvas"
-                ></canvas>
-              </div>
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
-                <h4 className="font-bold text-gray-700 mb-1">📈 결과 요약:</h4>
-                <p>
-                  {loading ? "데이터 로딩 중..." : 
-                   dashboardData?.analysis ? 
-                   `긍정 비율: ${Math.round(dashboardData.analysis.positiveRatio || 0)}%, 부정 비율: ${Math.round(dashboardData.analysis.negativeRatio || 0)}%. 총 리뷰 수: ${dashboardData?.stats?.totalReviews || 0}건.` :
-                   "분석 데이터가 없습니다."}
-                </p>
-              </div>
+              {dailyTrendData.dates.length > 0 ? (
+                <>
+                  <div className="relative h-96 flex-1">
+                    <canvas
+                      ref={dailyTrendChartRef}
+                      className="chart-canvas"
+                    ></canvas>
+                  </div>
+                  <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
+                    <h4 className="font-bold text-gray-700 mb-1">📈 결과 요약:</h4>
+                    <p>
+                      {loading ? "데이터 로딩 중..." : 
+                       dashboardData?.analysis ? 
+                       `긍정 비율: ${Math.round(dashboardData.analysis.positiveRatio || 0)}%, 부정 비율: ${Math.round(dashboardData.analysis.negativeRatio || 0)}%. 총 리뷰 수: ${dashboardData?.stats?.totalReviews || 0}건.` :
+                       "분석 데이터가 없습니다."}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="relative flex-1 flex items-center justify-center" style={{ minHeight: '350px', width: '100%' }}>
+                  <div className="text-center text-gray-500">
+                    <p className="text-lg font-medium mb-2">데이터가 없습니다</p>
+                    <p className="text-sm">일자별 트렌드 데이터를 불러올 수 없습니다.</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="card lg:col-span-1 flex flex-col">
               <h2 className="text-xl font-semibold mb-4">
                 🕸️ 속성별 감정 밸런스
               </h2>
-              <div className="relative h-96 flex-1">
-                <canvas
-                  ref={radarChartRef}
-                  className="chart-canvas"
-                ></canvas>
-              </div>
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
-                <h4 className="font-bold text-gray-700 mb-1">📈 해석:</h4>
-                <p>
-                  {loading ? "데이터 로딩 중..." : 
-                   dashboardData?.analysis ?
-                   `긍정 비율: ${Math.round(dashboardData.analysis.positiveRatio || 0)}%, 부정 비율: ${Math.round(dashboardData.analysis.negativeRatio || 0)}%. 평균 평점: ${parseFloat(dashboardData?.insight?.avg_rating || dashboardData.analysis.avgRating || 0).toFixed(1)}/5.0` :
-                   "분석 데이터가 없습니다."}
-                </p>
-              </div>
+              {radarData.labels.length > 0 ? (
+                <>
+                  <div className="relative flex-1" style={{ minHeight: '350px', width: '100%' }}>
+                    <canvas
+                      ref={radarChartRef}
+                      className="chart-canvas"
+                      style={{ width: '100%', height: '100%' }}
+                    ></canvas>
+                  </div>
+                  <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
+                    <h4 className="font-bold text-gray-700 mb-1">📈 해석:</h4>
+                    <p>
+                      {loading ? "데이터 로딩 중..." : 
+                       dashboardData?.analysis ?
+                       `긍정 비율: ${Math.round(dashboardData.analysis.positiveRatio || 0)}%, 부정 비율: ${Math.round(dashboardData.analysis.negativeRatio || 0)}%. 평균 평점: ${parseFloat(dashboardData?.insight?.avg_rating || dashboardData.analysis.avgRating || 0).toFixed(1)}/5.0` :
+                       "분석 데이터가 없습니다."}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="relative flex-1 flex items-center justify-center" style={{ minHeight: '350px', width: '100%' }}>
+                  <div className="text-center text-gray-500">
+                    <p className="text-lg font-medium mb-2">데이터가 없습니다</p>
+                    <p className="text-sm">키워드 데이터를 불러올 수 없습니다.</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -943,18 +1031,17 @@ function Dashboard() {
                               {formattedDate}
                             </td>
                             <td className="px-3 py-2 text-gray-900">
-                            <div>
-                                  {displayText}
-                                  {isLongText && (
-                                    <button
-                                      onClick={toggleExpand}
-                                      className="ml-2 text-blue-600 hover:text-blue-800 text-xs font-medium underline"
-                                    >
-                                      {isExpanded ? "접기" : "더보기"}
-                                    </button>
-                                  )}
-                                </div>
-                              {review.review_text}
+                              <div>
+                                {displayText}
+                                {isLongText && (
+                                  <button
+                                    onClick={toggleExpand}
+                                    className="ml-2 text-blue-600 hover:text-blue-800 text-xs font-medium underline"
+                                  >
+                                    {isExpanded ? "접기" : "더보기"}
+                                  </button>
+                                )}
+                              </div>
                             </td>
                             <td className="px-3 py-2 whitespace-nowrap">
                               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -1080,6 +1167,9 @@ function Dashboard() {
               📥 [ 리포트 PDF 다운로드 ]
             </button>
           </div>
+
+          {/* ===================== FOOTER ===================== */}
+          <Footer />
         </div>
       </div>
     </div>

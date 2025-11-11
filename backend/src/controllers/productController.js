@@ -120,7 +120,6 @@ export const dashboard = async (req, res) => {
           insight_id,
           product_id,
           user_id,
-          avg_rating,
           pos_top_keywords,
           neg_top_keywords,
           insight_summary,

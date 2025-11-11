@@ -9,6 +9,7 @@ import {
   Filler,
   RadarController,
 } from 'chart.js';
+import './RadarChart.css';
 
 // Register Chart.js components
 Chart.register(
@@ -26,8 +27,8 @@ const RadarChart = ({ data, loading }) => {
   const chartInstance = useRef(null);
 
   // Color constants
-  const primaryColor = "#5B8EFF";
-  const neutralColor = "#CBD5E1";
+  const primaryColor = "#5B8EFF"; // 긍정 비율 (파란색)
+  const negativeColor = "#EF4444"; // 부정 비율 (빨간색) - 가시성 개선
   const fontColor = "#333333";
 
   useEffect(() => {
@@ -72,17 +73,21 @@ const RadarChart = ({ data, loading }) => {
                     pointHoverBackgroundColor: "#fff",
                     pointHoverBorderColor: primaryColor,
                     borderWidth: 2,
+                    pointRadius: 5, // 포인트 크기
+                    pointHoverRadius: 7, // 호버 시 포인트 크기
                   },
                   {
                     label: "부정 비율",
                     data: data.negative,
-                    backgroundColor: "rgba(203, 213, 225, 0.4)",
-                    borderColor: neutralColor,
-                    pointBackgroundColor: neutralColor,
+                    backgroundColor: "rgba(239, 68, 68, 0.3)", // 빨간색 배경 (더 진하게)
+                    borderColor: negativeColor, // 빨간색 테두리
+                    pointBackgroundColor: negativeColor, // 빨간색 포인트
                     pointBorderColor: "#fff",
                     pointHoverBackgroundColor: "#fff",
-                    pointHoverBorderColor: neutralColor,
-                    borderWidth: 2,
+                    pointHoverBorderColor: negativeColor,
+                    borderWidth: 3, // 테두리 두께 증가 (가시성 개선)
+                    pointRadius: 5, // 포인트 크기 증가
+                    pointHoverRadius: 7, // 호버 시 포인트 크기 증가
                   },
                 ],
               },
@@ -187,21 +192,20 @@ const RadarChart = ({ data, loading }) => {
 
   if (loading || !data || data.labels.length === 0) {
     return (
-      <div className="relative flex-1 flex items-center justify-center" style={{ minHeight: '350px', width: '100%' }}>
-        <div className="text-center text-gray-500">
-          <p className="text-lg font-medium mb-2">데이터가 없습니다</p>
-          <p className="text-sm">키워드 데이터를 불러올 수 없습니다.</p>
+      <div className="radar-chart-loading">
+        <div className="radar-chart-content">
+          <p className="radar-chart-title">데이터가 없습니다</p>
+          <p className="radar-chart-subtitle">키워드 데이터를 불러올 수 없습니다.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative flex-1" style={{ minHeight: '350px', width: '100%' }}>
+    <div className="radar-chart-container">
       <canvas
         ref={chartRef}
-        className="chart-canvas"
-        style={{ width: '100%', height: '100%' }}
+        className="radar-chart-canvas"
       ></canvas>
     </div>
   );

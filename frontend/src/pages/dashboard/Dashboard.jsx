@@ -7,6 +7,7 @@ import dashboardService from "../../services/dashboardService";
 import DailyTrendChart from "../../components/charts/DailyTrendChart";
 import RadarChart from "../../components/charts/RadarChart";
 import SplitBarChart from "../../components/charts/SplitBarChart";
+import Heatmap from "../../components/charts/Heatmap";
 import "../../styles/common.css";
 import "./dashboard.css";
 import "../../components/layout/sidebar/sidebar.css";
@@ -16,6 +17,7 @@ function Dashboard() {
   const [searchParams] = useSearchParams();
   const dashboardContentRef = useRef(null);
   const downloadBtnRef = useRef(null);
+  const abortControllerRef = useRef(null); // AbortController를 ref로 관리
 
   // State for dashboard data
   const [dashboardData, setDashboardData] = useState(null);
@@ -46,15 +48,17 @@ function Dashboard() {
 
   // Fetch dashboard data
   useEffect(() => {
-    // AbortController를 사용하여 요청 취소 가능하도록 함
-    const abortController = new AbortController();
     let isMounted = true;
-    let isFetching = false; // 중복 요청 방지
 
     const fetchData = async () => {
-      if (!isMounted || abortController.signal.aborted || isFetching) {
-        return;
+      // 이전 요청이 있으면 취소
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
+
+      // 새로운 AbortController 생성
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
 
       // productId 유효성 검사
       if (!productId || isNaN(productId)) {
@@ -62,10 +66,10 @@ function Dashboard() {
           alert("유효하지 않은 제품 ID입니다.");
           setLoading(false);
         }
+        abortControllerRef.current = null;
         return;
       }
 
-      isFetching = true;
       setLoading(true);
 
       try {
@@ -74,12 +78,20 @@ function Dashboard() {
 
         // 요청이 취소되었거나 컴포넌트가 언마운트된 경우 상태 업데이트 방지
         if (!isMounted || abortController.signal.aborted) {
-          isFetching = false;
+          abortControllerRef.current = null;
           return;
         }
 
         if (!result.success) {
           const errorMsg = result.message || "데이터를 불러오는데 실패했습니다.";
+          
+          // 에러 로깅 (디버깅용)
+          console.error("대시보드 데이터 조회 실패:", {
+            success: result.success,
+            message: result.message,
+            status: result.status,
+            result: result,
+          });
           
           // 404 에러인 경우 워크플레이스로 이동 제안
           if (result.status === 404) {
@@ -87,13 +99,13 @@ function Dashboard() {
               navigate("/wp");
             }
           } else {
-            alert(errorMsg);
+            alert(`오류: ${errorMsg}\n\n상태 코드: ${result.status || 'N/A'}`);
           }
           
           if (isMounted && !abortController.signal.aborted) {
             setLoading(false);
           }
-          isFetching = false;
+          abortControllerRef.current = null;
           return;
         }
 
@@ -103,13 +115,26 @@ function Dashboard() {
         
         // 응답 데이터 검증
         if (!responseData) {
+          console.error("❌ responseData가 없습니다:", result);
           if (isMounted && !abortController.signal.aborted) {
             alert("대시보드 데이터를 불러오는데 실패했습니다.");
             setLoading(false);
           }
-          isFetching = false;
+          abortControllerRef.current = null;
           return;
         }
+        
+        console.log("📊 응답 데이터 구조:", {
+          hasDashboard: !!responseData.dashboard,
+          hasDateSentimental: !!responseData.date_sentimental,
+          hasKeywordSummary: !!responseData.keyword_summary,
+          hasRecentReviews: !!responseData.recent_reviews,
+          hasInsight: !!responseData.insight,
+          responseDataKeys: Object.keys(responseData),
+        });
+        
+        // 데이터 처리 중 에러 발생 시 정확한 위치 파악을 위한 try-catch
+        try {
         
         // 새로운 응답 구조: { message, dashboard, date_sentimental, heatmap, keyword_summary, recent_reviews, insight, wordcloud }
         const dashboard = responseData?.dashboard || {};
@@ -118,9 +143,23 @@ function Dashboard() {
         let dateSentimental = responseData?.date_sentimental || dashboard?.date_sentimental || [];
         let heatmap = responseData?.heatmap || dashboard?.heatmap || {};
         let keywordSummary = responseData?.keyword_summary || dashboard?.keyword_summary || [];
-        const recentReviews = responseData?.recent_reviews || [];
+        let recentReviews = responseData?.recent_reviews || [];
         const insight = responseData?.insight || null;
         const wordcloud = responseData?.wordcloud || dashboard?.wordcloud || null;
+        
+        // 배열 타입 검증
+        if (!Array.isArray(dateSentimental)) {
+          console.warn("⚠️ dateSentimental가 배열이 아닙니다:", typeof dateSentimental, dateSentimental);
+          dateSentimental = [];
+        }
+        if (!Array.isArray(keywordSummary)) {
+          console.warn("⚠️ keywordSummary가 배열이 아닙니다:", typeof keywordSummary, keywordSummary);
+          keywordSummary = [];
+        }
+        if (!Array.isArray(recentReviews)) {
+          console.warn("⚠️ recentReviews가 배열이 아닙니다:", typeof recentReviews, recentReviews);
+          recentReviews = [];
+        }
         
         // JSON 문자열인 경우 파싱
         if (typeof dateSentimental === 'string') {
@@ -162,7 +201,7 @@ function Dashboard() {
             alert("대시보드 데이터를 불러오는데 실패했습니다.");
             setLoading(false);
           }
-          isFetching = false;
+          abortControllerRef.current = null;
           return;
         }
 
@@ -178,15 +217,30 @@ function Dashboard() {
         };
 
         // 통계 데이터 변환
-        const sentimentDist = dashboard.sentiment_distribution || { positive: 0, negative: 0 };
-        const positiveRatio = sentimentDist.positive ? (sentimentDist.positive * 100) : 0;
-        const negativeRatio = sentimentDist.negative ? (sentimentDist.negative * 100) : 0;
+        let sentimentDist = dashboard.sentiment_distribution || { positive: 0, negative: 0 };
+        
+        // sentiment_distribution이 문자열이거나 객체가 아닌 경우 처리
+        if (typeof sentimentDist === 'string') {
+          try {
+            sentimentDist = JSON.parse(sentimentDist);
+          } catch (e) {
+            console.warn("⚠️ sentiment_distribution 파싱 실패:", e);
+            sentimentDist = { positive: 0, negative: 0 };
+          }
+        }
+        if (typeof sentimentDist !== 'object' || sentimentDist === null) {
+          console.warn("⚠️ sentiment_distribution이 객체가 아닙니다:", typeof sentimentDist, sentimentDist);
+          sentimentDist = { positive: 0, negative: 0 };
+        }
+        
+        const positiveRatio = (sentimentDist.positive || 0) ? ((sentimentDist.positive || 0) * 100) : 0;
+        const negativeRatio = (sentimentDist.negative || 0) ? ((sentimentDist.negative || 0) * 100) : 0;
         const totalReviews = dashboard.total_reviews || 0;
-        const positiveCount = Math.round(totalReviews * sentimentDist.positive);
-        const negativeCount = Math.round(totalReviews * sentimentDist.negative);
+        const positiveCount = Math.round(totalReviews * (sentimentDist.positive || 0));
+        const negativeCount = Math.round(totalReviews * (sentimentDist.negative || 0));
 
         // date_sentimental을 dailyTrend로 변환
-        const dailyTrend = dateSentimental.map(item => ({
+        const dailyTrend = Array.isArray(dateSentimental) ? dateSentimental.map(item => ({
           date: item.week_start || item.date || '',
           week_start: item.week_start,
           week_end: item.week_end,
@@ -197,10 +251,10 @@ function Dashboard() {
           negativeRatio: item.negative ? (item.negative * 100) : 0,
           positiveCount: Math.round((item.review_count || 0) * (item.positive || 0)),
           negativeCount: Math.round((item.review_count || 0) * (item.negative || 0)),
-        }));
+        })) : [];
 
         // keyword_summary를 keywords로 변환
-        const keywords = keywordSummary.map(kw => {
+        const keywords = Array.isArray(keywordSummary) ? keywordSummary.map(kw => {
           const posRatio = kw.positive_ratio || kw.positive || 0;
           const negRatio = kw.negative_ratio || kw.negative || 0;
           const total = kw.total_count || kw.count || 0;
@@ -219,23 +273,35 @@ function Dashboard() {
             positiveRatio: typeof posRatio === 'number' && posRatio <= 1 ? (posRatio * 100) : posRatio,
             negativeRatio: typeof negRatio === 'number' && negRatio <= 1 ? (negRatio * 100) : negRatio,
           };
-        });
+        }) : [];
 
         // 리뷰 데이터 변환
-        const reviews = recentReviews.map(review => ({
+        const reviews = Array.isArray(recentReviews) ? recentReviews.map(review => ({
           ...review,
           rating: review.rating || parseFloat(dashboard.product_score) || 0,
           source: review.source || 'Unknown',
           review_date: review.review_date || review.date || '',
-        }));
+        })) : [];
 
         // insight에서 키워드 추출 (기존 형식 유지)
-        const positiveKeywords = insight?.pos_top_keywords 
-          ? insight.pos_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean)
-          : wordcloud?.positive_keywords || [];
-        const negativeKeywords = insight?.neg_top_keywords 
-          ? insight.neg_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean)
-          : wordcloud?.negative_keywords || [];
+        let positiveKeywords = [];
+        let negativeKeywords = [];
+        
+        try {
+          if (insight?.pos_top_keywords && typeof insight.pos_top_keywords === 'string') {
+            positiveKeywords = insight.pos_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean);
+          } else if (wordcloud?.positive_keywords && Array.isArray(wordcloud.positive_keywords)) {
+            positiveKeywords = wordcloud.positive_keywords;
+          }
+          
+          if (insight?.neg_top_keywords && typeof insight.neg_top_keywords === 'string') {
+            negativeKeywords = insight.neg_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean);
+          } else if (wordcloud?.negative_keywords && Array.isArray(wordcloud.negative_keywords)) {
+            negativeKeywords = wordcloud.negative_keywords;
+          }
+        } catch (e) {
+          console.warn("⚠️ 키워드 추출 중 오류:", e);
+        }
 
         // 기존 데이터 구조에 맞게 변환
         const combinedData = {
@@ -315,18 +381,48 @@ function Dashboard() {
           
           setLoading(false);
         }
-        isFetching = false;
+        abortControllerRef.current = null;
+        } catch (dataProcessingError) {
+          // 데이터 처리 중 발생한 에러
+          console.error("❌ 데이터 처리 중 오류 발생:", {
+            error: dataProcessingError,
+            message: dataProcessingError.message,
+            stack: dataProcessingError.stack,
+            responseData: responseData,
+          });
+          
+          if (isMounted && !abortController.signal.aborted) {
+            alert(`데이터 처리 중 오류가 발생했습니다: ${dataProcessingError.message}`);
+            setLoading(false);
+          }
+          abortControllerRef.current = null;
+        }
       } catch (error) {
         // AbortError는 정상적인 취소이므로 에러로 처리하지 않음
         if (error.name === 'AbortError' || error.name === 'CanceledError' || error.code === 'ERR_CANCELED' || abortController.signal.aborted) {
-          isFetching = false;
+          abortControllerRef.current = null;
           return;
         }
+        
+        // 에러 로깅 (디버깅용)
+        console.error("대시보드 데이터 로딩 오류:", {
+          error,
+          message: error.message,
+          response: error.response,
+          status: error.response?.status,
+          data: error.response?.data,
+        });
+        
         if (isMounted && !abortController.signal.aborted) {
-          alert("데이터를 불러오는데 실패했습니다.");
+          // 서버에서 반환한 메시지가 있으면 사용, 없으면 기본 메시지
+          const errorMessage = error.response?.data?.message 
+            || error.message 
+            || "대시보드 데이터를 불러오는데 실패했습니다.";
+          
+          alert(`오류: ${errorMessage}\n\n상태 코드: ${error.response?.status || 'N/A'}`);
           setLoading(false);
         }
-        isFetching = false;
+        abortControllerRef.current = null;
       }
     };
 
@@ -335,7 +431,10 @@ function Dashboard() {
     // cleanup 함수: 컴포넌트 언마운트 시 또는 productId 변경 시 진행 중인 요청 취소
     return () => {
       isMounted = false;
-      abortController.abort();
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
     };
   }, [productId]);
 
@@ -848,8 +947,10 @@ function Dashboard() {
   // Process keyword data for charts using positive_ratio and negative_ratio from DB
   // Data comes from tb_productKeyword (product_id, keyword_id, positive_ratio DECIMAL(5,2), negative_ratio DECIMAL(5,2))
   // Joined with tb_keyword to get keyword_text for display (VARCHAR(50))
-  const radarData = dashboardData?.keywords && dashboardData.keywords.length > 0 ? (() => {
-    const keywordData = dashboardData.keywords.slice(0, 6);
+  // 날짜 필터와 무관하게 원본 데이터 사용 (RadarChart는 전체 기간 데이터 표시)
+  const keywordsForRadar = originalDashboardData?.keywords || dashboardData?.keywords || [];
+  const radarData = keywordsForRadar.length > 0 ? (() => {
+    const keywordData = keywordsForRadar.slice(0, 6);
     const labels = keywordData.map(kw => kw.keyword_text || kw.keyword || kw.keyword_id || '').filter(Boolean);
     const positive = keywordData.map(kw => parseFloat(kw.positive_ratio || kw.positiveRatio || 0));
     const negative = keywordData.map(kw => parseFloat(kw.negative_ratio || kw.negativeRatio || 0));
@@ -991,82 +1092,6 @@ function Dashboard() {
       });
   };
 
-  const renderHeatmap = () => {
-    let html = [];
-    correlationLabels.forEach((rowLabel, rowIndex) => {
-      let rowCells = [];
-      rowCells.push(
-        <div
-          key={`label-${rowIndex}`}
-          className="text-xs font-semibold text-gray-600"
-        >
-          {rowLabel}
-        </div>
-      );
-
-      correlationLabels.forEach((colLabel, colIndex) => {
-        let cellContent = "-";
-        let bgColor = "bg-gray-100";
-        let value = null;
-
-        if (rowIndex === colIndex) {
-          cellContent = "-";
-          bgColor = "bg-gray-100";
-        } else {
-          // 키워드 상관관계는 나중에 DB에서 계산하거나 구현
-          value = null;
-        }
-
-        if (value !== null) {
-          const normalized = (value - 0.18) / (0.82 - 0.18);
-          const intensity = Math.min(
-            5,
-            Math.max(0, Math.round(normalized * 5))
-          );
-          const bgClasses = [
-            "bg-blue-100",
-            "bg-blue-200",
-            "bg-blue-300",
-            "bg-blue-400",
-            "bg-blue-500",
-            "bg-blue-600",
-          ];
-          bgColor = bgClasses[intensity] || "bg-blue-200";
-
-          let icon = "🔵";
-          if (value >= 0.7) icon = "🔵";
-          else if (value >= 0.4) icon = "🔵";
-          else if (value >= 0.2) icon = "🔵";
-
-          cellContent = (
-            <span>
-              <span className="text-lg">{icon}</span>{" "}
-              <span className="font-medium">{value.toFixed(2)}</span>
-            </span>
-          );
-        }
-
-        rowCells.push(
-          <div
-            key={`cell-${rowIndex}-${colIndex}`}
-            className={`p-1 h-full flex flex-col justify-center items-center ${bgColor} rounded-sm`}
-          >
-            {cellContent}
-          </div>
-        );
-      });
-
-      html.push(
-        <div
-          key={`row-${rowIndex}`}
-          className="grid grid-cols-6 items-center border-b border-gray-100 py-2"
-        >
-          {rowCells}
-        </div>
-      );
-    });
-    return html;
-  };
 
   return (
     <div className={`dashboard-page sidebar-open`}>
@@ -1290,28 +1315,11 @@ function Dashboard() {
               <h2 className="text-xl font-semibold mb-4">
                 🔥 속성 상관관계 히트맵
               </h2>
-              {loading || !dashboardData?.keywords || correlationLabels.length === 0 ? (
-                <div className="text-center text-gray-500 py-8">
-                  {loading ? "로딩 중..." : "키워드 데이터가 없습니다."}
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-6 text-center text-sm font-semibold border-b border-gray-200 pb-2">
-                    <div className="text-gray-500"></div>
-                    {correlationLabels.map((label, idx) => (
-                      <div key={idx} className="text-gray-600">{label}</div>
-                    ))}
-                    {correlationLabels.length < 5 && Array(5 - correlationLabels.length).fill(0).map((_, idx) => (
-                      <div key={`empty-${idx}`} className="text-gray-500">-</div>
-                    ))}
-                  </div>
-                  <div className="mt-2 text-xs">{renderHeatmap()}</div>
-                  <p className="mt-4 text-xs text-gray-500">
-                    <span className="text-main font-bold">🔵</span> 진할수록 함께
-                    언급되는 빈도가 높음.
-                  </p>
-                </>
-              )}
+              <Heatmap 
+                labels={correlationLabels} 
+                matrix={correlationMatrix} 
+                loading={loading || !dashboardData?.keywords || correlationLabels.length === 0}
+              />
             </div>
           </div>
 
@@ -1322,57 +1330,7 @@ function Dashboard() {
                 🌈 감정 워드클라우드
               </h2>
               <div className="flex flex-wrap gap-3">
-                {loading ? (
-                  <span className="text-gray-500">로딩 중...</span>
-                ) : (() => {
-                  // Parse pos_top_keywords from tb_productInsight (VARCHAR(255), comma-separated)
-                  const posKeywords = dashboardData?.insight?.pos_top_keywords 
-                    ? dashboardData.insight.pos_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean)
-                    : dashboardData?.analysis?.positiveKeywords || [];
-                  
-                  return posKeywords.length > 0 ? (
-                    posKeywords.slice(0, 6).map((keyword, idx) => {
-                      const keywordText = typeof keyword === 'string' ? keyword : keyword.keyword_text || keyword.keyword || keyword;
-                      return (
-                        <span
-                          key={idx}
-                          className={`wordcloud-positive wordcloud-size-${idx} ${idx === 0 ? "font-bold" : ""}`}
-                        >
-                          {keywordText}
-                        </span>
-                      );
-                    })
-                  ) : (
-                    <span className="text-gray-500">긍정 키워드 데이터가 없습니다.</span>
-                  );
-                })()}
-              </div>
-              <div className="border-t border-gray-100 my-4"></div>
-              <div className="flex flex-wrap gap-3">
-                {loading ? (
-                  <span className="text-gray-500">로딩 중...</span>
-                ) : (() => {
-                  // Parse neg_top_keywords from tb_productInsight (VARCHAR(255), comma-separated)
-                  const negKeywords = dashboardData?.insight?.neg_top_keywords 
-                    ? dashboardData.insight.neg_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean)
-                    : dashboardData?.analysis?.negativeKeywords || [];
-                  
-                  return negKeywords.length > 0 ? (
-                    negKeywords.slice(0, 5).map((keyword, idx) => {
-                      const keywordText = typeof keyword === 'string' ? keyword : keyword.keyword_text || keyword.keyword || keyword;
-                      return (
-                        <span
-                          key={idx}
-                          className={`wordcloud-negative wordcloud-size-${idx} ${idx === 0 ? "font-bold" : ""}`}
-                        >
-                          {keywordText}
-                        </span>
-                      );
-                    })
-                  ) : (
-                    <span className="text-gray-500">부정 키워드 데이터가 없습니다.</span>
-                  );
-                })()}
+                <span className="text-gray-500">데이터 없음</span>
               </div>
             </div>
 
@@ -1492,14 +1450,67 @@ function Dashboard() {
             </div>
             <div className="card">
               <h2 className="text-lg font-semibold mb-3">C. 리뷰 샘플</h2>
-              <p className="whitespace-pre-wrap text-sm text-gray-700">
-                {loading ? "데이터 로딩 중..." : 
-                 dashboardData?.reviews?.length > 0 ?
-                 dashboardData.reviews.slice(0, 3).map((review, idx) => 
-                   `💬 "${review.review_text}"`
-                 ).join(" ") :
-                 "리뷰 데이터가 없습니다."}
-              </p>
+              <div className="text-sm text-gray-700">
+                {loading ? (
+                  <p>데이터 로딩 중...</p>
+                ) : (() => {
+                  // Parse pos_top_keywords from tb_productInsight (VARCHAR(255), comma-separated)
+                  const posKeywords = dashboardData?.insight?.pos_top_keywords 
+                    ? dashboardData.insight.pos_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean)
+                    : dashboardData?.analysis?.positiveKeywords || [];
+                  
+                  // Parse neg_top_keywords from tb_productInsight (VARCHAR(255), comma-separated)
+                  const negKeywords = dashboardData?.insight?.neg_top_keywords 
+                    ? dashboardData.insight.neg_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean)
+                    : dashboardData?.analysis?.negativeKeywords || [];
+                  
+                  return (
+                    <div>
+                      <div className="mb-4">
+                        <h4 className="font-semibold text-gray-800 mb-2">긍정 키워드:</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {posKeywords.length > 0 ? (
+                            posKeywords.slice(0, 6).map((keyword, idx) => {
+                              const keywordText = typeof keyword === 'string' ? keyword : keyword.keyword_text || keyword.keyword || keyword;
+                              return (
+                                <span
+                                  key={idx}
+                                  className={`wordcloud-positive wordcloud-size-${idx} ${idx === 0 ? "font-bold" : ""}`}
+                                >
+                                  {keywordText}
+                                </span>
+                              );
+                            })
+                          ) : (
+                            <span className="text-gray-500">긍정 키워드 데이터가 없습니다.</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="border-t border-gray-100 my-4"></div>
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-2">부정 키워드:</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {negKeywords.length > 0 ? (
+                            negKeywords.slice(0, 5).map((keyword, idx) => {
+                              const keywordText = typeof keyword === 'string' ? keyword : keyword.keyword_text || keyword.keyword || keyword;
+                              return (
+                                <span
+                                  key={idx}
+                                  className={`wordcloud-negative wordcloud-size-${idx} ${idx === 0 ? "font-bold" : ""}`}
+                                >
+                                  {keywordText}
+                                </span>
+                              );
+                            })
+                          ) : (
+                            <span className="text-gray-500">부정 키워드 데이터가 없습니다.</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
           </div>
 

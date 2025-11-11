@@ -1,0 +1,50 @@
+/* Color constants */
+:root {
+  --splitbar-primary-color: #5B8EFF;
+  --splitbar-neutral-color: #CBD5E1;
+  --splitbar-font-color: #333333;
+  --splitbar-grid-color: #E5E7EB;
+}
+
+.splitbar-chart-container {
+  position: relative;
+  height: 24rem; /* h-96 */
+}
+
+.splitbar-chart-loading {
+  position: relative;
+  height: 24rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.splitbar-chart-empty {
+  position: relative;
+  height: 24rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.splitbar-chart-content {
+  text-align: center;
+  color: #6b7280;
+}
+
+.splitbar-chart-title {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.splitbar-chart-subtitle {
+  font-size: 0.875rem;
+}
+
+.splitbar-chart-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+

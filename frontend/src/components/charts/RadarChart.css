@@ -1,0 +1,57 @@
+/* Color constants */
+:root {
+  --radar-primary-color: #5B8EFF;
+  --radar-negative-color: #EF4444;
+  --radar-font-color: #333333;
+  --radar-grid-color: #E5E7EB;
+  --radar-backdrop-color: rgba(255, 255, 255, 0.9);
+}
+
+.radar-chart-container {
+  position: relative;
+  flex: 1;
+  min-height: 350px;
+  width: 100%;
+}
+
+.radar-chart-loading {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 350px;
+  width: 100%;
+}
+
+.radar-chart-empty {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 350px;
+  width: 100%;
+}
+
+.radar-chart-content {
+  text-align: center;
+  color: #6b7280;
+}
+
+.radar-chart-title {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.radar-chart-subtitle {
+  font-size: 0.875rem;
+}
+
+.radar-chart-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+

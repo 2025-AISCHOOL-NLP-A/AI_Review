@@ -5,7 +5,24 @@ const dashboardService = {
   async getDashboardData(productId = 1007, signal = null) {
     try {
       const config = signal ? { signal } : {};
-      const res = await api.get(`/products/${productId}/dashboard`, config);
+      const url = `/products/${productId}/dashboard`;
+      
+      console.log("📤 대시보드 데이터 요청:", {
+        url,
+        productId,
+        hasSignal: !!signal,
+        config,
+      });
+      
+      const res = await api.get(url, config);
+      
+      console.log("✅ 대시보드 데이터 응답:", {
+        status: res.status,
+        statusText: res.statusText,
+        hasData: !!res.data,
+        dataKeys: res.data ? Object.keys(res.data) : [],
+      });
+      
       return { success: true, data: res.data };
     } catch (err) {
       // AbortError는 정상적인 취소이므로 에러로 처리하지 않음
@@ -13,14 +30,54 @@ const dashboardService = {
         throw err;
       }
       
+      // 에러 로깅 (디버깅용)
+      console.error("dashboardService.getDashboardData 에러:", {
+        name: err.name,
+        message: err.message,
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        headers: err.response?.headers,
+        requestUrl: err.config?.url,
+        requestMethod: err.config?.method,
+        fullError: err,
+      });
+      
+      // 응답 데이터의 상세 정보 출력
+      if (err.response?.data) {
+        console.error("❌ 서버 응답 데이터:", JSON.stringify(err.response.data, null, 2));
+      }
+      
+      // 네트워크 요청 정보 출력 (브라우저 네트워크 탭에서 확인 가능)
+      console.error("❌ 네트워크 요청 정보:", {
+        requestUrl: err.config?.url,
+        fullUrl: `${err.config?.baseURL || ''}${err.config?.url || ''}`,
+        method: err.config?.method,
+        requestHeaders: err.config?.headers,
+        requestData: err.config?.data,
+      });
+      
+      // 브라우저 개발자 도구 네트워크 탭 확인 안내
+      console.error("💡 브라우저 개발자 도구(F12) > Network 탭에서 다음을 확인하세요:");
+      console.error("   1. 요청이 전송되었는지");
+      console.error("   2. 응답 상태 코드 (500)");
+      console.error("   3. 응답 본문 (Response 탭)");
+      console.error("   4. 요청 헤더 (Headers 탭)");
+      
       // 404 에러 처리
       if (err.response?.status === 404) {
         const msg = err.response?.data?.message || "대시보드 데이터를 찾을 수 없습니다. 먼저 리뷰 분석을 실행해주세요.";
         return { success: false, message: msg, status: 404 };
       }
       
-      const msg = err.response?.data?.message || "대시보드 데이터를 불러오는데 실패했습니다.";
-      return { success: false, message: msg };
+      // 500 에러 처리
+      if (err.response?.status === 500) {
+        const msg = err.response?.data?.message || "대시보드 조회 중 서버 오류가 발생했습니다.";
+        return { success: false, message: msg, status: 500 };
+      }
+      
+      const msg = err.response?.data?.message || err.message || "대시보드 데이터를 불러오는데 실패했습니다.";
+      return { success: false, message: msg, status: err.response?.status };
     }
   },
 

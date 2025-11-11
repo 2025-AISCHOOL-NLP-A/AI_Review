@@ -8,6 +8,7 @@ import {
   Legend,
   BarController,
 } from 'chart.js';
+import './SplitBarChart.css';
 
 // Register Chart.js components
 Chart.register(
@@ -161,18 +162,18 @@ const SplitBarChart = ({ data, loading }) => {
 
   if (loading || !data || data.length === 0) {
     return (
-      <div className="relative h-96 flex items-center justify-center">
-        <div className="text-center text-gray-500">
-          <p className="text-lg font-medium mb-2">데이터가 없습니다</p>
-          <p className="text-sm">키워드 데이터를 불러올 수 없습니다.</p>
+      <div className="splitbar-chart-loading">
+        <div className="splitbar-chart-content">
+          <p className="splitbar-chart-title">데이터가 없습니다</p>
+          <p className="splitbar-chart-subtitle">키워드 데이터를 불러올 수 없습니다.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative h-96">
-      <canvas ref={chartRef}></canvas>
+    <div className="splitbar-chart-container">
+      <canvas ref={chartRef} className="splitbar-chart-canvas"></canvas>
     </div>
   );
 };

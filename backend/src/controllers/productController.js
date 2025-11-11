@@ -35,18 +35,27 @@ export const getProductById = async (req, res) => {
 // ==============================
 export const productList = async (req, res) => {
   try {
+    // const [rows] = await db.query(`
+    //   SELECT 
+    //     p.product_id,
+    //     p.product_name,
+    //     p.brand,
+    //     c.category_name,
+    //     IFNULL(d.product_score, 0) AS product_score,
+    //     IFNULL(d.total_reviews, 0) AS total_reviews,
+    //     d.updated_at
+    //   FROM tb_product p
+    //   LEFT JOIN tb_productCategory c ON p.category_id = c.category_id
+    //   LEFT JOIN tb_productDashboard d ON p.product_id = d.product_id
+    //   ORDER BY p.product_id DESC
+    // `);
     const [rows] = await db.query(`
       SELECT 
         p.product_id,
         p.product_name,
         p.brand,
-        c.category_name,
-        IFNULL(d.product_score, 0) AS product_score,
-        IFNULL(d.total_reviews, 0) AS total_reviews,
-        d.updated_at
+        p.registered_date
       FROM tb_product p
-      LEFT JOIN tb_productCategory c ON p.category_id = c.category_id
-      LEFT JOIN tb_productDashboard d ON p.product_id = d.product_id
       ORDER BY p.product_id DESC
     `);
 

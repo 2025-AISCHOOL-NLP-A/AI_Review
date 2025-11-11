@@ -100,7 +100,6 @@ export const dashboard = async (req, res) => {
       WHERE product_id = ?`,
       [productId]
     );
-
     if (!dashboardData) {
       return res.status(404).json({ message: "대시보드 데이터를 찾을 수 없습니다." });
     }

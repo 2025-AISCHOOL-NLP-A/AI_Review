@@ -535,95 +535,31 @@ function Workplace() {
                   <th 
                     className="sortable-header"
                     onClick={() => handleSort('registered_date')}
-                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                    style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center' }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                      <span>등록일</span>
+                      <span style={{ flex: 1, textAlign: 'center' }}>등록일</span>
                       <span style={{ 
                         display: 'flex', 
                         flexDirection: 'column', 
+                        gap: '2px',
                         fontSize: '0.7rem',
-                        lineHeight: '0.8',
-                        color: sortField === 'registered_date' ? '#5B8EFF' : '#9CA3AF'
+                        alignItems: 'center',
+                        color: sortField === 'registered_date' ? '#5B8EFF' : '#9CA3AF',
+                        marginLeft: 'auto'
                       }}>
                         <span style={{ 
                           opacity: sortField === 'registered_date' && sortDirection === 'asc' ? 1 : 0.3 
-                        }}>↑</span>
+                        }}>▲</span>
                         <span style={{ 
                           opacity: sortField === 'registered_date' && sortDirection === 'desc' ? 1 : 0.3 
-                        }}>↓</span>
+                        }}>▼</span>
                       </span>
                     </div>
                   </th>
-                  <th 
-                    className="sortable-header"
-                    onClick={() => handleSort('product_name')}
-                    style={{ cursor: 'pointer', userSelect: 'none' }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                      <span>제품명</span>
-                      <span style={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        fontSize: '0.7rem',
-                        lineHeight: '0.8',
-                        color: sortField === 'product_name' ? '#5B8EFF' : '#9CA3AF'
-                      }}>
-                        <span style={{ 
-                          opacity: sortField === 'product_name' && sortDirection === 'asc' ? 1 : 0.3 
-                        }}>↑</span>
-                        <span style={{ 
-                          opacity: sortField === 'product_name' && sortDirection === 'desc' ? 1 : 0.3 
-                        }}>↓</span>
-                      </span>
-                    </div>
-                  </th>
-                  <th 
-                    className="sortable-header"
-                    onClick={() => handleSort('brand')}
-                    style={{ cursor: 'pointer', userSelect: 'none' }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                      <span>브랜드</span>
-                      <span style={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        fontSize: '0.7rem',
-                        lineHeight: '0.8',
-                        color: sortField === 'brand' ? '#5B8EFF' : '#9CA3AF'
-                      }}>
-                        <span style={{ 
-                          opacity: sortField === 'brand' && sortDirection === 'asc' ? 1 : 0.3 
-                        }}>↑</span>
-                        <span style={{ 
-                          opacity: sortField === 'brand' && sortDirection === 'desc' ? 1 : 0.3 
-                        }}>↓</span>
-                      </span>
-                    </div>
-                  </th>
-                  <th 
-                    className="sortable-header"
-                    onClick={() => handleSort('category_id')}
-                    style={{ cursor: 'pointer', userSelect: 'none' }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                      <span>카테고리</span>
-                      <span style={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        fontSize: '0.7rem',
-                        lineHeight: '0.8',
-                        color: sortField === 'category_id' ? '#5B8EFF' : '#9CA3AF'
-                      }}>
-                        <span style={{ 
-                          opacity: sortField === 'category_id' && sortDirection === 'asc' ? 1 : 0.3 
-                        }}>↑</span>
-                        <span style={{ 
-                          opacity: sortField === 'category_id' && sortDirection === 'desc' ? 1 : 0.3 
-                        }}>↓</span>
-                      </span>
-                    </div>
-                  </th>
+                  <th style={{ textAlign: 'center' }}>제품명</th>
+                  <th style={{ textAlign: 'center' }}>브랜드</th>
+                  <th style={{ textAlign: 'center' }}>카테고리</th>
                 </tr>
               </thead>
               <tbody>
@@ -657,12 +593,12 @@ function Workplace() {
                           onChange={() => handleSelectItem(item.product_id)}
                         />
                       </td>
-                      <td>{formatDate(item)}</td>
-                      <td className="product-cell">
+                      <td style={{ textAlign: 'center' }}>{formatDate(item)}</td>
+                      <td className="product-cell" style={{ textAlign: 'center' }}>
                         <span>{item.product_name || "-"}</span>
                       </td>
-                      <td>{item.brand && item.brand.trim() !== "" ? item.brand : "-"}</td>
-                      <td>{getCategoryName(item.category_id)}</td>
+                      <td style={{ textAlign: 'center' }}>{item.brand && item.brand.trim() !== "" ? item.brand : "-"}</td>
+                      <td style={{ textAlign: 'center' }}>{getCategoryName(item.category_id)}</td>
                     </tr>
                     );
                   })

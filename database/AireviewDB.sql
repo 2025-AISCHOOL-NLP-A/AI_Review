@@ -144,6 +144,7 @@ CREATE TABLE tb_log (
     ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 11) 이메일 인증
 CREATE TABLE `tb_email_verification` (
    `verification_id` int NOT NULL AUTO_INCREMENT,
    `email` varchar(100) NOT NULL,
@@ -154,6 +155,7 @@ CREATE TABLE `tb_email_verification` (
    KEY `idx_email` (`email`)
  ) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
+-- 12) 대시보드 카테고리를 명시화한 테이블
  CREATE TABLE `tb_productDashboard` (
    `dashboard_id` int NOT NULL AUTO_INCREMENT,
    `product_id` int NOT NULL,

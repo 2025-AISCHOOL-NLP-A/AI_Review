@@ -586,8 +586,10 @@ function Dashboard() {
               </div>
               <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-3 text-sm">
                 <div className="flex items-center space-x-2">
-                  <label className="text-gray-600 font-medium whitespace-nowrap">기간 필터:</label>
+                  <label htmlFor="dashboard_start_date" className="text-gray-600 font-medium whitespace-nowrap">기간 필터:</label>
                   <input
+                    id="dashboard_start_date"
+                    name="start_date"
                     type="date"
                     className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent"
                     value={startDate}
@@ -596,6 +598,8 @@ function Dashboard() {
                   />
                   <span className="text-gray-500">~</span>
                   <input
+                    id="dashboard_end_date"
+                    name="end_date"
                     type="date"
                     className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent"
                     value={endDate}

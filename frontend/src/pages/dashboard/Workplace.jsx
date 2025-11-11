@@ -466,7 +466,11 @@ function Workplace() {
           {/* Header Section */}
           <div className="workplace-header">
             <h1 className="workplace-title">Workplace</h1>
-            <div className="workplace-filters">
+          </div>
+
+          {/* Filters Section */}
+          <div className="workplace-filters">
+            <div className="filters-left">
               <div className="filter-dropdown">
                 <select
                   id="workplace_category_filter"
@@ -512,55 +516,55 @@ function Workplace() {
                   onKeyDown={handleSearch}
                 />
               </div>
-              <div className="date-filter-container">
-                <input
-                  type="date"
-                  id="workplace_start_date"
-                  name="start_date"
-                  className="date-input"
-                  placeholder="시작일"
-                  value={startDate}
-                  onChange={handleStartDateChange}
-                  max={endDate || getTodayDate()}
-                />
-                <span className="date-separator">~</span>
-                <input
-                  type="date"
-                  id="workplace_end_date"
-                  name="end_date"
-                  className="date-input"
-                  placeholder="종료일"
-                  value={endDate}
-                  onChange={handleEndDateChange}
-                  min={startDate || undefined}
-                  max={getTodayDate()}
-                />
-                {(startDate || endDate) && (
-                  <button
-                    className="date-clear-btn"
-                    onClick={() => {
-                      setStartDate("");
-                      setEndDate("");
-                    }}
-                    title="날짜 필터 초기화"
+            </div>
+            <div className="date-filter-container">
+              <input
+                type="date"
+                id="workplace_start_date"
+                name="start_date"
+                className="date-input"
+                placeholder="시작일"
+                value={startDate}
+                onChange={handleStartDateChange}
+                max={endDate || getTodayDate()}
+              />
+              <span className="date-separator">~</span>
+              <input
+                type="date"
+                id="workplace_end_date"
+                name="end_date"
+                className="date-input"
+                placeholder="종료일"
+                value={endDate}
+                onChange={handleEndDateChange}
+                min={startDate || undefined}
+                max={getTodayDate()}
+              />
+              {(startDate || endDate) && (
+                <button
+                  className="date-clear-btn"
+                  onClick={() => {
+                    setStartDate("");
+                    setEndDate("");
+                  }}
+                  title="날짜 필터 초기화"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    className="clear-icon"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      className="clear-icon"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                )}
-              </div>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
 
@@ -635,31 +639,27 @@ function Workplace() {
                 ) : (
                   workplaceData.map((item) => {
                     return (
-                    <tr key={item.product_id}>
-                      <td className="checkbox-column">
+                    <tr 
+                      key={item.product_id}
+                      onClick={() => navigate(`/dashboard?productId=${item.product_id}`)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <td className="checkbox-column" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           id={`workplace_product_${item.product_id}`}
                           name={`product_${item.product_id}`}
                           checked={selectedProducts.includes(item.product_id)}
-                          onChange={() => handleSelectItem(item.product_id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleSelectItem(item.product_id);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
                         />
                       </td>
                       <td style={{ textAlign: 'center' }}>{formatDate(item)}</td>
                       <td className="product-cell" style={{ textAlign: 'center' }}>
-                        <span 
-                          onClick={() => navigate(`/dashboard?productId=${item.product_id}`)}
-                          style={{ 
-                            cursor: 'pointer', 
-                            color: '#5B8EFF', 
-                            textDecoration: 'underline',
-                            fontWeight: '500'
-                          }}
-                          onMouseEnter={(e) => e.target.style.color = '#4A7CFF'}
-                          onMouseLeave={(e) => e.target.style.color = '#5B8EFF'}
-                        >
-                          {item.product_name || "-"}
-                        </span>
+                        {item.product_name || "-"}
                       </td>
                       <td style={{ textAlign: 'center' }}>{item.brand && item.brand.trim() !== "" ? item.brand : "-"}</td>
                       <td style={{ textAlign: 'center' }}>{getCategoryName(item.category_id)}</td>
@@ -719,27 +719,6 @@ function Workplace() {
             <div className="action-buttons">
               <button className="download-btn" onClick={handleDownload}>
                 Download
-              </button>
-              <button 
-                className="delete-btn" 
-                onClick={handleDeleteSelected}
-                disabled={selectedProducts.length === 0}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  className="delete-icon"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg>
-                Delete
               </button>
               <button className="add-btn" onClick={handleAdd}>
                 <svg

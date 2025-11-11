@@ -188,6 +188,18 @@ const dashboardService = {
       return { success: false, message: msg };
     }
   },
+
+  /** ➕ 제품 생성 */
+  async createProduct(productData) {
+    try {
+      const res = await api.post("/products", productData);
+      return { success: true, data: res.data };
+    } catch (err) {
+      console.error("제품 생성 오류:", err);
+      const msg = err.response?.data?.message || "제품 생성에 실패했습니다.";
+      return { success: false, message: msg };
+    }
+  },
 };
 
 export default dashboardService;

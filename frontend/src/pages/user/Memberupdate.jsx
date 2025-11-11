@@ -16,7 +16,7 @@ function Memberupdate() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     user_id: "", // 아이디 (고정)
-    lgin_id: "", // 고정
+    login_id: "", // 고정
     current_password: "", // 확인용
     new_password: "", // 변경용
     new_password_confirm: "",
@@ -37,7 +37,6 @@ function Memberupdate() {
 
   useEffect(() => {
     let isMounted = true;
-    const abortController = new AbortController();
 
     // 현재 로그인 사용자 정보 조회
     (async () => {
@@ -70,9 +69,8 @@ function Memberupdate() {
 
     return () => {
       isMounted = false;
-      abortController.abort();
     };
-  }, []);
+  }, [navigate]);
 
   // -----------------------------
   // ✅ 타이머 복원 (페이지 로드 시)

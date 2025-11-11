@@ -16,7 +16,6 @@ function Memberdrop() {
 
   useEffect(() => {
     let isMounted = true;
-    const abortController = new AbortController();
 
     // 현재 로그인 사용자 정보 조회
     const fetchUserInfo = async () => {
@@ -46,9 +45,8 @@ function Memberdrop() {
 
     return () => {
       isMounted = false;
-      abortController.abort();
     };
-  }, []);
+  }, [navigate]);
 
   const handleWithdraw = async () => {
     if (!agreeChecked) {

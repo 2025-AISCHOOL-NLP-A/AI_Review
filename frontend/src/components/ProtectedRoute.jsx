@@ -8,7 +8,6 @@ function ProtectedRoute({ children }) {
 
   useEffect(() => {
     let isMounted = true;
-    const abortController = new AbortController();
 
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
@@ -43,7 +42,6 @@ function ProtectedRoute({ children }) {
 
     return () => {
       isMounted = false;
-      abortController.abort();
     };
   }, []);
 

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
+import dashboardService from "../services/dashboardService";
 
-export default function ProductUploadForm({ onClose, formData }) {
+export default function ProductUploadForm({ onClose, formData, onSuccess }) {
   const [files, setFiles] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef(null);
@@ -30,17 +31,39 @@ export default function ProductUploadForm({ onClose, formData }) {
       return;
     }
 
-    // 나중에 분석 기능 연결 예정
-    console.log("Analyze clicked with files:", files);
-    console.log("Form data:", formData);
-    
+    if (!formData) {
+      alert("제품 정보를 먼저 입력해주세요.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // 여기에 분석 로직 추가 예정
-      // 예: await api.uploadAndAnalyze(formData, files);
+      // 제품 생성
+      const productData = {
+        product_name: formData.productName,
+        brand: formData.brand || null,
+        category_id: parseInt(formData.category, 10),
+      };
+
+      const result = await dashboardService.createProduct(productData);
+
+      if (result.success) {
+        alert("제품이 성공적으로 생성되었습니다.");
+        if (onSuccess) {
+          onSuccess(result.data.product);
+        }
+        onClose();
+        
+        // TODO: 파일 업로드 및 분석 로직은 추후 구현
+        // if (files.length > 0) {
+        //   // 파일 업로드 및 분석 요청
+        // }
+      } else {
+        alert(result.message || "제품 생성에 실패했습니다.");
+      }
     } catch (error) {
-      console.error("분석 중 오류:", error);
-      alert("분석 중 오류가 발생했습니다.");
+      console.error("제품 생성 중 오류:", error);
+      alert("제품 생성 중 오류가 발생했습니다.");
     } finally {
       setIsSubmitting(false);
     }
@@ -95,7 +118,7 @@ export default function ProductUploadForm({ onClose, formData }) {
         <button 
           className="next" 
           onClick={handleAnalyze}
-          disabled={isSubmitting || files.length === 0}
+          disabled={isSubmitting || !formData}
         >
           {isSubmitting ? "처리 중..." : "Analyze"}
         </button>

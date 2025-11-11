@@ -46,9 +46,9 @@ export default function ProductInfoForm({ onNext, onClose }) {
           onChange={handleChange}
         >
           <option value="">Select Category</option>
-          <option value="화장품">화장품</option>
-          <option value="전자기기">전자기기</option>
-          <option value="게임">게임</option>
+          <option value="102">화장품</option>
+          <option value="101">전자기기</option>
+          <option value="103">게임</option>
         </select>
       </div>
 

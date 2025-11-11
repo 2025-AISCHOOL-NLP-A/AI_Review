@@ -32,13 +32,11 @@ function Dashboard() {
   // Fetch dashboard data
   useEffect(() => {
     let isMounted = true;
-    const abortController = new AbortController();
 
     // 이미 요청이 진행 중이면 중복 요청 방지
     if (fetchInProgress.current) {
       return () => {
         isMounted = false;
-        abortController.abort();
       };
     }
 
@@ -88,7 +86,6 @@ function Dashboard() {
 
     return () => {
       isMounted = false;
-      abortController.abort();
       // cleanup에서 fetchInProgress를 false로 설정하지 않음
       // (요청이 완료된 후에만 false로 설정되어야 함)
     };

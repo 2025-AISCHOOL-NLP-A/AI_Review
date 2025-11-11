@@ -22,7 +22,6 @@ function Main() {
   // 이미 로그인된 사용자가 메인 페이지에 접근하면 워크플레이스로 리다이렉트
   useEffect(() => {
     let isMounted = true;
-    const abortController = new AbortController();
 
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
@@ -48,7 +47,6 @@ function Main() {
 
     return () => {
       isMounted = false;
-      abortController.abort();
     };
   }, [navigate]);
 

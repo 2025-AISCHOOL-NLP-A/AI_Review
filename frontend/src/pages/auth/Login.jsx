@@ -31,18 +31,28 @@ function Login() {
   }, [loginSuccess, navigate]);
 
   useEffect(() => {
+    let isMounted = true;
+
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
       if (token) {
         try {
           await authService.getMe();
-          navigate("/wp", { replace: true });
+          if (isMounted) {
+            navigate("/wp", { replace: true });
+          }
         } catch (error) {
-          localStorage.removeItem("token");
+          if (isMounted) {
+            localStorage.removeItem("token");
+          }
         }
       }
     };
     checkAuth();
+
+    return () => {
+      isMounted = false;
+    };
   }, [navigate]);
 
   const handleChange = (e) => {

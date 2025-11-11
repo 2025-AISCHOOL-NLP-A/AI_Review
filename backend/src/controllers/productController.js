@@ -54,7 +54,8 @@ export const productList = async (req, res) => {
         p.product_id,
         p.product_name,
         p.brand,
-        p.registered_date
+        p.registered_date,
+        p.category_id
       FROM tb_product p
       ORDER BY p.product_id DESC
     `);

@@ -26,7 +26,6 @@ function Workplace() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const fetchInProgress = useRef(false);
   const [modalStep, setModalStep] = useState(null); // 'info' | 'upload' | null
   const [productFormData, setProductFormData] = useState(null);
   const [sortField, setSortField] = useState(null); // 'registered_date' | 'product_name' | 'brand' | 'category_id' | null
@@ -39,6 +38,34 @@ function Workplace() {
   });
 
   const productsPerPage = 10;
+
+  // 오늘 날짜를 YYYY-MM-DD 형식으로 가져오기
+  const getTodayDate = () => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  };
+
+  // 날짜 변경 핸들러 (시작일)
+  const handleStartDateChange = (e) => {
+    const newStartDate = e.target.value;
+    // HTML max 속성으로 이미 제한되지만, 방어적 프로그래밍을 위한 검증
+    if (endDate && newStartDate > endDate) {
+      // 시작일이 종료일보다 나중이면 설정하지 않음 (브라우저에서 이미 제한됨)
+      return;
+    }
+    setStartDate(newStartDate);
+  };
+
+  // 날짜 변경 핸들러 (종료일)
+  const handleEndDateChange = (e) => {
+    const newEndDate = e.target.value;
+    // HTML min 속성으로 이미 제한되지만, 방어적 프로그래밍을 위한 검증
+    if (startDate && newEndDate < startDate) {
+      // 종료일이 시작일보다 이전이면 설정하지 않음 (브라우저에서 이미 제한됨)
+      return;
+    }
+    setEndDate(newEndDate);
+  };
 
   // 사이드바 상태 변경 감지 (CustomEvent 사용)
   useEffect(() => {
@@ -57,45 +84,31 @@ function Workplace() {
     };
     window.addEventListener("storage", handleStorageChange);
 
-    // 초기 로드 시 localStorage에서 상태 확인
-    const checkSidebarState = () => {
-      const saved = localStorage.getItem("sidebarOpen");
-      if (saved !== null) {
-        setSidebarOpen(saved === "true");
-      }
-    };
-    
-    // 주기적으로 상태 확인 (같은 탭에서의 변경 감지)
-    const interval = setInterval(checkSidebarState, 200);
-
     return () => {
       window.removeEventListener("sidebar-toggle", handleSidebarToggle);
       window.removeEventListener("storage", handleStorageChange);
-      clearInterval(interval);
     };
   }, []);
 
   // 제품 목록 가져오기 (전체 데이터를 한 번만 가져옴)
   useEffect(() => {
-    // 이미 요청이 진행 중이면 중복 요청 방지
-    if (fetchInProgress.current) {
-      return;
-    }
-
-    let isCancelled = false;
+    // AbortController를 사용하여 요청 취소 가능하도록 함
+    const abortController = new AbortController();
+    let isMounted = true;
 
     const fetchProducts = async () => {
-      // 중복 요청 방지를 위한 플래그 설정
-      fetchInProgress.current = true;
+      if (!isMounted || abortController.signal.aborted) {
+        return;
+      }
 
       setLoading(true);
 
       try {
-        // 백엔드에서 전체 데이터를 가져옴 (페이지네이션 파라미터는 무시)
-        const result = await dashboardService.getProducts(1, 1000, "", null);
+        // 백엔드에서 전체 데이터를 가져옴 (페이지네이션 파라미터는 무시, AbortSignal 전달)
+        const result = await dashboardService.getProducts(1, 1000, "", null, abortController.signal);
 
-        // 컴포넌트가 언마운트되었거나 요청이 취소된 경우 상태 업데이트 방지
-        if (isCancelled) {
+        // 요청이 취소되었거나 컴포넌트가 언마운트된 경우 상태 업데이트 방지
+        if (!isMounted || abortController.signal.aborted) {
           return;
         }
 
@@ -130,7 +143,7 @@ function Workplace() {
           }
 
           // 전체 제품 데이터 저장 (빈 배열도 저장)
-          if (!isCancelled) {
+          if (isMounted && !abortController.signal.aborted) {
             if (Array.isArray(products)) {
               setAllProducts(products);
             } else {
@@ -138,29 +151,32 @@ function Workplace() {
             }
           }
         } else {
-          if (!isCancelled) {
+          if (isMounted && !abortController.signal.aborted) {
             setAllProducts([]);
           }
         }
       } catch (error) {
+        // AbortError는 정상적인 취소이므로 에러로 처리하지 않음
+        if (error.name === 'AbortError' || error.name === 'CanceledError' || error.code === 'ERR_CANCELED' || abortController.signal.aborted) {
+          return;
+        }
         console.error("❌ 제품 목록 조회 중 오류:", error);
-        if (!isCancelled) {
+        if (isMounted && !abortController.signal.aborted) {
           setAllProducts([]);
         }
       } finally {
-        if (!isCancelled) {
+        if (isMounted && !abortController.signal.aborted) {
           setLoading(false);
         }
-        fetchInProgress.current = false;
       }
     };
 
     fetchProducts();
 
-    // cleanup 함수: 컴포넌트 언마운트 시 요청 취소
+    // cleanup 함수: 컴포넌트 언마운트 시 또는 refreshTrigger 변경 시 진행 중인 요청 취소
     return () => {
-      isCancelled = true;
-      fetchInProgress.current = false;
+      isMounted = false;
+      abortController.abort();
     };
   }, [refreshTrigger]); // refreshTrigger만 의존성으로 설정
 
@@ -287,6 +303,15 @@ function Workplace() {
     setWorkplaceData(paginatedData);
   }, [allProducts, currentPage, searchQuery, selectedCategoryFilter, startDate, endDate, productsPerPage, sortField, sortDirection]);
 
+  // totalPages가 변경되면 currentPage가 유효한 범위 내에 있는지 확인
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    } else if (totalPages === 0 && currentPage > 1) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
+
   // 카테고리 ID를 이름으로 변환
   const getCategoryName = (categoryId) => {
     const categoryMap = {
@@ -377,6 +402,16 @@ function Workplace() {
     setProductFormData(null);
   };
 
+  // 제품 추가 성공 시 호출되는 콜백
+  const handleProductAdded = () => {
+    // 모달 닫기
+    handleCloseModal();
+    // 첫 페이지로 이동
+    setCurrentPage(1);
+    // 제품 목록 새로고침
+    setRefreshTrigger(prev => prev + 1);
+  };
+
   // 선택된 제품들 삭제
   const handleDeleteSelected = async () => {
     if (selectedProducts.length === 0) {
@@ -406,6 +441,8 @@ function Workplace() {
           setSelectedProducts([]);
           // refreshTrigger를 변경하여 useEffect가 다시 실행되도록 함
           setRefreshTrigger(prev => prev + 1);
+          // 삭제 후 현재 페이지가 빈 페이지가 되면 이전 페이지로 이동
+          // (이 로직은 useEffect에서 totalPages를 계산한 후 처리됨)
         } else {
           alert("일부 제품 삭제에 실패했습니다.");
           // 성공한 것만 제거하고 새로고침
@@ -432,6 +469,8 @@ function Workplace() {
             <div className="workplace-filters">
               <div className="filter-dropdown">
                 <select
+                  id="workplace_category_filter"
+                  name="category_filter"
                   className="product-filter"
                   value={selectedCategoryFilter}
                   onChange={(e) => {
@@ -464,6 +503,8 @@ function Workplace() {
                 </svg>
                 <input
                   type="text"
+                  id="workplace_search"
+                  name="workplace_search"
                   className="search-input"
                   placeholder="제품명 또는 브랜드로 검색"
                   value={searchQuery}
@@ -474,18 +515,25 @@ function Workplace() {
               <div className="date-filter-container">
                 <input
                   type="date"
+                  id="workplace_start_date"
+                  name="start_date"
                   className="date-input"
                   placeholder="시작일"
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={handleStartDateChange}
+                  max={endDate || getTodayDate()}
                 />
                 <span className="date-separator">~</span>
                 <input
                   type="date"
+                  id="workplace_end_date"
+                  name="end_date"
                   className="date-input"
                   placeholder="종료일"
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  onChange={handleEndDateChange}
+                  min={startDate || undefined}
+                  max={getTodayDate()}
                 />
                 {(startDate || endDate) && (
                   <button
@@ -524,6 +572,8 @@ function Workplace() {
                   <th className="checkbox-column">
                     <input
                       type="checkbox"
+                      id="workplace_select_all"
+                      name="select_all"
                       checked={
                         workplaceData.length > 0 &&
                         selectedProducts.length === workplaceData.length
@@ -589,6 +639,8 @@ function Workplace() {
                       <td className="checkbox-column">
                         <input
                           type="checkbox"
+                          id={`workplace_product_${item.product_id}`}
+                          name={`product_${item.product_id}`}
                           checked={selectedProducts.includes(item.product_id)}
                           onChange={() => handleSelectItem(item.product_id)}
                         />
@@ -613,12 +665,12 @@ function Workplace() {
               <button
                 className="pagination-btn"
                 onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
+                disabled={currentPage === 1 || totalPages === 0}
               >
                 Previous
               </button>
               <div className="page-numbers">
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                {totalPages > 0 && Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                   let page;
                   if (totalPages <= 5) {
                     page = i + 1;
@@ -628,6 +680,10 @@ function Workplace() {
                     page = totalPages - 4 + i;
                   } else {
                     page = currentPage - 2 + i;
+                  }
+                  // 페이지 번호가 유효한 범위 내에 있는지 확인
+                  if (page < 1 || page > totalPages) {
+                    return null;
                   }
                   return (
                     <button
@@ -643,7 +699,7 @@ function Workplace() {
               <button
                 className="pagination-btn"
                 onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
+                disabled={currentPage === totalPages || totalPages === 0}
               >
                 Next
               </button>
@@ -715,6 +771,7 @@ function Workplace() {
           <ProductUploadForm
             onClose={handleCloseModal}
             formData={productFormData}
+            onSuccess={handleProductAdded}
           />
         </ProductModal>
       )}

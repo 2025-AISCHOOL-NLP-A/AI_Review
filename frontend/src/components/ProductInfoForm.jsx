@@ -41,6 +41,7 @@ export default function ProductInfoForm({ onNext, onClose }) {
           Category <span className="required">*</span>
         </label>
         <select
+          id="product_category"
           name="category"
           value={form.category}
           onChange={handleChange}
@@ -58,6 +59,7 @@ export default function ProductInfoForm({ onNext, onClose }) {
         </label>
         <input
           type="text"
+          id="product_name"
           name="productName"
           value={form.productName}
           onChange={handleChange}
@@ -69,6 +71,7 @@ export default function ProductInfoForm({ onNext, onClose }) {
         <label>Brand</label>
         <input
           type="text"
+          id="product_brand"
           name="brand"
           value={form.brand}
           onChange={handleChange}

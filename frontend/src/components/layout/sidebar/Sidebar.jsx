@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import authService from "../../../services/authService";
+import { useUser } from "../../../contexts/UserContext";
 import "../../../styles/common.css";
 import "./sidebar.css";
 
 function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout: contextLogout } = useUser();
 
   // localStorage에서 사이드바 상태 불러오기 (기본값: true)
   const [sidebarOpen, setSidebarOpen] = useState(() => {
@@ -20,7 +21,11 @@ function Sidebar() {
     return saved !== null ? saved === "true" : false;
   });
 
-  const [userInfo, setUserInfo] = useState({ login_id: "", email: "" });
+  // Context에서 사용자 정보 가져오기 (API 호출 없음)
+  const userInfo = user ? {
+    login_id: user?.login_id || "",
+    email: user?.email || "",
+  } : { login_id: "", email: "" };
 
   const isActive = (path) => location.pathname === path;
 
@@ -33,21 +38,6 @@ function Sidebar() {
   useEffect(() => {
     localStorage.setItem("settingsOpen", settingsOpen.toString());
   }, [settingsOpen]);
-
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const user = await authService.getMe();
-        setUserInfo({
-          login_id: user?.login_id || "",
-          email: user?.email || "",
-        });
-      } catch (error) {
-        console.error("사용자 정보를 가져오는데 실패했습니다:", error);
-      }
-    };
-    fetchUserInfo();
-  }, []);
 
   return (
     <aside
@@ -510,7 +500,7 @@ function Sidebar() {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            authService.logout();
+            contextLogout();
             navigate("/login");
           }}
           onMouseDown={(e) => {

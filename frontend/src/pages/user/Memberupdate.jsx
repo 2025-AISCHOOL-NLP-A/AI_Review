@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import authService from "../../services/authService";
+import { useUser } from "../../contexts/UserContext";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
 import Footer from "../../components/layout/Footer/Footer";
 import "./memberupdate.css";
@@ -11,6 +12,7 @@ import "../../styles/common.css";
 
 function Memberupdate() {
   const navigate = useNavigate();
+  const { user } = useUser();
 
   // 프로필 기본값 불러오기
   const [loading, setLoading] = useState(false);
@@ -35,42 +37,16 @@ function Memberupdate() {
   const [timer, setTimer] = useState(0);
   const timerRef = useRef(null);
 
+  // Context에서 사용자 정보 가져오기 (API 호출 없음)
   useEffect(() => {
-    let isMounted = true;
-
-    // 현재 로그인 사용자 정보 조회
-    (async () => {
-      try {
-        const me = await authService.getMe(); // { id, login_id, email }
-        if (isMounted) {
-          setFormData((p) => ({
-            ...p,
-            user_id: me?.login_id || "",
-            current_email: me?.email || "",
-          }));
-        }
-      } catch (e) {
-        if (isMounted) {
-          // 401 오류는 토큰이 만료되었거나 유효하지 않은 경우
-          if (e.response && e.response.status === 401) {
-            // 인증이 필요한 페이지이므로 로그인 페이지로 리다이렉트
-            navigate("/login");
-          } else if (e.status === 401) {
-            // authService에서 설정한 401 오류
-            navigate("/login");
-          } else {
-            // 401이 아닌 다른 오류만 콘솔에 로그
-            console.error("프로필 정보 불러오기 오류:", e);
-            alert("프로필 정보를 불러오지 못했습니다.");
-          }
-        }
-      }
-    })();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [navigate]);
+    if (user) {
+      setFormData((p) => ({
+        ...p,
+        user_id: user?.login_id || "",
+        current_email: user?.email || "",
+      }));
+    }
+  }, [user]);
 
   // -----------------------------
   // ✅ 타이머 복원 (페이지 로드 시)
@@ -274,7 +250,7 @@ function Memberupdate() {
 
       if (res.success) {
         alert("회원정보가 수정되었습니다. 다시 로그인해야 할 수 있어요.");
-        authService.logout();
+        logout();
         navigate("/login");
       } else {
         alert(res.message || "수정에 실패했습니다.");
@@ -311,6 +287,7 @@ function Memberupdate() {
                     </div>
                     <input
                       type="text"
+                      id="update_user_id"
                       name="user_id"
                       className="form-input"
                       value={formData.user_id}
@@ -332,11 +309,13 @@ function Memberupdate() {
                     <div className="password-input-wrapper">
                       <input
                         type={showCurrentPassword ? "text" : "password"}
+                        id="update_current_password"
                         name="current_password"
                         className="form-input"
                         placeholder="기존 비밀번호"
                         value={formData.current_password}
                         onChange={handleChange}
+                        autoComplete="current-password"
                         required
                       />
                       <button
@@ -397,11 +376,13 @@ function Memberupdate() {
                     <div className="password-input-wrapper">
                       <input
                         type={showNewPassword ? "text" : "password"}
+                        id="update_new_password"
                         name="new_password"
                         className="form-input"
                         placeholder="비밀번호 수정"
                         value={formData.new_password}
                         onChange={handleChange}
+                        autoComplete="new-password"
                       />
                       <button
                         type="button"
@@ -457,11 +438,13 @@ function Memberupdate() {
                     <div className="password-input-wrapper">
                       <input
                         type={showNewPasswordConfirm ? "text" : "password"}
+                        id="update_new_password_confirm"
                         name="new_password_confirm"
                         className="form-input"
                         placeholder="수정된 비밀번호 확인"
                         value={formData.new_password_confirm}
                         onChange={handleChange}
+                        autoComplete="new-password"
                       />
                       <button
                         type="button"
@@ -522,6 +505,7 @@ function Memberupdate() {
                     </div>
                     <input
                       type="text"
+                      id="update_current_email"
                       name="current_email"
                       className="form-input"
                       placeholder="기존 이메일(고정)"
@@ -540,17 +524,20 @@ function Memberupdate() {
                       </div>
                       <input
                         type="text"
+                        id="update_new_email_prefix"
                         name="new_email_prefix"
                         className="form-input email-input"
                         placeholder="변경할 이메일"
                         value={formData.new_email_prefix}
                         onChange={handleChange}
+                        autoComplete="email"
                       />
                     </div>
 
                     {/* ==== ⬇️ 이 부분은 요청대로 '그대로' 유지합니다 ⬇️ ==== */}
                     <span className="email-at">@</span>
                     <select
+                      id="update_email_domain"
                       name="email_domain"
                       className="form-select"
                       value={formData.email_domain}
@@ -592,6 +579,7 @@ function Memberupdate() {
                       </div>
                       <input
                         type="text"
+                        id="update_email_code"
                         name="email_code"
                         className="form-input"
                         placeholder={
@@ -602,6 +590,7 @@ function Memberupdate() {
                         value={formData.email_code}
                         onChange={handleChange}
                         disabled={!isEmailSent}
+                        autoComplete="one-time-code"
                         style={{
                           backgroundColor: !isEmailSent
                             ? "#f3f4f6"

@@ -49,10 +49,13 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
 
       if (result.success) {
         alert("제품이 성공적으로 생성되었습니다.");
+        // onSuccess 콜백이 있으면 onSuccess에서 모달을 닫도록 하고,
+        // 없으면 여기서 모달을 닫음
         if (onSuccess) {
-          onSuccess(result.data.product);
+          onSuccess(result.data?.product);
+        } else {
+          onClose();
         }
-        onClose();
         
         // TODO: 파일 업로드 및 분석 로직은 추후 구현
         // if (files.length > 0) {
@@ -100,6 +103,8 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
         )}
         <input
           ref={fileInputRef}
+          id="product_file_upload"
+          name="product_files"
           type="file"
           multiple
           onChange={handleFileSelect}

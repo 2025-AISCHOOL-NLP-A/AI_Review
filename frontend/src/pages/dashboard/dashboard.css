@@ -12,6 +12,10 @@
   position: relative;
   overflow-x: hidden;
   box-sizing: border-box;
+  /* 확대 시에도 사이드바와 겹치지 않도록 최소 너비 설정 */
+  min-width: 320px;
+  /* 사이드바가 fixed이므로 flex 레이아웃에 영향을 주지 않음 */
+  align-items: flex-start;
 }
 
 
@@ -32,14 +36,17 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
+  /* 확대 시에도 사이드바와 겹치지 않도록 최소 너비 설정 */
+  min-width: 280px;
 }
 
 /* 사이드바가 열려있을 때 workplace 영역을 닫혀있을 때 기준으로 중앙 정렬 */
 /* 사이드바가 열려있을 때(256px)와 닫혀있을 때(64px)의 차이: 192px */
 /* 콘텐츠를 닫혀있을 때와 같은 화면상 위치에 오도록 하려면 왼쪽으로 96px 이동 */
+/* 하지만 확대 시 겹침 방지를 위해 transform 제거 (레이아웃이 자연스럽게 유지됨) */
 .dashboard-page.sidebar-open .dashboard-content {
-  transform: translateX(-96px);
-  transition: transform 0.3s ease;
+  /* transform 제거 - 확대 시에도 사이드바와 겹치지 않도록 */
+  /* margin-left와 margin-right는 자동으로 유지됨 */
 }
 
 @media (min-width: 1024px) {

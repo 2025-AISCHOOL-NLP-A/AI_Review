@@ -21,7 +21,6 @@ function Dashboard() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedReviews, setExpandedReviews] = useState(new Set());
-  const fetchInProgress = useRef(false);
 
   // Get productId from URL query parameter or use default
   const productId = useMemo(() => {
@@ -31,29 +30,23 @@ function Dashboard() {
 
   // Fetch dashboard data
   useEffect(() => {
+    // AbortController를 사용하여 요청 취소 가능하도록 함
+    const abortController = new AbortController();
     let isMounted = true;
 
-    // 이미 요청이 진행 중이면 중복 요청 방지
-    if (fetchInProgress.current) {
-      return () => {
-        isMounted = false;
-      };
-    }
-
     const fetchData = async () => {
-      if (fetchInProgress.current || !isMounted) return;
-      fetchInProgress.current = true;
-
-      if (isMounted) {
-        setLoading(true);
+      if (!isMounted || abortController.signal.aborted) {
+        return;
       }
 
-      try {
-        // 단일 API 호출로 대시보드 데이터 가져오기
-        const result = await dashboardService.getDashboardData(productId);
+      setLoading(true);
 
-        if (!isMounted) {
-          fetchInProgress.current = false;
+      try {
+        // 단일 API 호출로 대시보드 데이터 가져오기 (AbortSignal 전달)
+        const result = await dashboardService.getDashboardData(productId, abortController.signal);
+
+        // 요청이 취소되었거나 컴포넌트가 언마운트된 경우 상태 업데이트 방지
+        if (!isMounted || abortController.signal.aborted) {
           return;
         }
 
@@ -61,33 +54,35 @@ function Dashboard() {
           const errorMsg = result.message || "데이터를 불러오는데 실패했습니다.";
           alert(errorMsg);
           setLoading(false);
-          fetchInProgress.current = false;
           return;
         }
 
         // dashboardService에서 이미 변환된 데이터 사용
         const combinedData = result.data;
 
-        if (isMounted) {
+        if (isMounted && !abortController.signal.aborted) {
           setDashboardData(combinedData);
           setLoading(false);
         }
       } catch (error) {
+        // AbortError는 정상적인 취소이므로 에러로 처리하지 않음
+        if (error.name === 'AbortError' || error.name === 'CanceledError' || error.code === 'ERR_CANCELED' || abortController.signal.aborted) {
+          return;
+        }
         console.error("대시보드 데이터 조회 오류:", error);
-        if (isMounted) {
+        if (isMounted && !abortController.signal.aborted) {
           alert("데이터를 불러오는데 실패했습니다.");
           setLoading(false);
         }
-      } finally {
-        fetchInProgress.current = false;
       }
     };
+
     fetchData();
 
+    // cleanup 함수: 컴포넌트 언마운트 시 또는 productId 변경 시 진행 중인 요청 취소
     return () => {
       isMounted = false;
-      // cleanup에서 fetchInProgress를 false로 설정하지 않음
-      // (요청이 완료된 후에만 false로 설정되어야 함)
+      abortController.abort();
     };
   }, [productId]);
 

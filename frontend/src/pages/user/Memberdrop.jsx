@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
 import Footer from "../../components/layout/Footer/Footer";
 import authService from "../../services/authService";
+import { useUser } from "../../contexts/UserContext";
 import "../dashboard/dashboard.css";
 import "../../components/layout/sidebar/sidebar.css";
 import "../../styles/common.css";
@@ -10,43 +11,14 @@ import "./memberdrop.css";
 
 function Memberdrop() {
   const navigate = useNavigate();
-  const [userInfo, setUserInfo] = useState({ login_id: "" });
+  const { user, logout } = useUser();
   const [agreeChecked, setAgreeChecked] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    // 현재 로그인 사용자 정보 조회
-    const fetchUserInfo = async () => {
-      try {
-        const me = await authService.getMe();
-        if (isMounted) {
-          setUserInfo({
-            login_id: me?.login_id || "",
-          });
-        }
-      } catch (error) {
-        if (isMounted) {
-          // 401 오류는 토큰이 만료되었거나 유효하지 않은 경우
-          if (error.response && error.response.status === 401) {
-            // 인증이 필요한 페이지이므로 로그인 페이지로 리다이렉트
-            navigate("/login");
-          } else {
-            // 401이 아닌 다른 오류만 콘솔에 로그
-            console.error("사용자 정보를 가져오는데 실패했습니다:", error);
-            alert("사용자 정보를 불러오는데 실패했습니다.");
-          }
-        }
-      }
-    };
-
-    fetchUserInfo();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [navigate]);
+  // Context에서 사용자 정보 가져오기 (API 호출 없음)
+  const userInfo = user ? {
+    login_id: user?.login_id || "",
+  } : { login_id: "" };
 
   const handleWithdraw = async () => {
     if (!agreeChecked) {
@@ -65,7 +37,7 @@ function Memberdrop() {
       const result = await authService.withdraw();
       if (result.success) {
         alert("회원탈퇴가 완료되었습니다.");
-        authService.logout();
+        logout();
         navigate("/login");
       } else {
         alert(result.message || "회원탈퇴에 실패했습니다.");
@@ -180,6 +152,8 @@ function Memberdrop() {
               <label className="agree-checkbox">
                 <input
                   type="checkbox"
+                  id="memberdrop_agree"
+                  name="memberdrop_agree"
                   checked={agreeChecked}
                   onChange={(e) => setAgreeChecked(e.target.checked)}
                 />

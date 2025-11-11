@@ -108,11 +108,13 @@ function LoginFind() {
                   </div>
                   <input
                     type="email"
+                    id="find_id_email"
                     name="email"
                     className="form-input"
                     placeholder="이메일 입력"
                     value={findIdData.email}
                     onChange={handleFindIdChange}
+                    autoComplete="email"
                     required
                   />
                 </div>
@@ -162,11 +164,13 @@ function LoginFind() {
                   </div>
                   <input
                     type="text"
+                    id="find_password_login_id"
                     name="login_id"
                     className="form-input"
                     placeholder="아이디 입력"
                     value={findPasswordData.login_id}
                     onChange={handleFindPasswordChange}
+                    autoComplete="username"
                     required
                   />
                 </div>
@@ -179,11 +183,13 @@ function LoginFind() {
                   </div>
                   <input
                     type="email"
+                    id="find_password_email"
                     name="email"
                     className="form-input"
                     placeholder="이메일 입력"
                     value={findPasswordData.email}
                     onChange={handleFindPasswordChange}
+                    autoComplete="email"
                     required
                   />
                 </div>

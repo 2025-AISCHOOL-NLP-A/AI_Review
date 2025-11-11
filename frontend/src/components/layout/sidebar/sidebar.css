@@ -14,6 +14,8 @@
   flex-direction: column;
   overflow: hidden;
   flex-shrink: 0;
+  /* 확대 시에도 사이드바가 항상 최상위에 표시되도록 */
+  will-change: width;
 }
 
 .dashboard-sidebar.sidebar-open {
@@ -271,7 +273,7 @@
   margin-left: 256px;
   transition: margin-left 0.3s ease;
   min-height: 100vh;
-  min-width: 0;
+  /* 확대 시에도 사이드바와 겹치지 않도록 너비 제한 */
   width: calc(100% - 256px);
   max-width: calc(100% - 256px);
   box-sizing: border-box;
@@ -280,9 +282,15 @@
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  /* 확대 시에도 사이드바 오른쪽에 고정 */
+  min-width: 0;
+  /* 확대 시에도 레이아웃이 깨지지 않도록 - 사이드바 너비만큼 공간 확보 */
+  flex-shrink: 0;
+  flex-grow: 1;
 }
 .dashboard-page.sidebar-closed .dashboard-wrapper {
   margin-left: 64px;
+  /* 닫힘 상태에서도 사이드바 너비만큼 공간 확보 */
   width: calc(100% - 64px);
   max-width: calc(100% - 64px);
 }

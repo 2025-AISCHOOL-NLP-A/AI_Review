@@ -154,9 +154,10 @@ const authService = {
   },
 
   /** 👤 현재 사용자 정보 가져오기 */
-  async getMe() {
+  async getMe(signal = null) {
     try {
-      const res = await api.get("/auth/verify");
+      const config = signal ? { signal } : {};
+      const res = await api.get("/auth/verify", config);
       if (res.data.valid && res.data.user) {
         // JWT에 있는 정보만 반환 (id, login_id)
         // email은 localStorage에서 가져오기 (로그인 시 저장됨)
@@ -169,6 +170,10 @@ const authService = {
       }
       throw new Error("사용자 정보를 가져올 수 없습니다.");
     } catch (err) {
+      // AbortError는 정상적인 취소이므로 에러로 처리하지 않음
+      if (err.name === 'AbortError' || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+        throw err;
+      }
       // 401 오류는 토큰이 만료되었거나 유효하지 않은 경우이므로 조용히 처리
       if (err.response && err.response.status === 401) {
         // 토큰이 이미 api 인터셉터에서 제거되었으므로 에러만 throw

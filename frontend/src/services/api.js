@@ -15,6 +15,7 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // AbortSignal은 axios가 자동으로 처리하므로 추가 작업 불필요
   return config;
 });
 

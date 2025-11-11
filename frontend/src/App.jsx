@@ -15,13 +15,15 @@ import Memberdrop from "./pages/user/Memberdrop";
 import PricingSystem from "./pages/dashboard/PricingSystem";
 import Workplace from "./pages/dashboard/Workplace";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { UserProvider } from "./contexts/UserContext";
 import "./App.css";
 import "./styles/common.css";
 
 function App() {
   return (
-    <Router>
-      <Routes>
+    <UserProvider>
+      <Router>
+        <Routes>
         {/* ✅ 기본 경로를 메인 페이지로 설정 */}
         <Route path="/" element={<Main />} />
 
@@ -77,8 +79,9 @@ function App() {
 
         {/* 🚧 존재하지 않는 경로는 메인으로 */}
         <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </Router>
+        </Routes>
+      </Router>
+    </UserProvider>
   );
 }
 

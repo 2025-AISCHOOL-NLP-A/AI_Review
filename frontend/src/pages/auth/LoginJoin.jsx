@@ -290,11 +290,13 @@ function LoginJoin() {
                     </div>
                     <input
                       type="text"
+                      id="join_user_id"
                       name="user_id"
                       className="form-input"
                       placeholder="아이디"
                       value={formData.user_id}
                       onChange={handleChange}
+                      autoComplete="username"
                       required
                     />
                   </div>
@@ -320,11 +322,13 @@ function LoginJoin() {
                   <div className="password-input-wrapper">
                     <input
                       type={showPassword ? "text" : "password"}
+                      id="join_password"
                       name="password"
                       className="form-input"
                       placeholder="비밀번호"
                       value={formData.password}
                       onChange={handleChange}
+                      autoComplete="new-password"
                       required
                     />
                     <button
@@ -381,11 +385,13 @@ function LoginJoin() {
                   <div className="password-input-wrapper">
                     <input
                       type={showPasswordConfirm ? "text" : "password"}
+                      id="join_password_confirm"
                       name="password_confirm"
                       className="form-input"
                       placeholder="비밀번호 확인"
                       value={formData.password_confirm}
                       onChange={handleChange}
+                      autoComplete="new-password"
                       required
                     />
                     <button
@@ -447,16 +453,19 @@ function LoginJoin() {
                     </div>
                     <input
                       type="text"
+                      id="join_email_prefix"
                       name="email_prefix"
                       className="form-input email-input"
                       placeholder="이메일"
                       value={formData.email_prefix}
                       onChange={handleChange}
+                      autoComplete="email"
                       required
                     />
                   </div>
                   <span className="email-at">@</span>
                   <select
+                    id="join_email_domain"
                     name="email_domain"
                     className="form-select"
                     value={formData.email_domain}
@@ -496,6 +505,7 @@ function LoginJoin() {
                     </div>
                     <input
                       type="text"
+                      id="join_email_code"
                       name="email_code"
                       className="form-input"
                       placeholder={
@@ -506,6 +516,7 @@ function LoginJoin() {
                       value={formData.email_code}
                       onChange={handleChange}
                       disabled={!isEmailSent}
+                      autoComplete="one-time-code"
                       style={{
                         backgroundColor: !isEmailSent
                           ? "#f3f4f6"

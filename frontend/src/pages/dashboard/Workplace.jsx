@@ -659,7 +659,24 @@ function Workplace() {
                       </td>
                       <td style={{ textAlign: 'center' }}>{formatDate(item)}</td>
                       <td className="product-cell" style={{ textAlign: 'center' }}>
-                        {item.product_name || "-"}
+                        <span
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const productName = encodeURIComponent(item.product_name || "");
+                            navigate(`/dashboard?productId=${item.product_id}&productName=${productName}`);
+                          }}
+                          style={{
+                            cursor: 'pointer',
+                            color: '#5B8EFF',
+                            textDecoration: 'underline',
+                            fontWeight: '500'
+                          }}
+                          onMouseEnter={(e) => e.target.style.color = '#4A7CFF'}
+                          onMouseLeave={(e) => e.target.style.color = '#5B8EFF'}
+                        >
+                          {item.product_name || "-"}
+                        </span>
                       </td>
                       <td style={{ textAlign: 'center' }}>{item.brand && item.brand.trim() !== "" ? item.brand : "-"}</td>
                       <td style={{ textAlign: 'center' }}>{getCategoryName(item.category_id)}</td>

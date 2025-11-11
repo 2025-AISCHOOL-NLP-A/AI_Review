@@ -26,6 +26,11 @@ function Dashboard() {
   // Date filter state
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [appliedStartDate, setAppliedStartDate] = useState(""); // 적용된 시작 날짜
+  const [appliedEndDate, setAppliedEndDate] = useState(""); // 적용된 종료 날짜
+  
+  // Chart period state (daily, weekly, monthly)
+  const [chartPeriod, setChartPeriod] = useState("monthly"); // "monthly" only
 
   // Get productId from URL query parameter or use default
   const productId = useMemo(() => {
@@ -33,17 +38,34 @@ function Dashboard() {
     return idFromUrl ? parseInt(idFromUrl, 10) : 1007; // 기본값 1007
   }, [searchParams]);
 
+  // Get productName from URL query parameter (워크플레이스에서 전달된 상품명)
+  const productNameFromUrl = useMemo(() => {
+    const nameFromUrl = searchParams.get("productName");
+    return nameFromUrl ? decodeURIComponent(nameFromUrl) : null;
+  }, [searchParams]);
+
   // Fetch dashboard data
   useEffect(() => {
     // AbortController를 사용하여 요청 취소 가능하도록 함
     const abortController = new AbortController();
     let isMounted = true;
+    let isFetching = false; // 중복 요청 방지
 
     const fetchData = async () => {
-      if (!isMounted || abortController.signal.aborted) {
+      if (!isMounted || abortController.signal.aborted || isFetching) {
         return;
       }
 
+      // productId 유효성 검사
+      if (!productId || isNaN(productId)) {
+        if (isMounted && !abortController.signal.aborted) {
+          alert("유효하지 않은 제품 ID입니다.");
+          setLoading(false);
+        }
+        return;
+      }
+
+      isFetching = true;
       setLoading(true);
 
       try {
@@ -52,34 +74,259 @@ function Dashboard() {
 
         // 요청이 취소되었거나 컴포넌트가 언마운트된 경우 상태 업데이트 방지
         if (!isMounted || abortController.signal.aborted) {
+          isFetching = false;
           return;
         }
 
         if (!result.success) {
           const errorMsg = result.message || "데이터를 불러오는데 실패했습니다.";
-          alert(errorMsg);
-          setLoading(false);
+          
+          // 404 에러인 경우 워크플레이스로 이동 제안
+          if (result.status === 404) {
+            if (window.confirm(`${errorMsg}\n\n워크플레이스로 이동하시겠습니까?`)) {
+              navigate("/wp");
+            }
+          } else {
+            alert(errorMsg);
+          }
+          
+          if (isMounted && !abortController.signal.aborted) {
+            setLoading(false);
+          }
+          isFetching = false;
           return;
         }
 
-        // dashboardService에서 이미 변환된 데이터 사용
-        const combinedData = result.data;
+        // 새로운 API 응답 구조 처리
+        // result.data는 { message, dashboard, date_sentimental, heatmap, keyword_summary, recent_reviews, insight, wordcloud } 형태
+        const responseData = result.data;
+        
+        // 응답 데이터 검증
+        if (!responseData) {
+          if (isMounted && !abortController.signal.aborted) {
+            alert("대시보드 데이터를 불러오는데 실패했습니다.");
+            setLoading(false);
+          }
+          isFetching = false;
+          return;
+        }
+        
+        // 새로운 응답 구조: { message, dashboard, date_sentimental, heatmap, keyword_summary, recent_reviews, insight, wordcloud }
+        const dashboard = responseData?.dashboard || {};
+        
+        // JSON 컬럼이 문자열로 올 수 있으므로 파싱 시도
+        let dateSentimental = responseData?.date_sentimental || dashboard?.date_sentimental || [];
+        let heatmap = responseData?.heatmap || dashboard?.heatmap || {};
+        let keywordSummary = responseData?.keyword_summary || dashboard?.keyword_summary || [];
+        const recentReviews = responseData?.recent_reviews || [];
+        const insight = responseData?.insight || null;
+        const wordcloud = responseData?.wordcloud || dashboard?.wordcloud || null;
+        
+        // JSON 문자열인 경우 파싱
+        if (typeof dateSentimental === 'string') {
+          try {
+            dateSentimental = JSON.parse(dateSentimental);
+          } catch (e) {
+            dateSentimental = [];
+          }
+        }
+        
+        if (typeof heatmap === 'string') {
+          try {
+            heatmap = JSON.parse(heatmap);
+          } catch (e) {
+            heatmap = {};
+          }
+        }
+        
+        if (typeof keywordSummary === 'string') {
+          try {
+            keywordSummary = JSON.parse(keywordSummary);
+          } catch (e) {
+            keywordSummary = [];
+          }
+        }
+        
+        // sentiment_distribution도 JSON일 수 있음
+        if (dashboard.sentiment_distribution && typeof dashboard.sentiment_distribution === 'string') {
+          try {
+            dashboard.sentiment_distribution = JSON.parse(dashboard.sentiment_distribution);
+          } catch (e) {
+            // 파싱 실패 시 기본값 유지
+          }
+        }
+
+        // 데이터가 없으면 에러 처리
+        if (!dashboard || !dashboard.product_id) {
+          if (isMounted && !abortController.signal.aborted) {
+            alert("대시보드 데이터를 불러오는데 실패했습니다.");
+            setLoading(false);
+          }
+          isFetching = false;
+          return;
+        }
+
+        // 제품 정보 변환
+        const product = {
+          product_id: dashboard.product_id,
+          product_name: dashboard.product_name || '',
+          brand: dashboard.brand || '',
+          category_name: dashboard.category_name || '',
+          product_score: dashboard.product_score || '0',
+          total_reviews: dashboard.total_reviews || 0,
+          updated_at: dashboard.updated_at,
+        };
+
+        // 통계 데이터 변환
+        const sentimentDist = dashboard.sentiment_distribution || { positive: 0, negative: 0 };
+        const positiveRatio = sentimentDist.positive ? (sentimentDist.positive * 100) : 0;
+        const negativeRatio = sentimentDist.negative ? (sentimentDist.negative * 100) : 0;
+        const totalReviews = dashboard.total_reviews || 0;
+        const positiveCount = Math.round(totalReviews * sentimentDist.positive);
+        const negativeCount = Math.round(totalReviews * sentimentDist.negative);
+
+        // date_sentimental을 dailyTrend로 변환
+        const dailyTrend = dateSentimental.map(item => ({
+          date: item.week_start || item.date || '',
+          week_start: item.week_start,
+          week_end: item.week_end,
+          reviewCount: item.review_count || 0,
+          positive_ratio: item.positive ? (item.positive * 100) : 0,
+          negative_ratio: item.negative ? (item.negative * 100) : 0,
+          positiveRatio: item.positive ? (item.positive * 100) : 0,
+          negativeRatio: item.negative ? (item.negative * 100) : 0,
+          positiveCount: Math.round((item.review_count || 0) * (item.positive || 0)),
+          negativeCount: Math.round((item.review_count || 0) * (item.negative || 0)),
+        }));
+
+        // keyword_summary를 keywords로 변환
+        const keywords = keywordSummary.map(kw => {
+          const posRatio = kw.positive_ratio || kw.positive || 0;
+          const negRatio = kw.negative_ratio || kw.negative || 0;
+          const total = kw.total_count || kw.count || 0;
+          const posCount = Math.round(total * (typeof posRatio === 'number' && posRatio <= 1 ? posRatio : posRatio / 100));
+          const negCount = Math.round(total * (typeof negRatio === 'number' && negRatio <= 1 ? negRatio : negRatio / 100));
+          
+          return {
+            keyword_id: kw.keyword_id || null,
+            keyword_text: kw.keyword_text || kw.keyword || kw.text || '',
+            positive_count: posCount,
+            negative_count: negCount,
+            positiveCount: posCount,
+            negativeCount: negCount,
+            positive_ratio: typeof posRatio === 'number' && posRatio <= 1 ? (posRatio * 100) : posRatio,
+            negative_ratio: typeof negRatio === 'number' && negRatio <= 1 ? (negRatio * 100) : negRatio,
+            positiveRatio: typeof posRatio === 'number' && posRatio <= 1 ? (posRatio * 100) : posRatio,
+            negativeRatio: typeof negRatio === 'number' && negRatio <= 1 ? (negRatio * 100) : negRatio,
+          };
+        });
+
+        // 리뷰 데이터 변환
+        const reviews = recentReviews.map(review => ({
+          ...review,
+          rating: review.rating || parseFloat(dashboard.product_score) || 0,
+          source: review.source || 'Unknown',
+          review_date: review.review_date || review.date || '',
+        }));
+
+        // insight에서 키워드 추출 (기존 형식 유지)
+        const positiveKeywords = insight?.pos_top_keywords 
+          ? insight.pos_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean)
+          : wordcloud?.positive_keywords || [];
+        const negativeKeywords = insight?.neg_top_keywords 
+          ? insight.neg_top_keywords.split(/[|,]/).map(k => k.trim()).filter(Boolean)
+          : wordcloud?.negative_keywords || [];
+
+        // 기존 데이터 구조에 맞게 변환
+        const combinedData = {
+          product: product,
+          reviews: reviews,
+          insights: [],
+          dateSentimental: dateSentimental, // date_sentimental 데이터 저장
+          dailyTrend: dailyTrend, // 변환된 dailyTrend도 저장
+          analysis: {
+            positiveRatio: Number(positiveRatio.toFixed(2)),
+            negativeRatio: Number(negativeRatio.toFixed(2)),
+            avgRating: parseFloat(dashboard.product_score) || 0,
+            positiveKeywords: positiveKeywords,
+            negativeKeywords: negativeKeywords,
+          },
+          stats: {
+            totalReviews: totalReviews,
+            positiveRatio: Number(positiveRatio.toFixed(2)),
+            negativeRatio: Number(negativeRatio.toFixed(2)),
+            positiveCount: positiveCount,
+            negativeCount: negativeCount,
+            avgRating: parseFloat(dashboard.product_score) || 0,
+          },
+          keywords: keywords,
+          insight: insight,
+          heatmap: heatmap,
+          wordcloud: wordcloud,
+        };
 
         if (isMounted && !abortController.signal.aborted) {
           setOriginalDashboardData(combinedData); // 원본 데이터 저장
           setDashboardData(combinedData);
+          
+          // 첫 번째 리뷰 날짜 찾기
+          let firstReviewDate = null;
+          if (reviews && reviews.length > 0) {
+            const validDates = reviews
+              .map(review => review.review_date)
+              .filter(date => date)
+              .map(date => {
+                const d = new Date(date);
+                return isNaN(d.getTime()) ? null : d;
+              })
+              .filter(d => d !== null);
+            
+            if (validDates.length > 0) {
+              firstReviewDate = new Date(Math.min(...validDates.map(d => d.getTime())));
+            }
+          }
+          
+          // dailyTrend에서 첫 번째 날짜 찾기 (reviews에 날짜가 없는 경우)
+          if (!firstReviewDate && dailyTrend && dailyTrend.length > 0) {
+            const validDates = dailyTrend
+              .map(item => item.date || item.week_start)
+              .filter(date => date)
+              .map(date => {
+                const d = new Date(date);
+                return isNaN(d.getTime()) ? null : d;
+              })
+              .filter(d => d !== null);
+            
+            if (validDates.length > 0) {
+              firstReviewDate = new Date(Math.min(...validDates.map(d => d.getTime())));
+            }
+          }
+          
+          // 날짜 범위 자동 설정
+          if (firstReviewDate) {
+            const firstDateStr = `${firstReviewDate.getFullYear()}-${String(firstReviewDate.getMonth() + 1).padStart(2, '0')}-${String(firstReviewDate.getDate()).padStart(2, '0')}`;
+            const todayStr = getTodayDate();
+            setStartDate(firstDateStr);
+            setEndDate(todayStr);
+            // 자동 설정된 날짜도 적용된 날짜로 저장
+            setAppliedStartDate(firstDateStr);
+            setAppliedEndDate(todayStr);
+          }
+          
           setLoading(false);
         }
+        isFetching = false;
       } catch (error) {
         // AbortError는 정상적인 취소이므로 에러로 처리하지 않음
         if (error.name === 'AbortError' || error.name === 'CanceledError' || error.code === 'ERR_CANCELED' || abortController.signal.aborted) {
+          isFetching = false;
           return;
         }
-        console.error("대시보드 데이터 조회 오류:", error);
         if (isMounted && !abortController.signal.aborted) {
           alert("데이터를 불러오는데 실패했습니다.");
           setLoading(false);
         }
+        isFetching = false;
       }
     };
 
@@ -268,34 +515,20 @@ function Dashboard() {
   };
 
   // 필터 적용 핸들러
-  const handleApplyFilter = async () => {
-    // 백엔드 API를 사용하여 필터링된 데이터 가져오기
-    if (startDate || endDate) {
-      setLoading(true);
-      try {
-        const result = await dashboardService.getDashboardData(productId, startDate, endDate, null, null);
-        if (result.success) {
-          setOriginalDashboardData(result.data);
-          setDashboardData(result.data);
-        } else {
-          alert(result.message || "필터 적용에 실패했습니다.");
-        }
-      } catch (error) {
-        console.error("필터 적용 오류:", error);
-        alert("필터 적용 중 오류가 발생했습니다.");
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      // 날짜 필터가 없으면 클라이언트 사이드 필터링
-      applyDateFilter();
-    }
+  const handleApplyFilter = () => {
+    // 클라이언트 사이드 필터링
+    applyDateFilter();
+    // 적용된 날짜 저장
+    setAppliedStartDate(startDate);
+    setAppliedEndDate(endDate);
   };
 
   // 필터 초기화 핸들러
   const handleResetFilter = () => {
     setStartDate("");
     setEndDate("");
+    setAppliedStartDate("");
+    setAppliedEndDate("");
     if (originalDashboardData) {
       setDashboardData(originalDashboardData);
     }
@@ -311,25 +544,306 @@ function Dashboard() {
     return shuffled.slice(0, 10);
   }, [dashboardData?.reviews]);
 
-  // Process data for charts
-  const dailyTrendData = dashboardData?.dailyTrend && dashboardData.dailyTrend.length > 0 ? {
-    dates: dashboardData.dailyTrend.map(item => {
+  // Process data for charts based on selected period
+  // date_sentimental 데이터를 직접 사용
+  const dailyTrendData = useMemo(() => {
+    // date_sentimental 데이터가 있으면 직접 사용
+    if (dashboardData?.dateSentimental && Array.isArray(dashboardData.dateSentimental) && dashboardData.dateSentimental.length > 0) {
+      const dateSentimental = dashboardData.dateSentimental;
+      
+      try {
+        // date_sentimental 데이터를 차트 형식으로 변환 (월별만)
+        // 각 항목: { week_start, week_end, date, review_count, positive, negative }
+        
+        // 월별: date 또는 week_start에서 월 추출
+        // review_count가 0인 항목은 스킵
+        const monthlyMap = new Map();
+        
+        const filteredData = dateSentimental.filter(item => (item.review_count || 0) > 0);
+        
+        filteredData.forEach(item => {
+          // date, week_start, month_start 중 하나를 사용
+          const dateStr = item.date || item.week_start || item.month_start || '';
+          if (!dateStr) {
+            return;
+          }
+          
+          const date = new Date(dateStr);
+          if (isNaN(date.getTime())) {
+            return;
+          }
+          
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          
+          if (!monthlyMap.has(monthKey)) {
+            monthlyMap.set(monthKey, {
+              month: monthKey,
+              reviewCount: 0,
+              positiveSum: 0,
+              negativeSum: 0,
+              count: 0,
+            });
+          }
+          
+          const monthData = monthlyMap.get(monthKey);
+          monthData.reviewCount += item.review_count || 0;
+          monthData.positiveSum += (item.positive || 0) * (item.review_count || 0);
+          monthData.negativeSum += (item.negative || 0) * (item.review_count || 0);
+          monthData.count += 1;
+        });
+        
+        // 오래된 데이터부터 표시하도록 오름차순 정렬
+        const monthlyData = Array.from(monthlyMap.values())
+          .filter(item => item.reviewCount > 0) // reviewCount가 0인 월 제외
+          .sort((a, b) => a.month.localeCompare(b.month)) // 오름차순 정렬 (오래된 데이터 먼저)
+          .map(item => {
+            const total = item.reviewCount || 1;
+            return {
+              month: item.month,
+              reviewCount: item.reviewCount,
+              positive: (item.positiveSum / total) * 100,
+              negative: (item.negativeSum / total) * 100,
+            };
+          });
+        
+        // 모든 항목에 년도 표시
+        const result = {
+          dates: monthlyData.map((item) => {
+            const [year, month] = item.month.split('-');
+            const monthNum = parseInt(month);
+            const yearNum = parseInt(year);
+            return `${yearNum}년 ${monthNum}월`;
+          }),
+          positive: monthlyData.map(item => Number(item.positive.toFixed(2))),
+          negative: monthlyData.map(item => Number(item.negative.toFixed(2))),
+          newReviews: monthlyData.map(item => item.reviewCount),
+        };
+        
+        return result;
+      } catch (error) {
+        // 에러 발생 시 빈 데이터 반환
+        return {
+          dates: [],
+          positive: [],
+          negative: [],
+          newReviews: [],
+        };
+      }
+    }
+    
+    // date_sentimental이 없으면 기존 로직 사용 (reviews 기반)
+    const startDate = appliedStartDate;
+    const endDate = appliedEndDate;
+    
+    // 리뷰 데이터가 없으면 빈 데이터 반환
+    if (!dashboardData?.reviews || dashboardData.reviews.length === 0) {
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+          const allDates = [];
+          const current = new Date(start);
+          while (current <= end) {
+            const dateKey = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+            allDates.push(dateKey);
+            current.setDate(current.getDate() + 1);
+          }
+          
+          return {
+            dates: allDates.map(dateKey => {
+              const date = new Date(dateKey);
+              if (isNaN(date.getTime())) return "-";
+              return `${date.getMonth() + 1}/${date.getDate()}`;
+            }),
+            positive: new Array(allDates.length).fill(0),
+            negative: new Array(allDates.length).fill(0),
+            newReviews: new Array(allDates.length).fill(0),
+          };
+        }
+      }
+      
+      return {
+        dates: [],
+        positive: [],
+        negative: [],
+        newReviews: [],
+      };
+    }
+    
+    // 리뷰 데이터를 기반으로 날짜별 그룹화 (기존 로직)
+    const dateMap = new Map();
+    
+    dashboardData.reviews.forEach(review => {
+      if (!review.review_date) return;
+      
+      const reviewDate = new Date(review.review_date);
+      if (isNaN(reviewDate.getTime())) return;
+      
+      const dateKey = `${reviewDate.getFullYear()}-${String(reviewDate.getMonth() + 1).padStart(2, '0')}-${String(reviewDate.getDate()).padStart(2, '0')}`;
+      
+      if (!dateMap.has(dateKey)) {
+        dateMap.set(dateKey, {
+          date: dateKey,
+          reviewCount: 0,
+          positiveCount: 0,
+          negativeCount: 0,
+        });
+      }
+      
+      const dayData = dateMap.get(dateKey);
+      dayData.reviewCount += 1;
+      
+      const rating = parseFloat(review.rating) || 0;
+      if (rating >= 3.0) {
+        dayData.positiveCount += 1;
+      } else {
+        dayData.negativeCount += 1;
+      }
+    });
+
+    // 요청한 기간 전체 날짜 생성 (날짜가 항상 지정되어 있음)
+    let allDates = [];
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+        const current = new Date(start);
+        while (current <= end) {
+          const dateKey = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+          allDates.push(dateKey);
+          current.setDate(current.getDate() + 1);
+        }
+      }
+    } else {
+      // 기간이 없으면 리뷰 데이터가 있는 날짜만 사용
+      allDates = Array.from(dateMap.keys()).sort();
+    }
+    
+    // 날짜가 없으면 빈 데이터 반환
+    if (allDates.length === 0) {
+      // 날짜가 없어도 startDate와 endDate가 있으면 생성 시도
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+          const current = new Date(start);
+          while (current <= end) {
+            const dateKey = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+            allDates.push(dateKey);
+            current.setDate(current.getDate() + 1);
+          }
+        }
+      }
+      
+      if (allDates.length === 0) {
+        return {
+          dates: [],
+          positive: [],
+          negative: [],
+          newReviews: [],
+        };
+      }
+    }
+
+    // 모든 날짜에 대해 데이터 생성 (데이터가 없으면 0)
+    const trendData = allDates.map(dateKey => {
+      const dayData = dateMap.get(dateKey) || {
+        date: dateKey,
+        reviewCount: 0,
+        positiveCount: 0,
+        negativeCount: 0,
+      };
+      const total = dayData.reviewCount || 1;
+      return {
+        date: dateKey,
+        reviewCount: dayData.reviewCount,
+        positiveCount: dayData.positiveCount,
+        negativeCount: dayData.negativeCount,
+        positive_ratio: dayData.reviewCount > 0 ? (dayData.positiveCount / total) * 100 : 0,
+        negative_ratio: dayData.reviewCount > 0 ? (dayData.negativeCount / total) * 100 : 0,
+      };
+    });
+
+    // 월별만 처리
+    // 월별: 월 기준으로 그룹화
+    const monthlyMap = new Map();
+    
+    // 요청한 기간의 모든 월 생성
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+        const current = new Date(start.getFullYear(), start.getMonth(), 1);
+        const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+        
+        while (current <= endMonth) {
+          const monthKey = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+          monthlyMap.set(monthKey, {
+            month: monthKey,
+            reviewCount: 0,
+            positiveCount: 0,
+            negativeCount: 0,
+          });
+          
+          current.setMonth(current.getMonth() + 1);
+        }
+      }
+    }
+    
+    // trendData를 월 단위로 그룹화
+    trendData.forEach(item => {
+      if (!item.date) return;
+      
       const date = new Date(item.date);
-      return `${date.getMonth() + 1}/${date.getDate()}`;
-    }).reverse(),
-    positive: dashboardData.dailyTrend.map(item => 
-      item.positive_ratio || item.positiveRatio || 0
-    ).reverse(),
-    negative: dashboardData.dailyTrend.map(item => 
-      item.negative_ratio || item.negativeRatio || 0
-    ).reverse(),
-    newReviews: dashboardData.dailyTrend.map(item => item.reviewCount || 0).reverse(),
-  } : {
-    dates: [],
-    positive: [],
-    negative: [],
-    newReviews: [],
-  };
+      if (isNaN(date.getTime())) return;
+      
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      
+      if (!monthlyMap.has(monthKey)) {
+        monthlyMap.set(monthKey, {
+          month: monthKey,
+          reviewCount: 0,
+          positiveCount: 0,
+          negativeCount: 0,
+        });
+      }
+      
+      const monthData = monthlyMap.get(monthKey);
+      monthData.reviewCount += item.reviewCount || 0;
+      monthData.positiveCount += item.positiveCount || 0;
+      monthData.negativeCount += item.negativeCount || 0;
+    });
+    
+    // 오래된 데이터부터 표시하도록 오름차순 정렬
+    const monthlyData = Array.from(monthlyMap.values()).sort((a, b) => 
+      a.month.localeCompare(b.month)
+    );
+    
+    // 모든 항목에 년도 표시
+    return {
+      dates: monthlyData.map((item) => {
+        if (!item.month) return "-";
+        const [year, month] = item.month.split('-');
+        const monthNum = parseInt(month);
+        const yearNum = parseInt(year);
+        if (isNaN(monthNum)) return "-";
+        return `${yearNum}년 ${monthNum}월`;
+      }),
+      positive: monthlyData.map(item => {
+        const total = item.reviewCount || 1;
+        return parseFloat(((item.positiveCount / total) * 100).toFixed(2));
+      }),
+      negative: monthlyData.map(item => {
+        const total = item.reviewCount || 1;
+        return parseFloat(((item.negativeCount / total) * 100).toFixed(2));
+      }),
+      newReviews: monthlyData.map(item => item.reviewCount || 0),
+    };
+  }, [dashboardData?.reviews, dashboardData?.dateSentimental, appliedStartDate, appliedEndDate]);
 
   // Process keyword data for charts using positive_ratio and negative_ratio from DB
   // Data comes from tb_productKeyword (product_id, keyword_id, positive_ratio DECIMAL(5,2), negative_ratio DECIMAL(5,2))
@@ -458,7 +972,6 @@ function Dashboard() {
                 }
               })
               .catch((error) => {
-                console.error("PDF 다운로드 오류:", error);
                 // 오류 발생 시에도 원본 스타일 복원
                 contentElement.style.width = originalWidth;
                 contentElement.style.maxWidth = originalMaxWidth;
@@ -579,55 +1092,70 @@ function Dashboard() {
                 </span>
                 <span className="text-2xl font-bold text-gray-900">
                   {loading ? "로딩 중..." : 
-                   dashboardData?.product?.product_name || 
-                   dashboardData?.product_name || 
-                   "상품 정보 없음"}
+                   (dashboardData?.product?.product_name || 
+                    dashboardData?.product_name || 
+                    productNameFromUrl ||
+                    (dashboardData === null ? "로딩 중..." : "상품 정보 없음"))}
                 </span>
               </div>
               <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-3 text-sm">
-                <div className="flex items-center space-x-2">
-                  <label htmlFor="dashboard_start_date" className="text-gray-600 font-medium whitespace-nowrap">기간 필터:</label>
-                  <input
-                    id="dashboard_start_date"
-                    name="start_date"
-                    type="date"
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent"
-                    value={startDate}
-                    onChange={handleStartDateChange}
-                    max={endDate || getTodayDate()}
-                  />
-                  <span className="text-gray-500">~</span>
-                  <input
-                    id="dashboard_end_date"
-                    name="end_date"
-                    type="date"
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent"
-                    value={endDate}
-                    onChange={handleEndDateChange}
-                    min={startDate || undefined}
-                    max={getTodayDate()}
-                  />
-                  {(startDate || endDate) && (
-                    <button
-                      onClick={handleResetFilter}
-                      className="p-2 text-gray-500 hover:text-gray-700 transition"
-                      title="필터 초기화"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="2"
+                <div className="flex flex-col space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <label htmlFor="dashboard_start_date" className="text-gray-600 font-medium whitespace-nowrap">기간 필터:</label>
+                    <input
+                      id="dashboard_start_date"
+                      name="start_date"
+                      type="date"
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent"
+                      value={startDate}
+                      onChange={handleStartDateChange}
+                      max={endDate || getTodayDate()}
+                    />
+                    <span className="text-gray-500">~</span>
+                    <input
+                      id="dashboard_end_date"
+                      name="end_date"
+                      type="date"
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent"
+                      value={endDate}
+                      onChange={handleEndDateChange}
+                      min={startDate || undefined}
+                      max={getTodayDate()}
+                    />
+                    {(startDate || endDate) && (
+                      <button
+                        onClick={handleResetFilter}
+                        className="p-2 text-gray-500 hover:text-gray-700 transition"
+                        title="필터 초기화"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                  {(appliedStartDate || appliedEndDate) && (
+                    <div className="flex items-center space-x-1 text-xs text-gray-600">
+                      <span className="font-medium">현재 적용:</span>
+                      <span className="text-main font-semibold">
+                        {appliedStartDate 
+                          ? `${appliedStartDate.split('-')[0]}.${appliedStartDate.split('-')[1]}.${appliedStartDate.split('-')[2]}` 
+                          : '전체'} ~ {appliedEndDate 
+                          ? `${appliedEndDate.split('-')[0]}.${appliedEndDate.split('-')[1]}.${appliedEndDate.split('-')[2]}` 
+                          : '전체'}
+                      </span>
+                    </div>
                   )}
                 </div>
                 <button 
@@ -715,9 +1243,11 @@ function Dashboard() {
               className="card lg:col-span-2 flex flex-col"
               id="daily-trend-card"
             >
-              <h2 className="text-xl font-semibold mb-4">
-                📊 일자별 긍·부정 포함 리뷰 비율
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">
+                  📊 월별 긍·부정 포함 리뷰 비율
+                </h2>
+              </div>
               <DailyTrendChart data={dailyTrendData} loading={loading} />
               <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
                 <h4 className="font-bold text-gray-700 mb-1">📈 결과 요약:</h4>

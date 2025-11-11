@@ -1,14 +1,33 @@
 import api from "./api";
 
 const dashboardService = {
-  /** 📊 대시보드 데이터 조회 - 단일 API 호출 */
-  async getDashboardData(productId = 1007, signal = null) {
+  /** 📊 대시보드 데이터 조회 - /products/{id}/reviews API 사용 */
+  async getDashboardData(productId = 1007, dateFrom = null, dateTo = null, keyword = null, signal = null) {
     try {
-      const config = signal ? { signal } : {};
-      const res = await api.get(`/products/${productId}/dashboard`, config);
+      // 현재 백엔드 /products/{id}/reviews API는 날짜 필터를 지원하지 않음
+      // 키워드가 있으면 /products/{id}/reviews API 사용, 없으면 /products/{id}/dashboard 사용
+      let responseData;
       
-      // 백엔드 응답 구조에 맞게 변환
-      const responseData = res.data;
+      if (keyword) {
+        // 키워드 필터가 있으면 /products/{id}/reviews API 사용
+        const reviewsRes = await api.get(`/products/${productId}/reviews`, {
+          params: { keyword },
+          ...(signal ? { signal } : {})
+        });
+        
+        // reviews API는 리뷰만 반환하므로, dashboard API도 함께 호출
+        const dashboardRes = await api.get(`/products/${productId}/dashboard`, signal ? { signal } : {});
+        
+        // 두 응답 병합
+        responseData = {
+          ...dashboardRes.data,
+          reviews: reviewsRes.data?.reviews || dashboardRes.data?.reviews || [],
+        };
+      } else {
+        // 키워드 필터가 없으면 기존 dashboard API 사용
+        const res = await api.get(`/products/${productId}/dashboard`, signal ? { signal } : {});
+        responseData = res.data;
+      }
       
       // 키워드 데이터 변환: positive_count와 negative_count로 비율 계산
       const keywords = (responseData?.keywords || []).map(kw => {

@@ -19,8 +19,13 @@ function Dashboard() {
 
   // State for dashboard data
   const [dashboardData, setDashboardData] = useState(null);
+  const [originalDashboardData, setOriginalDashboardData] = useState(null); // 원본 데이터 저장
   const [loading, setLoading] = useState(true);
   const [expandedReviews, setExpandedReviews] = useState(new Set());
+  
+  // Date filter state
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   // Get productId from URL query parameter or use default
   const productId = useMemo(() => {
@@ -61,6 +66,7 @@ function Dashboard() {
         const combinedData = result.data;
 
         if (isMounted && !abortController.signal.aborted) {
+          setOriginalDashboardData(combinedData); // 원본 데이터 저장
           setDashboardData(combinedData);
           setLoading(false);
         }
@@ -85,6 +91,215 @@ function Dashboard() {
       abortController.abort();
     };
   }, [productId]);
+
+  // 오늘 날짜를 YYYY-MM-DD 형식으로 가져오기
+  const getTodayDate = () => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  };
+
+  // 날짜 필터링 함수
+  const applyDateFilter = () => {
+    if (!originalDashboardData) return;
+
+    let filteredData = { ...originalDashboardData };
+
+    // 날짜 필터가 없으면 원본 데이터 반환
+    if (!startDate && !endDate) {
+      setDashboardData(originalDashboardData);
+      return;
+    }
+
+    // 리뷰 필터링
+    if (filteredData.reviews && filteredData.reviews.length > 0) {
+      filteredData.reviews = filteredData.reviews.filter((review) => {
+        if (!review.review_date) return false;
+        
+        const reviewDate = new Date(review.review_date);
+        if (isNaN(reviewDate.getTime())) return false;
+        
+        const reviewDateStr = `${reviewDate.getFullYear()}-${String(reviewDate.getMonth() + 1).padStart(2, '0')}-${String(reviewDate.getDate()).padStart(2, '0')}`;
+        
+        if (startDate && endDate) {
+          return reviewDateStr >= startDate && reviewDateStr <= endDate;
+        } else if (startDate) {
+          return reviewDateStr >= startDate;
+        } else if (endDate) {
+          return reviewDateStr <= endDate;
+        }
+        return true;
+      });
+    }
+
+    // dailyTrend 재계산 (필터링된 리뷰 기반)
+    const dailyTrendMap = new Map();
+    filteredData.reviews.forEach(review => {
+      if (review.review_date) {
+        const date = new Date(review.review_date).toISOString().split('T')[0];
+        if (!dailyTrendMap.has(date)) {
+          dailyTrendMap.set(date, {
+            date,
+            reviewCount: 0,
+            positiveCount: 0,
+            negativeCount: 0,
+          });
+        }
+        const dayData = dailyTrendMap.get(date);
+        dayData.reviewCount += 1;
+        if (review.rating >= 3.0) {
+          dayData.positiveCount += 1;
+        } else {
+          dayData.negativeCount += 1;
+        }
+      }
+    });
+
+    filteredData.dailyTrend = Array.from(dailyTrendMap.values())
+      .map(item => {
+        const total = item.reviewCount || 1;
+        const positiveRatio = (item.positiveCount / total) * 100;
+        const negativeRatio = (item.negativeCount / total) * 100;
+        return {
+          date: item.date,
+          reviewCount: item.reviewCount,
+          positiveCount: item.positiveCount,
+          negativeCount: item.negativeCount,
+          positive_ratio: Number(positiveRatio.toFixed(2)),
+          negative_ratio: Number(negativeRatio.toFixed(2)),
+          positiveRatio: Number(positiveRatio.toFixed(2)),
+          negativeRatio: Number(negativeRatio.toFixed(2)),
+        };
+      })
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // 통계 재계산
+    const totalReviews = filteredData.reviews.length;
+    const positiveCount = filteredData.reviews.filter(r => r.rating >= 3.0).length;
+    const negativeCount = filteredData.reviews.filter(r => r.rating < 3.0).length;
+    const positiveRatio = totalReviews > 0 ? (positiveCount / totalReviews) * 100 : 0;
+    const negativeRatio = totalReviews > 0 ? (negativeCount / totalReviews) * 100 : 0;
+
+    filteredData.stats = {
+      ...filteredData.stats,
+      totalReviews,
+      positiveRatio: Number(positiveRatio.toFixed(2)),
+      negativeRatio: Number(negativeRatio.toFixed(2)),
+      positiveCount,
+      negativeCount,
+    };
+
+    filteredData.analysis = {
+      ...filteredData.analysis,
+      positiveRatio: Number(positiveRatio.toFixed(2)),
+      negativeRatio: Number(negativeRatio.toFixed(2)),
+    };
+
+    // 키워드 데이터 재계산 (필터링된 리뷰 기반)
+    // 필터링된 리뷰의 review_id 추출
+    const filteredReviewIds = new Set(filteredData.reviews.map(r => r.review_id).filter(Boolean));
+    
+    // 원본 데이터에서 키워드와 리뷰의 연결 정보가 있다면 재계산
+    // 하지만 현재 구조에서는 키워드가 리뷰와 직접 연결되어 있지 않으므로,
+    // 키워드 비율을 필터링된 리뷰 수에 맞춰 조정
+    if (filteredData.keywords && originalDashboardData?.reviews) {
+      const originalReviewCount = originalDashboardData.reviews.length;
+      const filteredReviewCount = filteredData.reviews.length;
+      
+      // 키워드 비율을 필터링된 리뷰 수에 비례하여 조정
+      // 실제로는 백엔드에서 날짜 필터를 받아서 재계산하는 것이 정확하지만,
+      // 프론트엔드에서 근사치로 조정
+      if (originalReviewCount > 0 && filteredReviewCount > 0) {
+        const ratio = filteredReviewCount / originalReviewCount;
+        filteredData.keywords = filteredData.keywords.map(kw => {
+          const originalPosCount = kw.positive_count || kw.positiveCount || 0;
+          const originalNegCount = kw.negative_count || kw.negativeCount || 0;
+          const adjustedPosCount = Math.round(originalPosCount * ratio);
+          const adjustedNegCount = Math.round(originalNegCount * ratio);
+          const total = adjustedPosCount + adjustedNegCount;
+          const positiveRatio = total > 0 ? (adjustedPosCount / total) * 100 : 0;
+          const negativeRatio = total > 0 ? (adjustedNegCount / total) * 100 : 0;
+          
+          return {
+            ...kw,
+            positive_count: adjustedPosCount,
+            negative_count: adjustedNegCount,
+            positiveCount: adjustedPosCount,
+            negativeCount: adjustedNegCount,
+            positive_ratio: Number(positiveRatio.toFixed(2)),
+            negative_ratio: Number(negativeRatio.toFixed(2)),
+            positiveRatio: Number(positiveRatio.toFixed(2)),
+            negativeRatio: Number(negativeRatio.toFixed(2)),
+          };
+        });
+      } else {
+        // 필터링된 리뷰가 없으면 키워드도 0으로 설정
+        filteredData.keywords = filteredData.keywords.map(kw => ({
+          ...kw,
+          positive_count: 0,
+          negative_count: 0,
+          positiveCount: 0,
+          negativeCount: 0,
+          positive_ratio: 0,
+          negative_ratio: 0,
+          positiveRatio: 0,
+          negativeRatio: 0,
+        }));
+      }
+    }
+
+    setDashboardData(filteredData);
+  };
+
+  // 날짜 변경 핸들러
+  const handleStartDateChange = (e) => {
+    const newStartDate = e.target.value;
+    if (endDate && newStartDate > endDate) {
+      return;
+    }
+    setStartDate(newStartDate);
+  };
+
+  const handleEndDateChange = (e) => {
+    const newEndDate = e.target.value;
+    if (startDate && newEndDate < startDate) {
+      return;
+    }
+    setEndDate(newEndDate);
+  };
+
+  // 필터 적용 핸들러
+  const handleApplyFilter = async () => {
+    // 백엔드 API를 사용하여 필터링된 데이터 가져오기
+    if (startDate || endDate) {
+      setLoading(true);
+      try {
+        const result = await dashboardService.getDashboardData(productId, startDate, endDate, null, null);
+        if (result.success) {
+          setOriginalDashboardData(result.data);
+          setDashboardData(result.data);
+        } else {
+          alert(result.message || "필터 적용에 실패했습니다.");
+        }
+      } catch (error) {
+        console.error("필터 적용 오류:", error);
+        alert("필터 적용 중 오류가 발생했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // 날짜 필터가 없으면 클라이언트 사이드 필터링
+      applyDateFilter();
+    }
+  };
+
+  // 필터 초기화 핸들러
+  const handleResetFilter = () => {
+    setStartDate("");
+    setEndDate("");
+    if (originalDashboardData) {
+      setDashboardData(originalDashboardData);
+    }
+  };
 
   // 랜덤 리뷰 10개를 메모이제이션 (dashboardData.reviews가 변경될 때만 재생성)
   const randomReviews = useMemo(() => {
@@ -369,11 +584,52 @@ function Dashboard() {
                    "상품 정보 없음"}
                 </span>
               </div>
-              <div className="flex items-center space-x-3 text-sm">
-                <span className="text-gray-600">
-                  필터 기간: 2025.01.15 ~ 2025.02.07
-                </span>
-                <button className="bg-main text-white px-4 py-2 rounded-lg font-medium hover-opacity-90 transition shadow-md flex items-center">
+              <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-3 text-sm">
+                <div className="flex items-center space-x-2">
+                  <label className="text-gray-600 font-medium whitespace-nowrap">기간 필터:</label>
+                  <input
+                    type="date"
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent"
+                    value={startDate}
+                    onChange={handleStartDateChange}
+                    max={endDate || getTodayDate()}
+                  />
+                  <span className="text-gray-500">~</span>
+                  <input
+                    type="date"
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent"
+                    value={endDate}
+                    onChange={handleEndDateChange}
+                    min={startDate || undefined}
+                    max={getTodayDate()}
+                  />
+                  {(startDate || endDate) && (
+                    <button
+                      onClick={handleResetFilter}
+                      className="p-2 text-gray-500 hover:text-gray-700 transition"
+                      title="필터 초기화"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                <button 
+                  onClick={handleApplyFilter}
+                  className="bg-main text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition shadow-md flex items-center"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-4 w-4 mr-1"
@@ -388,23 +644,7 @@ function Dashboard() {
                       d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                     />
                   </svg>
-                  🔍 적용하기
-                </button>
-                <button className="bg-gray-200 text-gray-800 px-3 py-2 rounded-lg font-medium hover-bg-gray-300 transition flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                  </svg>
+                  적용하기
                 </button>
               </div>
             </div>

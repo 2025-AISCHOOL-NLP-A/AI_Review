@@ -119,23 +119,47 @@
   font-weight: 600;
   color: #333333;
   border-bottom: 1px solid #E5E7EB;
+  vertical-align: middle;
 }
 
 .workplace-table th.checkbox-column {
   width: 3rem;
+  min-width: 3rem;
+  max-width: 3rem;
   text-align: center;
+  padding: 0.75rem 0.5rem;
 }
 
 .workplace-table th.action-column {
   width: 3rem;
+  min-width: 3rem;
+  max-width: 3rem;
   text-align: center;
+  padding: 0.75rem 0.5rem;
 }
 
 .workplace-table td {
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid #E5E7EB;
   font-size: 0.875rem;
   color: #333333;
+  vertical-align: middle;
+}
+
+.workplace-table td.checkbox-column {
+  width: 3rem;
+  min-width: 3rem;
+  max-width: 3rem;
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+}
+
+.workplace-table td.action-column {
+  width: 3rem;
+  min-width: 3rem;
+  max-width: 3rem;
+  text-align: center;
+  padding: 0.75rem 0.5rem;
 }
 
 .workplace-table tbody tr:hover {
@@ -154,9 +178,8 @@
 }
 
 .product-cell {
-  display: flex;
+  display: block;
   align-items: center;
-  gap: 0.75rem;
 }
 
 .product-image {

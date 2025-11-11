@@ -51,10 +51,14 @@ export const productList = async (req, res) => {
     // `);
     const [rows] = await db.query(`
       SELECT 
+<<<<<<< HEAD
         p.product_id,
         p.product_name,
         p.brand,
         p.registered_date
+=======
+        *
+>>>>>>> 67836a738f674b6792ec14b27644a0d40a1c1373
       FROM tb_product p
       ORDER BY p.product_id DESC
     `);

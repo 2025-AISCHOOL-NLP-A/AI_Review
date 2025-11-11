@@ -18,7 +18,8 @@ function Workplace() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("");
-  const [workplaceData, setWorkplaceData] = useState([]);
+  const [allProducts, setAllProducts] = useState([]); // 전체 제품 데이터 (백엔드에서 받은 원본)
+  const [workplaceData, setWorkplaceData] = useState([]); // 화면에 표시할 제품 데이터 (필터링/페이지네이션 적용)
   const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -70,113 +71,194 @@ function Workplace() {
     };
   }, []);
 
-  // 제품 목록 가져오기 (useEffect)
+  // 제품 목록 가져오기 (전체 데이터를 한 번만 가져옴)
   useEffect(() => {
-    let isMounted = true;
-    const abortController = new AbortController();
-
     // 이미 요청이 진행 중이면 중복 요청 방지
     if (fetchInProgress.current) {
-      return () => {
-        isMounted = false;
-        abortController.abort();
-      };
+      console.log("이미 요청 진행 중, 중복 요청 방지");
+      return;
     }
 
     const fetchProducts = async () => {
-      if (fetchInProgress.current || !isMounted) return;
       fetchInProgress.current = true;
+      console.log("제품 목록 조회 시작");
 
-      if (isMounted) {
-        setLoading(true);
-      }
+      setLoading(true);
 
       try {
-        const result = await dashboardService.getProducts(
-          currentPage,
-          productsPerPage,
-          searchQuery,
-          selectedCategoryFilter || null
-        );
+        console.log("API 호출 시작...");
+        // 백엔드에서 전체 데이터를 가져옴 (페이지네이션 파라미터는 무시)
+        const result = await dashboardService.getProducts(1, 1000, "", null);
+        console.log("API 호출 완료, 응답:", result);
 
-        if (!isMounted) {
-          fetchInProgress.current = false;
-          return;
-        }
+        console.log("전체 API 응답:", result); // 디버깅용
+        console.log("result 타입:", typeof result);
+        console.log("result.success:", result?.success);
+        console.log("result.data:", result?.data);
 
-        if (result.success && result.data) {
+        // result가 있고 success가 false가 아니면 처리
+        if (result && (result.success === true || result.data !== undefined || result.products !== undefined)) {
           // 백엔드 응답 구조에 맞게 변환
           let products = [];
-          let total = 0;
+          // result.data가 있으면 사용, 없으면 result 자체를 사용
+          const responseData = result.data !== undefined ? result.data : result;
+
+          console.log("응답 데이터:", responseData); // 디버깅용
+          console.log("responseData 타입:", typeof responseData);
+          console.log("responseData.products:", responseData?.products);
 
           // 백엔드가 { message: "...", products: [] } 형태로 보내는 경우
-          if (result.data.products && Array.isArray(result.data.products)) {
-            products = result.data.products;
-            total = result.data.total !== undefined ? result.data.total : result.data.products.length;
+          if (responseData?.products && Array.isArray(responseData.products)) {
+            products = responseData.products;
+            console.log("✅ products 배열에서 데이터 추출 성공:", products.length, "개");
           }
           // 배열로 직접 반환하는 경우
-          else if (Array.isArray(result.data)) {
-            products = result.data;
-            total = result.data.length;
+          else if (Array.isArray(responseData)) {
+            products = responseData;
+            console.log("✅ 직접 배열로 반환된 데이터:", products.length, "개");
           }
           // { data: [] } 형태
-          else if (result.data.data && Array.isArray(result.data.data)) {
-            products = result.data.data;
-            total = result.data.total !== undefined ? result.data.total : result.data.data.length;
+          else if (responseData?.data && Array.isArray(responseData.data)) {
+            products = responseData.data;
+            console.log("✅ data 속성에서 배열 추출:", products.length, "개");
           }
           // 기타 객체 형태 - 모든 키를 확인
-          else if (typeof result.data === 'object') {
+          else if (typeof responseData === 'object' && responseData !== null) {
+            console.log("객체의 모든 키 확인 중...", Object.keys(responseData));
             // 객체의 모든 키를 확인하여 배열을 찾음
-            for (const key in result.data) {
-              if (Array.isArray(result.data[key])) {
-                products = result.data[key];
-                total = result.data.total !== undefined ? result.data.total : result.data[key].length;
+            for (const key in responseData) {
+              if (Array.isArray(responseData[key])) {
+                products = responseData[key];
+                console.log(`✅ ${key} 키에서 배열 발견:`, products.length, "개");
                 break;
               }
             }
           }
 
-          setWorkplaceData(products);
-          setTotalCount(total);
-          setTotalPages(Math.ceil(total / productsPerPage));
+          console.log("최종 파싱된 제품 목록:", products); // 디버깅용
+          console.log("제품 개수:", products.length); // 디버깅용
+
+          // 전체 제품 데이터 저장 (빈 배열도 저장)
+          if (Array.isArray(products)) {
+            setAllProducts(products);
+            console.log("✅ 제품 데이터 저장 완료:", products.length, "개");
+          } else {
+            console.warn("❌ 제품 목록이 배열이 아닙니다:", typeof products, products);
+            setAllProducts([]);
+          }
         } else {
-          setWorkplaceData([]);
-          setTotalCount(0);
-          setTotalPages(1);
+          console.warn("❌ API 응답 실패 또는 데이터 없음:", result);
+          console.warn("result 존재 여부:", !!result);
+          console.warn("result.success:", result?.success);
+          console.warn("result.data 존재 여부:", !!result?.data);
+          setAllProducts([]);
         }
       } catch (error) {
-        if (isMounted) {
-          console.error("제품 목록 조회 중 오류:", error);
-          setWorkplaceData([]);
-          setTotalCount(0);
-          setTotalPages(1);
+        console.error("❌ 제품 목록 조회 중 오류:", error);
+        console.error("오류 타입:", error.constructor.name);
+        console.error("오류 메시지:", error.message);
+        console.error("오류 상세:", error.response || error);
+        if (error.response) {
+          console.error("응답 상태:", error.response.status);
+          console.error("응답 데이터:", error.response.data);
         }
+        setAllProducts([]);
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        setLoading(false);
         fetchInProgress.current = false;
+        console.log("로딩 완료, fetchInProgress 리셋");
       }
     };
 
     fetchProducts();
 
+    // cleanup 함수는 필요 없음 - React가 자동으로 언마운트된 컴포넌트의 상태 업데이트를 무시함
     return () => {
-      isMounted = false;
-      abortController.abort();
-      // cleanup에서 fetchInProgress를 false로 설정하지 않음
-      // (요청이 완료된 후에만 false로 설정되어야 함)
+      // 컴포넌트가 언마운트되면 진행 중인 요청을 취소할 수 있지만,
+      // 이미 완료된 요청의 상태 업데이트는 React가 자동으로 무시함
+      fetchInProgress.current = false;
     };
-  }, [currentPage, searchQuery, selectedCategoryFilter, productsPerPage, refreshTrigger]);
+  }, [refreshTrigger]); // refreshTrigger만 의존성으로 설정
 
-  // 날짜 포맷팅
-  const formatDate = (dateString) => {
-    if (!dateString) return "-";
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}.${month}.${day}`;
+  // 카테고리 목록 추출 (중복 제거)
+  const categories = React.useMemo(() => {
+    const categorySet = new Set();
+    allProducts.forEach((product) => {
+      if (product.category_name) {
+        categorySet.add(product.category_name);
+      }
+    });
+    return Array.from(categorySet).sort();
+  }, [allProducts]);
+
+  // 검색어나 필터 변경 시 페이지를 1로 리셋
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategoryFilter]);
+
+  // 클라이언트 사이드 필터링 및 페이지네이션
+  useEffect(() => {
+    console.log("필터링 시작 - allProducts 개수:", allProducts.length);
+    console.log("검색어:", searchQuery);
+    console.log("카테고리 필터:", selectedCategoryFilter);
+    
+    let filtered = [...allProducts];
+
+    // 검색 필터 적용
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(
+        (item) =>
+          (item.product_name && item.product_name.toLowerCase().includes(query)) ||
+          (item.brand && item.brand.toLowerCase().includes(query))
+      );
+      console.log("검색 필터 적용 후:", filtered.length, "개");
+    }
+
+    // 카테고리 필터 적용
+    if (selectedCategoryFilter) {
+      filtered = filtered.filter(
+        (item) => item.category_name === selectedCategoryFilter
+      );
+      console.log("카테고리 필터 적용 후:", filtered.length, "개");
+    }
+
+    // 전체 개수 설정
+    const total = filtered.length;
+    setTotalCount(total);
+    setTotalPages(Math.ceil(total / productsPerPage));
+
+    // 페이지네이션 적용
+    const startIndex = (currentPage - 1) * productsPerPage;
+    const endIndex = startIndex + productsPerPage;
+    const paginatedData = filtered.slice(startIndex, endIndex);
+
+    console.log("최종 표시할 데이터:", paginatedData.length, "개 (페이지:", currentPage, "/", Math.ceil(total / productsPerPage), ")");
+    setWorkplaceData(paginatedData);
+  }, [allProducts, currentPage, searchQuery, selectedCategoryFilter, productsPerPage]);
+
+  // 날짜 포맷팅 (registered_date 우선 사용, 없으면 updated_at 사용)
+  const formatDate = (item) => {
+    // registered_date를 우선 사용, 없으면 updated_at 사용
+    const dateString = item.registered_date || item.updated_at || item.created_at;
+    
+    // null, undefined, 빈 문자열 체크
+    if (!dateString || dateString === null || dateString === undefined || dateString === '') {
+      return "-";
+    }
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return "-";
+      }
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}.${month}.${day}`;
+    } catch (e) {
+      return "-";
+    }
   };
 
   // 체크박스 전체 선택/해제
@@ -270,7 +352,11 @@ function Workplace() {
                   }}
                 >
                   <option value="">전체 카테고리</option>
-                  {/* TODO: 카테고리 목록을 API에서 가져와서 동적으로 표시 */}
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="search-container">
@@ -343,7 +429,8 @@ function Workplace() {
                     </td>
                   </tr>
                 ) : (
-                  workplaceData.map((item) => (
+                  workplaceData.map((item) => {
+                    return (
                     <tr key={item.product_id}>
                       <td className="checkbox-column">
                         <input
@@ -352,11 +439,11 @@ function Workplace() {
                           onChange={() => handleSelectItem(item.product_id)}
                         />
                       </td>
-                      <td>{formatDate(item.registered_date)}</td>
+                      <td>{formatDate(item)}</td>
                       <td className="product-cell">
                         <span>{item.product_name || "-"}</span>
                       </td>
-                      <td>{item.brand || "-"}</td>
+                      <td>{item.brand && item.brand.trim() !== "" ? item.brand : "-"}</td>
                       <td className="action-column">
                         <button
                           className="action-menu-btn"
@@ -380,7 +467,8 @@ function Workplace() {
                         </button>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>

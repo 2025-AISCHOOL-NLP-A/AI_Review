@@ -18,6 +18,8 @@ function Workplace() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [allProducts, setAllProducts] = useState([]); // 전체 제품 데이터 (백엔드에서 받은 원본)
   const [workplaceData, setWorkplaceData] = useState([]); // 화면에 표시할 제품 데이터 (필터링/페이지네이션 적용)
   const [loading, setLoading] = useState(true);
@@ -27,6 +29,8 @@ function Workplace() {
   const fetchInProgress = useRef(false);
   const [modalStep, setModalStep] = useState(null); // 'info' | 'upload' | null
   const [productFormData, setProductFormData] = useState(null);
+  const [sortField, setSortField] = useState(null); // 'registered_date' | 'product_name' | 'brand' | 'category_id' | null
+  const [sortDirection, setSortDirection] = useState('asc'); // 'asc' | 'desc'
   
   // 사이드바 상태를 localStorage에서 읽어오기
   const [sidebarOpen, setSidebarOpen] = useState(() => {
@@ -75,26 +79,25 @@ function Workplace() {
   useEffect(() => {
     // 이미 요청이 진행 중이면 중복 요청 방지
     if (fetchInProgress.current) {
-      console.log("이미 요청 진행 중, 중복 요청 방지");
       return;
     }
 
+    let isCancelled = false;
+
     const fetchProducts = async () => {
+      // 중복 요청 방지를 위한 플래그 설정
       fetchInProgress.current = true;
-      console.log("제품 목록 조회 시작");
 
       setLoading(true);
 
       try {
-        console.log("API 호출 시작...");
         // 백엔드에서 전체 데이터를 가져옴 (페이지네이션 파라미터는 무시)
         const result = await dashboardService.getProducts(1, 1000, "", null);
-        console.log("API 호출 완료, 응답:", result);
 
-        console.log("전체 API 응답:", result); // 디버깅용
-        console.log("result 타입:", typeof result);
-        console.log("result.success:", result?.success);
-        console.log("result.data:", result?.data);
+        // 컴포넌트가 언마운트되었거나 요청이 취소된 경우 상태 업데이트 방지
+        if (isCancelled) {
+          return;
+        }
 
         // result가 있고 success가 false가 아니면 처리
         if (result && (result.success === true || result.data !== undefined || result.products !== undefined)) {
@@ -103,124 +106,172 @@ function Workplace() {
           // result.data가 있으면 사용, 없으면 result 자체를 사용
           const responseData = result.data !== undefined ? result.data : result;
 
-          console.log("응답 데이터:", responseData); // 디버깅용
-          console.log("responseData 타입:", typeof responseData);
-          console.log("responseData.products:", responseData?.products);
-
           // 백엔드가 { message: "...", products: [] } 형태로 보내는 경우
           if (responseData?.products && Array.isArray(responseData.products)) {
             products = responseData.products;
-            console.log("✅ products 배열에서 데이터 추출 성공:", products.length, "개");
           }
           // 배열로 직접 반환하는 경우
           else if (Array.isArray(responseData)) {
             products = responseData;
-            console.log("✅ 직접 배열로 반환된 데이터:", products.length, "개");
           }
           // { data: [] } 형태
           else if (responseData?.data && Array.isArray(responseData.data)) {
             products = responseData.data;
-            console.log("✅ data 속성에서 배열 추출:", products.length, "개");
           }
           // 기타 객체 형태 - 모든 키를 확인
           else if (typeof responseData === 'object' && responseData !== null) {
-            console.log("객체의 모든 키 확인 중...", Object.keys(responseData));
             // 객체의 모든 키를 확인하여 배열을 찾음
             for (const key in responseData) {
               if (Array.isArray(responseData[key])) {
                 products = responseData[key];
-                console.log(`✅ ${key} 키에서 배열 발견:`, products.length, "개");
                 break;
               }
             }
           }
 
-          console.log("최종 파싱된 제품 목록:", products); // 디버깅용
-          console.log("제품 개수:", products.length); // 디버깅용
-
           // 전체 제품 데이터 저장 (빈 배열도 저장)
-          if (Array.isArray(products)) {
-            setAllProducts(products);
-            console.log("✅ 제품 데이터 저장 완료:", products.length, "개");
-          } else {
-            console.warn("❌ 제품 목록이 배열이 아닙니다:", typeof products, products);
-            setAllProducts([]);
+          if (!isCancelled) {
+            if (Array.isArray(products)) {
+              setAllProducts(products);
+            } else {
+              setAllProducts([]);
+            }
           }
         } else {
-          console.warn("❌ API 응답 실패 또는 데이터 없음:", result);
-          console.warn("result 존재 여부:", !!result);
-          console.warn("result.success:", result?.success);
-          console.warn("result.data 존재 여부:", !!result?.data);
-          setAllProducts([]);
+          if (!isCancelled) {
+            setAllProducts([]);
+          }
         }
       } catch (error) {
         console.error("❌ 제품 목록 조회 중 오류:", error);
-        console.error("오류 타입:", error.constructor.name);
-        console.error("오류 메시지:", error.message);
-        console.error("오류 상세:", error.response || error);
-        if (error.response) {
-          console.error("응답 상태:", error.response.status);
-          console.error("응답 데이터:", error.response.data);
+        if (!isCancelled) {
+          setAllProducts([]);
         }
-        setAllProducts([]);
       } finally {
-        setLoading(false);
+        if (!isCancelled) {
+          setLoading(false);
+        }
         fetchInProgress.current = false;
-        console.log("로딩 완료, fetchInProgress 리셋");
       }
     };
 
     fetchProducts();
 
-    // cleanup 함수는 필요 없음 - React가 자동으로 언마운트된 컴포넌트의 상태 업데이트를 무시함
+    // cleanup 함수: 컴포넌트 언마운트 시 요청 취소
     return () => {
-      // 컴포넌트가 언마운트되면 진행 중인 요청을 취소할 수 있지만,
-      // 이미 완료된 요청의 상태 업데이트는 React가 자동으로 무시함
+      isCancelled = true;
       fetchInProgress.current = false;
     };
   }, [refreshTrigger]); // refreshTrigger만 의존성으로 설정
 
-  // 카테고리 목록 추출 (중복 제거)
+  // 카테고리 목록 추출 (중복 제거) - category_id 기반
   const categories = React.useMemo(() => {
     const categorySet = new Set();
     allProducts.forEach((product) => {
-      if (product.category_name) {
-        categorySet.add(product.category_name);
+      if (product.category_id) {
+        categorySet.add(product.category_id);
       }
     });
-    return Array.from(categorySet).sort();
+    return Array.from(categorySet).sort((a, b) => a - b);
   }, [allProducts]);
 
   // 검색어나 필터 변경 시 페이지를 1로 리셋
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCategoryFilter]);
+  }, [searchQuery, selectedCategoryFilter, startDate, endDate]);
+
+  // 정렬 핸들러
+  const handleSort = (field) => {
+    if (sortField === field) {
+      // 같은 필드를 클릭하면 정렬 방향 토글
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // 다른 필드를 클릭하면 해당 필드로 정렬 (기본 오름차순)
+      setSortField(field);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1); // 정렬 변경 시 첫 페이지로
+  };
 
   // 클라이언트 사이드 필터링 및 페이지네이션
   useEffect(() => {
-    console.log("필터링 시작 - allProducts 개수:", allProducts.length);
-    console.log("검색어:", searchQuery);
-    console.log("카테고리 필터:", selectedCategoryFilter);
-    
     let filtered = [...allProducts];
 
     // 검색 필터 적용
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(
-        (item) =>
-          (item.product_name && item.product_name.toLowerCase().includes(query)) ||
-          (item.brand && item.brand.toLowerCase().includes(query))
+        (item) => {
+          const productName = item.product_name ? item.product_name.toLowerCase() : '';
+          const brand = item.brand && item.brand.trim() ? item.brand.toLowerCase() : '';
+          return productName.includes(query) || brand.includes(query);
+        }
       );
-      console.log("검색 필터 적용 후:", filtered.length, "개");
     }
 
     // 카테고리 필터 적용
     if (selectedCategoryFilter) {
       filtered = filtered.filter(
-        (item) => item.category_name === selectedCategoryFilter
+        (item) => item.category_id === Number(selectedCategoryFilter)
       );
-      console.log("카테고리 필터 적용 후:", filtered.length, "개");
+    }
+
+    // 등록일 날짜 범위 필터 적용
+    if (startDate || endDate) {
+      filtered = filtered.filter((item) => {
+        const itemDate = item.registered_date 
+          ? new Date(item.registered_date) 
+          : (item.updated_at ? new Date(item.updated_at) : (item.created_at ? new Date(item.created_at) : null));
+        
+        if (!itemDate || isNaN(itemDate.getTime())) return false;
+        
+        // 날짜만 비교 (시간 제외) - YYYY-MM-DD 형식으로 변환
+        const itemDateStr = `${itemDate.getFullYear()}-${String(itemDate.getMonth() + 1).padStart(2, '0')}-${String(itemDate.getDate()).padStart(2, '0')}`;
+        
+        if (startDate && endDate) {
+          return itemDateStr >= startDate && itemDateStr <= endDate;
+        } else if (startDate) {
+          return itemDateStr >= startDate;
+        } else if (endDate) {
+          return itemDateStr <= endDate;
+        }
+        
+        return true;
+      });
+    }
+
+    // 정렬 적용
+    if (sortField) {
+      filtered.sort((a, b) => {
+        let aValue = a[sortField];
+        let bValue = b[sortField];
+
+        // 숫자 필드인 경우 먼저 처리
+        if (sortField === 'category_id') {
+          aValue = (aValue !== null && aValue !== undefined) ? Number(aValue) : 0;
+          bValue = (bValue !== null && bValue !== undefined) ? Number(bValue) : 0;
+        }
+        // 날짜 필드인 경우 Date 객체로 변환
+        else if (sortField === 'registered_date') {
+          aValue = aValue ? new Date(aValue) : new Date(0);
+          bValue = bValue ? new Date(bValue) : new Date(0);
+        }
+        // 문자열 필드인 경우
+        else {
+          // null이나 undefined 처리
+          if (aValue === null || aValue === undefined) aValue = '';
+          if (bValue === null || bValue === undefined) bValue = '';
+          
+          // 문자열 비교 (대소문자 구분 없음)
+          if (typeof aValue === 'string' && typeof bValue === 'string') {
+            aValue = aValue.toLowerCase();
+            bValue = bValue.toLowerCase();
+          }
+        }
+
+        const result = aValue < bValue ? (sortDirection === 'asc' ? -1 : 1) : (aValue > bValue ? (sortDirection === 'asc' ? 1 : -1) : 0);
+        return result;
+      });
     }
 
     // 전체 개수 설정
@@ -233,9 +284,18 @@ function Workplace() {
     const endIndex = startIndex + productsPerPage;
     const paginatedData = filtered.slice(startIndex, endIndex);
 
-    console.log("최종 표시할 데이터:", paginatedData.length, "개 (페이지:", currentPage, "/", Math.ceil(total / productsPerPage), ")");
     setWorkplaceData(paginatedData);
-  }, [allProducts, currentPage, searchQuery, selectedCategoryFilter, productsPerPage]);
+  }, [allProducts, currentPage, searchQuery, selectedCategoryFilter, startDate, endDate, productsPerPage, sortField, sortDirection]);
+
+  // 카테고리 ID를 이름으로 변환
+  const getCategoryName = (categoryId) => {
+    const categoryMap = {
+      101: '전자기기',
+      102: '화장품',
+      103: '게임'
+    };
+    return categoryMap[categoryId] || (categoryId ? `카테고리 ${categoryId}` : '-');
+  };
 
   // 날짜 포맷팅 (registered_date 우선 사용, 없으면 updated_at 사용)
   const formatDate = (item) => {
@@ -317,17 +377,45 @@ function Workplace() {
     setProductFormData(null);
   };
 
-  // 제품 삭제
-  const handleDeleteProduct = async (productId) => {
-    if (window.confirm("정말 이 제품을 삭제하시겠습니까?")) {
-      const result = await dashboardService.deleteProduct(productId);
-      if (result.success) {
-        // 선택된 제품 목록에서 제거
-        setSelectedProducts(selectedProducts.filter(id => id !== productId));
-        // refreshTrigger를 변경하여 useEffect가 다시 실행되도록 함
-        setRefreshTrigger(prev => prev + 1);
-      } else {
-        alert(result.message || "제품 삭제에 실패했습니다.");
+  // 선택된 제품들 삭제
+  const handleDeleteSelected = async () => {
+    if (selectedProducts.length === 0) {
+      alert("삭제할 제품을 선택해주세요.");
+      return;
+    }
+
+    // 중복 요청 방지
+    if (loading) {
+      return;
+    }
+
+    if (window.confirm(`선택한 ${selectedProducts.length}개의 제품을 삭제하시겠습니까?`)) {
+      setLoading(true);
+      try {
+        // 모든 선택된 제품 삭제
+        const deletePromises = selectedProducts.map(productId => 
+          dashboardService.deleteProduct(productId)
+        );
+        const results = await Promise.all(deletePromises);
+        
+        // 모든 삭제가 성공했는지 확인
+        const allSuccess = results.every(result => result.success);
+        
+        if (allSuccess) {
+          // 선택된 제품 목록 초기화
+          setSelectedProducts([]);
+          // refreshTrigger를 변경하여 useEffect가 다시 실행되도록 함
+          setRefreshTrigger(prev => prev + 1);
+        } else {
+          alert("일부 제품 삭제에 실패했습니다.");
+          // 성공한 것만 제거하고 새로고침
+          setRefreshTrigger(prev => prev + 1);
+        }
+      } catch (error) {
+        console.error("제품 삭제 중 오류:", error);
+        alert("제품 삭제 중 오류가 발생했습니다.");
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -352,9 +440,9 @@ function Workplace() {
                   }}
                 >
                   <option value="">전체 카테고리</option>
-                  {categories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
+                  {categories.map((categoryId) => (
+                    <option key={categoryId} value={categoryId}>
+                      {getCategoryName(categoryId)}
                     </option>
                   ))}
                 </select>
@@ -383,6 +471,48 @@ function Workplace() {
                   onKeyDown={handleSearch}
                 />
               </div>
+              <div className="date-filter-container">
+                <input
+                  type="date"
+                  className="date-input"
+                  placeholder="시작일"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+                <span className="date-separator">~</span>
+                <input
+                  type="date"
+                  className="date-input"
+                  placeholder="종료일"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+                {(startDate || endDate) && (
+                  <button
+                    className="date-clear-btn"
+                    onClick={() => {
+                      setStartDate("");
+                      setEndDate("");
+                    }}
+                    title="날짜 필터 초기화"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      className="clear-icon"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -402,10 +532,98 @@ function Workplace() {
                       disabled={loading || workplaceData.length === 0}
                     />
                   </th>
-                  <th>등록일</th>
-                  <th>제품명</th>
-                  <th>브랜드</th>
-                  <th className="action-column"></th>
+                  <th 
+                    className="sortable-header"
+                    onClick={() => handleSort('registered_date')}
+                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                      <span>등록일</span>
+                      <span style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        fontSize: '0.7rem',
+                        lineHeight: '0.8',
+                        color: sortField === 'registered_date' ? '#5B8EFF' : '#9CA3AF'
+                      }}>
+                        <span style={{ 
+                          opacity: sortField === 'registered_date' && sortDirection === 'asc' ? 1 : 0.3 
+                        }}>↑</span>
+                        <span style={{ 
+                          opacity: sortField === 'registered_date' && sortDirection === 'desc' ? 1 : 0.3 
+                        }}>↓</span>
+                      </span>
+                    </div>
+                  </th>
+                  <th 
+                    className="sortable-header"
+                    onClick={() => handleSort('product_name')}
+                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                      <span>제품명</span>
+                      <span style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        fontSize: '0.7rem',
+                        lineHeight: '0.8',
+                        color: sortField === 'product_name' ? '#5B8EFF' : '#9CA3AF'
+                      }}>
+                        <span style={{ 
+                          opacity: sortField === 'product_name' && sortDirection === 'asc' ? 1 : 0.3 
+                        }}>↑</span>
+                        <span style={{ 
+                          opacity: sortField === 'product_name' && sortDirection === 'desc' ? 1 : 0.3 
+                        }}>↓</span>
+                      </span>
+                    </div>
+                  </th>
+                  <th 
+                    className="sortable-header"
+                    onClick={() => handleSort('brand')}
+                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                      <span>브랜드</span>
+                      <span style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        fontSize: '0.7rem',
+                        lineHeight: '0.8',
+                        color: sortField === 'brand' ? '#5B8EFF' : '#9CA3AF'
+                      }}>
+                        <span style={{ 
+                          opacity: sortField === 'brand' && sortDirection === 'asc' ? 1 : 0.3 
+                        }}>↑</span>
+                        <span style={{ 
+                          opacity: sortField === 'brand' && sortDirection === 'desc' ? 1 : 0.3 
+                        }}>↓</span>
+                      </span>
+                    </div>
+                  </th>
+                  <th 
+                    className="sortable-header"
+                    onClick={() => handleSort('category_id')}
+                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                      <span>카테고리</span>
+                      <span style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        fontSize: '0.7rem',
+                        lineHeight: '0.8',
+                        color: sortField === 'category_id' ? '#5B8EFF' : '#9CA3AF'
+                      }}>
+                        <span style={{ 
+                          opacity: sortField === 'category_id' && sortDirection === 'asc' ? 1 : 0.3 
+                        }}>↑</span>
+                        <span style={{ 
+                          opacity: sortField === 'category_id' && sortDirection === 'desc' ? 1 : 0.3 
+                        }}>↓</span>
+                      </span>
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -444,28 +662,7 @@ function Workplace() {
                         <span>{item.product_name || "-"}</span>
                       </td>
                       <td>{item.brand && item.brand.trim() !== "" ? item.brand : "-"}</td>
-                      <td className="action-column">
-                        <button
-                          className="action-menu-btn"
-                          onClick={() => handleDeleteProduct(item.product_id)}
-                          title="삭제"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            className="action-icon"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        </button>
-                      </td>
+                      <td>{getCategoryName(item.category_id)}</td>
                     </tr>
                     );
                   })
@@ -518,6 +715,27 @@ function Workplace() {
             <div className="action-buttons">
               <button className="download-btn" onClick={handleDownload}>
                 Download
+              </button>
+              <button 
+                className="delete-btn" 
+                onClick={handleDeleteSelected}
+                disabled={selectedProducts.length === 0}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="delete-icon"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+                Delete
               </button>
               <button className="add-btn" onClick={handleAdd}>
                 <svg

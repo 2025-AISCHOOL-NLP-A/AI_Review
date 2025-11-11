@@ -6,6 +6,7 @@ export default function ProductInfoForm({ onNext, onClose }) {
     productName: "",
     brand: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -15,9 +16,19 @@ export default function ProductInfoForm({ onNext, onClose }) {
   const isFormValid = form.category.trim() !== "" && form.productName.trim() !== "";
 
   const handleNext = () => {
-    if (isFormValid) {
-      onNext(form);
+    // 중복 클릭 방지
+    if (isSubmitting || !isFormValid) {
+      return;
     }
+
+    setIsSubmitting(true);
+    // onNext 호출 (모달이 닫히면 컴포넌트가 언마운트되므로 상태 리셋 불필요)
+    onNext(form);
+    // 모달이 닫히면 컴포넌트가 언마운트되므로 명시적인 리셋은 필요 없음
+    // 만약 모달이 닫히지 않는 경우를 대비해 약간의 지연 후 리셋
+    setTimeout(() => {
+      setIsSubmitting(false);
+    }, 500);
   };
 
   return (
@@ -66,15 +77,19 @@ export default function ProductInfoForm({ onNext, onClose }) {
       </div>
 
       <div className="button-row">
-        <button className="cancel" onClick={onClose}>
+        <button 
+          className="cancel" 
+          onClick={onClose}
+          disabled={isSubmitting}
+        >
           Cancel
         </button>
         <button
           className="next"
-          disabled={!isFormValid}
+          disabled={!isFormValid || isSubmitting}
           onClick={handleNext}
         >
-          Next
+          {isSubmitting ? "처리 중..." : "Next"}
         </button>
       </div>
     </>

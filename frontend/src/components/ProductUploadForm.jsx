@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 
 export default function ProductUploadForm({ onClose, formData }) {
   const [files, setFiles] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleFileSelect = (e) => {
@@ -23,11 +24,26 @@ export default function ProductUploadForm({ onClose, formData }) {
     fileInputRef.current?.click();
   };
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
+    // 중복 요청 방지
+    if (isSubmitting) {
+      return;
+    }
+
     // 나중에 분석 기능 연결 예정
     console.log("Analyze clicked with files:", files);
     console.log("Form data:", formData);
-    // 여기에 분석 로직 추가 예정
+    
+    setIsSubmitting(true);
+    try {
+      // 여기에 분석 로직 추가 예정
+      // 예: await api.uploadAndAnalyze(formData, files);
+    } catch (error) {
+      console.error("분석 중 오류:", error);
+      alert("분석 중 오류가 발생했습니다.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -69,11 +85,19 @@ export default function ProductUploadForm({ onClose, formData }) {
       </div>
 
       <div className="button-row">
-        <button className="cancel" onClick={onClose}>
+        <button 
+          className="cancel" 
+          onClick={onClose}
+          disabled={isSubmitting}
+        >
           Cancel
         </button>
-        <button className="next" onClick={handleAnalyze}>
-          Analyze
+        <button 
+          className="next" 
+          onClick={handleAnalyze}
+          disabled={isSubmitting || files.length === 0}
+        >
+          {isSubmitting ? "처리 중..." : "Analyze"}
         </button>
       </div>
     </>

@@ -7,8 +7,9 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  overflow-x: auto;
+  overflow-x: hidden;
   min-width: 0;
+  position: relative;
 }
 
 /* Header Section */
@@ -17,6 +18,11 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .workplace-title {
@@ -30,6 +36,29 @@
   display: flex;
   gap: 1rem;
   align-items: center;
+  flex-wrap: wrap;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1200px) {
+  .workplace-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .workplace-filters > * {
+    width: 100%;
+  }
+  
+  .date-filter-container {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .date-input {
+    flex: 1;
+  }
 }
 
 .filter-dropdown {
@@ -78,7 +107,8 @@
   border-radius: 8px;
   font-size: 0.875rem;
   color: #333333;
-  width: 200px;
+  width: 280px;
+  min-width: 200px;
 }
 
 .search-input:focus {
@@ -91,21 +121,89 @@
   color: #9CA3AF;
 }
 
+/* Date Filter Section */
+.date-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.date-input {
+  padding: 0.5rem 1rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background: white;
+  font-size: 0.875rem;
+  color: #333333;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #5B8EFF;
+  box-shadow: 0 0 0 3px rgba(91, 142, 255, 0.1);
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.date-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+.date-separator {
+  color: #6B7280;
+  font-size: 0.875rem;
+  font-weight: 500;
+  user-select: none;
+}
+
+.date-clear-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B7280;
+  transition: color 0.2s;
+  border-radius: 4px;
+}
+
+.date-clear-btn:hover {
+  color: #EF4444;
+  background: #FEE2E2;
+}
+
+.clear-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
 /* Table Section */
 .workplace-table-container {
   margin-bottom: 2rem;
   overflow-x: auto;
+  overflow-y: visible;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
 }
 
 .workplace-table {
   width: 100%;
   min-width: 600px;
+  max-width: 100%;
   border-collapse: collapse;
   background: white;
-  table-layout: auto;
+  table-layout: fixed;
+  box-sizing: border-box;
 }
 
 .workplace-table thead {
@@ -138,12 +236,56 @@
   padding: 0.75rem 0.5rem;
 }
 
+/* 정렬 가능한 헤더의 고정 너비 설정 */
+.workplace-table thead tr th:nth-child(2) {
+  width: 12rem;
+  min-width: 12rem;
+}
+
+.workplace-table thead tr th:nth-child(3) {
+  width: auto;
+}
+
+.workplace-table thead tr th:nth-child(4) {
+  width: 12rem;
+  min-width: 12rem;
+}
+
+.workplace-table thead tr th:nth-child(5) {
+  width: 10rem;
+  min-width: 10rem;
+}
+
+.workplace-table th.sortable-header {
+  transition: background-color 0.2s;
+  position: relative;
+}
+
+.workplace-table th.sortable-header:hover {
+  background-color: #E5E7EB;
+}
+
+.workplace-table th.sortable-header > div {
+  width: 100%;
+  min-width: 0;
+}
+
+.workplace-table th.sortable-header > div > span:first-child {
+  flex-shrink: 0;
+}
+
+.workplace-table th.sortable-header > div > span:last-child {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
 .workplace-table td {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #E5E7EB;
   font-size: 0.875rem;
   color: #333333;
   vertical-align: middle;
+  line-height: 1.5;
 }
 
 .workplace-table td.checkbox-column {
@@ -152,6 +294,7 @@
   max-width: 3rem;
   text-align: center;
   padding: 0.75rem 0.5rem;
+  vertical-align: middle;
 }
 
 .workplace-table td.action-column {
@@ -160,6 +303,7 @@
   max-width: 3rem;
   text-align: center;
   padding: 0.75rem 0.5rem;
+  vertical-align: middle;
 }
 
 .workplace-table tbody tr:hover {
@@ -178,8 +322,8 @@
 }
 
 .product-cell {
-  display: block;
-  align-items: center;
+  display: table-cell;
+  vertical-align: middle;
 }
 
 .product-image {
@@ -218,6 +362,9 @@
   align-items: center;
   margin-top: 2rem;
   gap: 1rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .workplace-footer .pagination {
@@ -310,6 +457,38 @@
   border-color: #D1D5DB;
 }
 
+.delete-btn {
+  padding: 0.625rem 1.5rem;
+  border: 1px solid #EF4444;
+  border-radius: 8px;
+  background: white;
+  color: #EF4444;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.delete-btn:hover:not(:disabled) {
+  background: #FEE2E2;
+  border-color: #DC2626;
+}
+
+.delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #E5E7EB;
+  color: #9CA3AF;
+}
+
+.delete-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
 .add-btn {
   padding: 0.625rem 1.5rem;
   border: none;
@@ -332,5 +511,45 @@
 .plus-icon {
   width: 1rem;
   height: 1rem;
+}
+
+/* 반응형 디자인 - 작은 화면에서 테이블이 사이드바를 침범하지 않도록 */
+@media (max-width: 1024px) {
+  .workplace-container {
+    padding: 1rem;
+  }
+  
+  .workplace-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .workplace-table {
+    min-width: 600px;
+  }
+  
+  .workplace-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .workplace-filters {
+    width: 100%;
+  }
+  
+  .workplace-footer {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .workplace-footer .pagination {
+    grid-column: 1;
+    justify-self: center;
+  }
+  
+  .workplace-footer .action-buttons {
+    grid-column: 1;
+    justify-self: center;
+  }
 }
 

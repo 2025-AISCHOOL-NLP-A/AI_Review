@@ -51,38 +51,24 @@ function Dashboard() {
       }
 
       try {
-        // 새로운 API를 사용하여 reviews와 insights를 각각 호출
-        const [reviewsResult, insightsResult] = await Promise.all([
-          dashboardService.getProductReviews(productId),
-          dashboardService.getProductInsights(productId),
-        ]);
+        // 단일 API 호출로 대시보드 데이터 가져오기
+        const result = await dashboardService.getDashboardData(productId);
 
         if (!isMounted) {
           fetchInProgress.current = false;
           return;
         }
 
-        if (!reviewsResult.success || !insightsResult.success) {
-          const errorMsg = reviewsResult.message || insightsResult.message || "데이터를 불러오는데 실패했습니다.";
+        if (!result.success) {
+          const errorMsg = result.message || "데이터를 불러오는데 실패했습니다.";
           alert(errorMsg);
           setLoading(false);
           fetchInProgress.current = false;
           return;
         }
 
-        // 기존 데이터 구조에 맞게 변환
-        const reviewsData = reviewsResult.data?.reviews || reviewsResult.data || [];
-        const insightsData = insightsResult.data || {};
-
-        const combinedData = {
-          reviews: Array.isArray(reviewsData) ? reviewsData : (Array.isArray(reviewsResult.data) ? reviewsResult.data : []),
-          insights: insightsResult.data?.insights || [],
-          analysis: insightsData?.analysis || {},
-          stats: insightsData?.stats || {},
-          dailyTrend: insightsData?.dailyTrend || [],
-          keywords: insightsData?.keywords || [],
-          insight: insightsData?.insight || insightsData || {},
-        };
+        // dashboardService에서 이미 변환된 데이터 사용
+        const combinedData = result.data;
 
         if (isMounted) {
           setDashboardData(combinedData);

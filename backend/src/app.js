@@ -10,7 +10,6 @@ import path from "path";
 
 dotenv.config();
 const app = express();
-const __dirname = path.resolve();
 
 // ✅ CORS는 딱 한 번만, JSON 파서보다 먼저 설정
 app.use(cors({
@@ -40,9 +39,6 @@ app.use("/reviews", reviewRoutes);
 
 // ✅ 이메일 인증 라우터 등록
 // app.use("/api/auth", authRoutes);
-
-// 🔹 static 폴더 설정
-app.use("/static", express.static(path.join(__dirname, "static")));
 
 // ✅ 서버 시작
 const PORT = process.env.PORT || 3001;

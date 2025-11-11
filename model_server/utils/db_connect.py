@@ -13,5 +13,6 @@ def get_connection():
         database=os.getenv("DB_NAME"),
         port=int(os.getenv("DB_PORT", 3306)),
         charset="utf8mb4",
-        cursorclass=pymysql.cursors.DictCursor
+        autocommit=True,
+        cursorclass=pymysql.cursors.DictCursor,
     )

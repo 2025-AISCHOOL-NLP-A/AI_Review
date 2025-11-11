@@ -73,7 +73,105 @@ export const productList = async (req, res) => {
 // ==============================
 // 📊 제품 대시보드 조회
 // ==============================
-export const dashboard = (req, res) => getProductDashboard(req, res);
+// export const dashboard = (req, res) => getProductDashboard(req, res);
+
+export const dashboard = async (req, res) => {
+  try {
+    const { id: productId } = req.params;
+
+    if (!productId) {
+      return res.status(400).json({ message: "제품 ID가 필요합니다." });
+    }
+
+    // 1. 대시보드 테이블 전체 조회
+    const [[dashboardData]] = await db.query(
+      `SELECT 
+        product_id,
+        total_reviews,
+        sentiment_distribution,
+        product_score,
+        date_sentimental,
+        keyword_summary,
+        heatmap,
+        wordcloud_path,
+        insight_id,
+        updated_at
+      FROM tb_productDashboard
+      WHERE product_id = ?`,
+      [productId]
+    );
+
+    if (!dashboardData) {
+      return res.status(404).json({ message: "대시보드 데이터를 찾을 수 없습니다." });
+    }
+
+    // 2. 워드클라우드 이미지 처리
+    let wordcloudImage = null;
+    if (dashboardData.wordcloud_path) {
+      // TODO: 이미지 파일을 읽어서 base64로 인코딩하거나 URL로 제공
+      wordcloudImage = dashboardData.wordcloud_path;
+    }
+
+    // 3. 인사이트 조회
+    let insight = null;
+    if (dashboardData.insight_id) {
+      const [[insightData]] = await db.query(
+        `SELECT 
+          insight_id,
+          product_id,
+          user_id,
+          avg_rating,
+          pos_top_keywords,
+          neg_top_keywords,
+          insight_summary,
+          improvement_suggestion,
+          created_at
+        FROM tb_productInsight
+        WHERE insight_id = ?`,
+        [dashboardData.insight_id]
+      );
+      insight = insightData || null;
+    }
+
+    // 4. 최신 리뷰 10개 조회
+    const [recentReviews] = await db.query(
+      `SELECT 
+        review_id,
+        product_id,
+        review_text,
+        rating,
+        review_date,
+        source
+      FROM tb_review
+      WHERE product_id = ?
+      ORDER BY review_date DESC
+      LIMIT 10`,
+      [productId]
+    );
+
+    // 5. 응답 데이터 구성
+    res.json({
+      message: "대시보드 조회 성공",
+      dashboard: {
+        product_id: dashboardData.product_id,
+        total_reviews: dashboardData.total_reviews,
+        sentiment_distribution: dashboardData.sentiment_distribution,
+        product_score: dashboardData.product_score,
+        date_sentimental: dashboardData.date_sentimental,
+        keyword_summary: dashboardData.keyword_summary,
+        heatmap: dashboardData.heatmap,
+        wordcloud: wordcloudImage,
+        updated_at: dashboardData.updated_at
+      },
+      insight,
+      recent_reviews: recentReviews
+    });
+
+  } catch (err) {
+    console.error("❌ 대시보드 조회 오류:", err);
+    res.status(500).json({ message: "대시보드 조회 중 서버 오류가 발생했습니다." });
+  }
+};
 
 // ==============================
 // 3. 대시보드 새로고침 (미들웨어)

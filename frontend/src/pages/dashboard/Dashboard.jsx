@@ -23,6 +23,7 @@ function Dashboard() {
   // State for dashboard data
   const [dashboardData, setDashboardData] = useState(null);
   const [originalDashboardData, setOriginalDashboardData] = useState(null); // 원본 데이터 저장
+  const [productInfo, setProductInfo] = useState(null); // 제품 정보 (이름, 브랜드 등)
   const [loading, setLoading] = useState(true);
   const [expandedReviews, setExpandedReviews] = useState(new Set());
   
@@ -41,11 +42,6 @@ function Dashboard() {
     return idFromUrl ? parseInt(idFromUrl, 10) : 1007; // 기본값 1007
   }, [searchParams]);
 
-  // Get productName from URL query parameter (워크플레이스에서 전달된 상품명)
-  const productNameFromUrl = useMemo(() => {
-    const nameFromUrl = searchParams.get("productName");
-    return nameFromUrl ? decodeURIComponent(nameFromUrl) : null;
-  }, [searchParams]);
 
   // Fetch dashboard data
   useEffect(() => {
@@ -74,8 +70,21 @@ function Dashboard() {
       setLoading(true);
 
       try {
-        // 단일 API 호출로 대시보드 데이터 가져오기 (AbortSignal 전달)
-        const result = await dashboardService.getDashboardData(productId, abortController.signal);
+        // 제품 정보와 대시보드 데이터를 병렬로 가져오기
+        const [productResult, result] = await Promise.all([
+          dashboardService.getProduct(productId),
+          dashboardService.getDashboardData(productId, abortController.signal)
+        ]);
+
+        // 제품 정보 추출
+        const fetchedProductInfo = productResult.success && productResult.data?.data 
+          ? productResult.data.data 
+          : null;
+
+        // 제품 정보 설정
+        if (fetchedProductInfo && isMounted && !abortController.signal.aborted) {
+          setProductInfo(fetchedProductInfo);
+        }
 
         // 요청이 취소되었거나 컴포넌트가 언마운트된 경우 상태 업데이트 방지
         if (!isMounted || abortController.signal.aborted) {
@@ -207,12 +216,12 @@ function Dashboard() {
           return;
         }
 
-        // 제품 정보 변환
+        // 제품 정보 변환 (제품 정보는 별도로 가져온 것을 사용)
         const product = {
           product_id: dashboard.product_id,
-          product_name: dashboard.product_name || '',
-          brand: dashboard.brand || '',
-          category_name: dashboard.category_name || '',
+          product_name: fetchedProductInfo?.product_name || dashboard.product_name || '',
+          brand: fetchedProductInfo?.brand || dashboard.brand || '',
+          category_name: fetchedProductInfo?.category_name || dashboard.category_name || '',
           product_score: dashboard.product_score || '0',
           total_reviews: dashboard.total_reviews || 0,
           updated_at: dashboard.updated_at,
@@ -1147,7 +1156,7 @@ function Dashboard() {
                 </span>
                 <span className="text-2xl font-bold text-gray-900">
                   {loading ? "로딩 중..." : 
-                   (productNameFromUrl || 
+                   (productInfo?.product_name || 
                     dashboardData?.product?.product_name || 
                     dashboardData?.product_name || 
                     (dashboardData === null ? "로딩 중..." : "상품 정보 없음"))}

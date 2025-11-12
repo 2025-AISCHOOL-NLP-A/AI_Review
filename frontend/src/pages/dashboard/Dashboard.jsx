@@ -338,10 +338,13 @@ function Dashboard() {
           setDashboardData(combinedData);
           
           // 첫 번째 리뷰 날짜 찾기
+          // 우선순위: date_sentimental > dailyTrend > reviews
           let firstReviewDate = null;
-          if (reviews && reviews.length > 0) {
-            const validDates = reviews
-              .map(review => review.review_date)
+          
+          // 1. date_sentimental에서 첫 번째 날짜 찾기 (가장 정확한 데이터)
+          if (dateSentimental && Array.isArray(dateSentimental) && dateSentimental.length > 0) {
+            const validDates = dateSentimental
+              .map(item => item.week_start || item.date || item.month_start)
               .filter(date => date)
               .map(date => {
                 const d = new Date(date);
@@ -354,10 +357,26 @@ function Dashboard() {
             }
           }
           
-          // dailyTrend에서 첫 번째 날짜 찾기 (reviews에 날짜가 없는 경우)
+          // 2. dailyTrend에서 첫 번째 날짜 찾기 (date_sentimental이 없는 경우)
           if (!firstReviewDate && dailyTrend && dailyTrend.length > 0) {
             const validDates = dailyTrend
               .map(item => item.date || item.week_start)
+              .filter(date => date)
+              .map(date => {
+                const d = new Date(date);
+                return isNaN(d.getTime()) ? null : d;
+              })
+              .filter(d => d !== null);
+            
+            if (validDates.length > 0) {
+              firstReviewDate = new Date(Math.min(...validDates.map(d => d.getTime())));
+            }
+          }
+          
+          // 3. reviews에서 첫 번째 날짜 찾기 (위 두 가지가 모두 없는 경우)
+          if (!firstReviewDate && reviews && reviews.length > 0) {
+            const validDates = reviews
+              .map(review => review.review_date)
               .filter(date => date)
               .map(date => {
                 const d = new Date(date);
@@ -635,14 +654,14 @@ function Dashboard() {
     }
   };
 
-  // 랜덤 리뷰 10개를 메모이제이션 (dashboardData.reviews가 변경될 때만 재생성)
+  // 랜덤 리뷰 5개를 메모이제이션 (dashboardData.reviews가 변경될 때만 재생성)
   const randomReviews = useMemo(() => {
     if (!dashboardData?.reviews || dashboardData.reviews.length === 0) {
       return [];
     }
-    // 리뷰 배열을 복사하여 랜덤으로 섞고 10개만 선택
+    // 리뷰 배열을 복사하여 랜덤으로 섞고 5개만 선택
     const shuffled = [...dashboardData.reviews].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 10);
+    return shuffled.slice(0, 5);
   }, [dashboardData?.reviews]);
 
   // Process data for charts based on selected period
@@ -1128,9 +1147,9 @@ function Dashboard() {
                 </span>
                 <span className="text-2xl font-bold text-gray-900">
                   {loading ? "로딩 중..." : 
-                   (dashboardData?.product?.product_name || 
+                   (productNameFromUrl || 
+                    dashboardData?.product?.product_name || 
                     dashboardData?.product_name || 
-                    productNameFromUrl ||
                     (dashboardData === null ? "로딩 중..." : "상품 정보 없음"))}
                 </span>
               </div>
@@ -1422,9 +1441,9 @@ function Dashboard() {
                           const reviewId = review.review_id || idx;
                           const reviewText = review.review_text || "";
                           const isExpanded = expandedReviews.has(reviewId);
-                          const isLongText = reviewText.length > 150;
+                          const isLongText = reviewText.length > 100;
                           const displayText = isLongText && !isExpanded 
-                            ? reviewText.substring(0, 150) + "..."
+                            ? reviewText.substring(0, 100) + "..."
                             : reviewText;
                           
                           const toggleExpand = () => {

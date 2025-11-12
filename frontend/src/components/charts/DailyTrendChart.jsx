@@ -103,23 +103,31 @@ const DailyTrendChart = ({ data, loading }) => {
               data: paddedPositive,
               backgroundColor: primaryColor,
               yAxisID: "y",
+              order: 2, // 막대는 아래쪽 (큰 order 값)
             },
             {
               label: "부정 비율 및 기타 (%)",
               data: paddedNegative,
               backgroundColor: neutralColor,
               yAxisID: "y",
+              order: 2, // 막대는 아래쪽 (큰 order 값)
             },
             {
               type: "line",
               label: "해당일 신규 리뷰 수 (건수)",
               data: paddedNewReviews,
               borderColor: newReviewColor,
-              borderWidth: 2,
+              borderWidth: 3, // 선 두께 증가로 더 잘 보이게
               pointBackgroundColor: newReviewColor,
+              pointRadius: 4, // 포인트 크기 증가
+              pointHoverRadius: 6, // 호버 시 포인트 크기 증가
+              pointBorderWidth: 2, // 포인트 테두리 두께
+              pointBorderColor: '#FFFFFF', // 포인트 테두리 색상 (흰색으로 더 눈에 띄게)
               yAxisID: "y1",
               fill: false,
               tension: 0.3,
+              order: 1, // 선은 위쪽 (작은 order 값) - order가 작을수록 위에 표시됨
+              pointStyle: 'line', // 범례 아이콘을 선으로 표시
             },
           ],
         },
@@ -135,11 +143,58 @@ const DailyTrendChart = ({ data, loading }) => {
           plugins: {
             legend: {
               position: "top",
-              labels: { color: fontColor },
+              labels: { 
+                color: fontColor,
+                generateLabels: (chart) => {
+                  // Chart.js의 기본 범례 라벨 생성 함수 사용
+                  const labels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                  
+                  // 각 라벨에 대해 데이터셋 타입에 맞게 스타일 조정
+                  labels.forEach((label) => {
+                    const datasetIndex = label.datasetIndex;
+                    if (datasetIndex !== undefined) {
+                      const dataset = chart.data.datasets[datasetIndex];
+                      // 선 차트(type: 'line')인 경우 범례 아이콘을 선으로 표시
+                      if (dataset && dataset.type === 'line') {
+                        // 선 차트의 범례 아이콘을 선으로 표시
+                        label.fillStyle = 'transparent'; // 배경 투명 (선만 표시)
+                        label.strokeStyle = dataset.borderColor || newReviewColor; // 선 색상
+                        label.lineWidth = dataset.borderWidth || 3; // 선 두께
+                        label.pointStyle = 'line'; // 선 스타일 사용
+                        label.usePointStyle = true; // 포인트 스타일 사용 활성화
+                        // 범례 아이콘을 선으로 그리기 위해 textAlign과 padding 조정
+                        label.textAlign = 'left';
+                      } else {
+                        // 바 차트의 경우 기본 사각형 유지
+                        label.usePointStyle = false;
+                      }
+                    }
+                  });
+                  
+                  return labels;
+                },
+              },
             },
             tooltip: {
               mode: "index",
               intersect: false,
+            },
+          },
+          // 선 차트가 바 차트 위에 그려지도록 설정
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          elements: {
+            line: {
+              borderWidth: 3,
+              borderJoinStyle: 'round',
+              borderCapStyle: 'round',
+            },
+            point: {
+              radius: 4,
+              hoverRadius: 6,
+              borderWidth: 2,
             },
           },
           scales: {

@@ -641,7 +641,11 @@ function Workplace() {
                     return (
                     <tr 
                       key={item.product_id}
-                      onClick={() => navigate(`/dashboard?productId=${item.product_id}`)}
+                      onClick={() => {
+                        // 워크플레이스에서 클릭한 제품명을 URL 파라미터로 전달
+                        const productName = encodeURIComponent(item.product_name || "");
+                        navigate(`/dashboard?productId=${item.product_id}&productName=${productName}`);
+                      }}
                       style={{ cursor: 'pointer' }}
                     >
                       <td className="checkbox-column" onClick={(e) => e.stopPropagation()}>
@@ -663,6 +667,7 @@ function Workplace() {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
+                            // 워크플레이스에서 클릭한 제품명을 URL 파라미터로 전달
                             const productName = encodeURIComponent(item.product_name || "");
                             navigate(`/dashboard?productId=${item.product_id}&productName=${productName}`);
                           }}

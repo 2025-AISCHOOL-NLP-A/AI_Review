@@ -87,6 +87,7 @@ const SplitBarChart = ({ data, loading }) => {
                   legend: {
                     position: "top",
                     labels: { color: fontColor },
+                    onClick: () => {}, // 범례 클릭 시 데이터셋 숨김 기능 비활성화
                   },
                   tooltip: {
                     callbacks: {

@@ -8,6 +8,24 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# ======================================
+# 🔹 model_server 디렉토리 경로 (절대 경로)
+# ======================================
+def get_model_server_dir():
+    """현재 파일 기준으로 model_server 디렉토리 경로 반환"""
+    current_file = os.path.abspath(__file__)  # generate_wordcloud_from_db.py의 절대 경로
+    utils_dir = os.path.dirname(current_file)  # utils 디렉토리
+    model_server_dir = os.path.dirname(utils_dir)  # model_server 디렉토리
+    
+    # 디버그: 경로 확인
+    print(f"🔍 [DEBUG] 경로 확인:")
+    print(f"   - __file__: {__file__}")
+    print(f"   - current_file (abs): {current_file}")
+    print(f"   - utils_dir: {utils_dir}")
+    print(f"   - model_server_dir: {model_server_dir}")
+    
+    return model_server_dir
+
 
 # ======================================
 # 🔹 DB 연결 함수
@@ -106,9 +124,19 @@ def generate_wordcloud_from_db(product_id: int, domain="steam"):
         conn.close()
         return None
 
-    # 6️⃣ 워드클라우드 생성 및 저장
-    os.makedirs("static/wordclouds", exist_ok=True)
-    save_path = f"static/wordclouds/product_{product_id}_wc.png"
+    # 6️⃣ 워드클라우드 생성 및 저장 (절대 경로 사용)
+    model_server_dir = get_model_server_dir()
+    static_dir = os.path.join(model_server_dir, "static", "wordclouds")
+
+    # 디버그: 최종 경로 확인
+    print(f"🔍 [DEBUG] 최종 저장 경로:")
+    print(f"   - model_server_dir: {model_server_dir}")
+    print(f"   - static_dir: {static_dir}")
+    print(f"   - 절대 경로 존재 여부: {os.path.exists(model_server_dir)}")
+
+    os.makedirs(static_dir, exist_ok=True)
+
+    save_path = os.path.join(static_dir, f"product_{product_id}_wc.png")
     public_path = f"/static/wordclouds/product_{product_id}_wc.png"
 
     wc = WordCloud(
@@ -121,6 +149,7 @@ def generate_wordcloud_from_db(product_id: int, domain="steam"):
 
     wc.to_file(save_path)
     print(f"✅ 워드클라우드 생성 완료: {save_path}")
+    print(f"📂 저장 위치: {static_dir}")
 
     # 7️⃣ DB 경로 업데이트
     cursor.execute(

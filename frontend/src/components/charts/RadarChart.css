@@ -9,9 +9,13 @@
 
 .radar-chart-container {
   position: relative;
-  flex: 1;
-  min-height: 350px;
+  height: 350px !important;
+  max-height: 350px !important;
+  min-height: 350px !important;
   width: 100%;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .radar-chart-loading {
@@ -50,8 +54,24 @@
 }
 
 .radar-chart-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
+  display: block !important;
+  width: 100% !important;
+  height: 350px !important;
+  max-height: 350px !important;
+  min-height: 350px !important;
+  box-sizing: border-box;
+}
+
+/* Dashboard에서 오는 스타일 오버라이드 */
+.dashboard-content .radar-chart-container {
+  height: 350px !important;
+  max-height: 350px !important;
+  min-height: 350px !important;
+}
+
+.dashboard-content .radar-chart-container .radar-chart-canvas {
+  height: 350px !important;
+  max-height: 350px !important;
+  min-height: 350px !important;
 }
 

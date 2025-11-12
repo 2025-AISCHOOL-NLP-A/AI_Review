@@ -373,6 +373,31 @@
   display: grid !important;
 }
 
+/* 워드클라우드 이미지 컨테이너 */
+.wordcloud-image-container {
+  width: 100%;
+  max-width: 100%;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.wordcloud-image {
+  max-width: 100% !important;
+  width: auto !important;
+  height: auto;
+  max-height: 400px;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  display: block;
+  box-sizing: border-box;
+}
+
 @media (min-width: 1024px) {
   .dashboard-content #wordcloud-review-section {
     grid-template-columns: repeat(2, 1fr) !important;
@@ -383,7 +408,39 @@
   .dashboard-content #wordcloud-review-section .card {
     width: 100% !important;
     min-width: 0 !important;
+    max-width: 100% !important;
     box-sizing: border-box !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  .dashboard-content #wordcloud-review-section .card > h2 {
+    flex-shrink: 0 !important;
+  }
+  
+  .dashboard-content #wordcloud-review-section .card > .wordcloud-image-container {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  .wordcloud-image-container {
+    padding: 0.75rem;
+  }
+  
+  .wordcloud-image {
+    max-height: 350px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .wordcloud-image-container {
+    padding: 0.75rem;
+  }
+  
+  .wordcloud-image {
+    max-height: 300px;
   }
 }
 
@@ -534,6 +591,20 @@
   #heatmap-card {
     grid-column: span 1 / span 1 !important;
     width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+  
+  #heatmap-card .heatmap-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  #heatmap-card .heatmap-body {
+    overflow: hidden !important;
   }
 }
 

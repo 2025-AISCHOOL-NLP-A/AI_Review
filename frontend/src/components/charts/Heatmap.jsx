@@ -16,22 +16,25 @@ const Heatmap = ({ labels, matrix, loading }) => {
     );
   }
 
-  // 상관관계 값 계산 함수 (현재는 더미 데이터, 나중에 실제 계산 로직으로 대체)
+  // 상관관계 값 가져오기 함수
+  // matrix는 2D 배열 형태: [[0.26, 0.01, 0.18, ...], [0.01, 0.02, ...], ...]
   const getCorrelationValue = (rowIndex, colIndex) => {
     if (rowIndex === colIndex) {
       return null; // 자기 자신과의 상관관계는 표시하지 않음
     }
     
-    // matrix에서 값 가져오기 (matrix[rowLabel][colLabel] 형식)
-    const rowLabel = labels[rowIndex];
-    const colLabel = labels[colIndex];
-    
-    if (matrix && matrix[rowLabel] && matrix[rowLabel][colLabel] !== undefined) {
-      return matrix[rowLabel][colLabel];
+    // matrix가 2D 배열인 경우
+    if (Array.isArray(matrix) && matrix.length > rowIndex) {
+      const row = matrix[rowIndex];
+      if (Array.isArray(row) && row.length > colIndex) {
+        const value = row[colIndex];
+        // 값이 유효한 숫자인지 확인
+        if (typeof value === 'number' && !isNaN(value)) {
+          return value;
+        }
+      }
     }
     
-    // 더미 데이터: 랜덤한 상관관계 값 생성 (실제로는 DB에서 계산된 값 사용)
-    // 실제 구현 시 이 부분을 제거하고 matrix에서 값을 가져와야 함
     return null;
   };
 
@@ -45,6 +48,7 @@ const Heatmap = ({ labels, matrix, loading }) => {
         <div
           key={`label-${rowIndex}`}
           className="heatmap-row-label"
+          title={rowLabel}
         >
           {rowLabel}
         </div>
@@ -60,11 +64,11 @@ const Heatmap = ({ labels, matrix, loading }) => {
           // 대각선 (자기 자신과의 상관관계)
           cellContent = "-";
           bgColor = "heatmap-cell-empty";
-        } else if (value !== null && value !== undefined) {
+        } else if (value !== null && value !== undefined && value > 0) {
           // 상관관계 값이 있는 경우
-          // 값 범위: 0 ~ 1 (또는 -1 ~ 1)
-          // 정규화: 0.18 ~ 0.82 범위를 0 ~ 5로 매핑
-          const normalized = (value - 0.18) / (0.82 - 0.18);
+          // 값 범위: 0 ~ 1
+          // 정규화: 0 ~ 1 범위를 0 ~ 5로 매핑
+          const normalized = Math.min(1, Math.max(0, value));
           const intensity = Math.min(
             5,
             Math.max(0, Math.round(normalized * 5))
@@ -78,16 +82,11 @@ const Heatmap = ({ labels, matrix, loading }) => {
             "heatmap-cell-blue-500",
             "heatmap-cell-blue-600",
           ];
-          bgColor = bgClasses[intensity] || "heatmap-cell-blue-200";
+          bgColor = bgClasses[intensity] || "heatmap-cell-blue-100";
 
-          let icon = "🔵";
-          if (value >= 0.7) icon = "🔵";
-          else if (value >= 0.4) icon = "🔵";
-          else if (value >= 0.2) icon = "🔵";
-
+          // 숫자만 표시 (이모지 제거)
           cellContent = (
             <span className="heatmap-cell-content">
-              <span className="heatmap-cell-icon">{icon}</span>
               <span className="heatmap-cell-value">{value.toFixed(2)}</span>
             </span>
           );
@@ -112,6 +111,7 @@ const Heatmap = ({ labels, matrix, loading }) => {
         <div
           key={`row-${rowIndex}`}
           className="heatmap-row"
+          style={{ gridTemplateColumns: `minmax(50px, auto) repeat(${labels.length}, 1fr)` }}
         >
           {rowCells}
         </div>
@@ -123,13 +123,10 @@ const Heatmap = ({ labels, matrix, loading }) => {
   return (
     <div className="heatmap-container">
       {/* 헤더: 열 레이블 */}
-      <div className="heatmap-header">
+      <div className="heatmap-header" style={{ gridTemplateColumns: `minmax(50px, auto) repeat(${labels.length}, 1fr)` }}>
         <div className="heatmap-header-empty"></div>
         {labels.map((label, idx) => (
-          <div key={idx} className="heatmap-header-label">{label}</div>
-        ))}
-        {labels.length < 5 && Array(5 - labels.length).fill(0).map((_, idx) => (
-          <div key={`empty-${idx}`} className="heatmap-header-empty">-</div>
+          <div key={idx} className="heatmap-header-label" title={label}>{label}</div>
         ))}
       </div>
       

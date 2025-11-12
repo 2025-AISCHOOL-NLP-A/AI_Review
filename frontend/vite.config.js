@@ -16,7 +16,7 @@ const cspPlugin = () => {
           "worker-src 'self' blob: data:; " +
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; " +
           "font-src 'self' https://fonts.gstatic.com; " +
-          "img-src 'self' data: https:; " +
+          "img-src 'self' data: https: http://localhost:3001; " +
           "connect-src 'self' ws://localhost:5173 http://localhost:3001 http://localhost:8000; " +
           "frame-ancestors 'none';"
         )

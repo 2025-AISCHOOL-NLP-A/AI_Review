@@ -4,6 +4,7 @@ import html2pdf from "html2pdf.js";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
 import Footer from "../../components/layout/Footer/Footer";
 import dashboardService from "../../services/dashboardService";
+import api from "../../services/api";
 import DailyTrendChart from "../../components/charts/DailyTrendChart";
 import RadarChart from "../../components/charts/RadarChart";
 import SplitBarChart from "../../components/charts/SplitBarChart";
@@ -145,6 +146,7 @@ function Dashboard() {
         let keywordSummary = responseData?.keyword_summary || dashboard?.keyword_summary || [];
         let recentReviews = responseData?.recent_reviews || [];
         const insight = responseData?.insight || null;
+        // wordcloud는 API 응답의 최상위 레벨에서 직접 받아옴
         const wordcloud = responseData?.wordcloud || dashboard?.wordcloud || null;
         
         // 배열 타입 검증
@@ -987,13 +989,22 @@ function Dashboard() {
     posCount: kw.positive_count || kw.positiveCount || 0,
   })) : [];
 
-  // Correlation labels from tb_keyword (linked via tb_productKeyword)
-  // Uses tb_keyword.keyword_text (VARCHAR(50))
-  const correlationLabels = dashboardData?.keywords ? 
-    [...new Set(dashboardData.keywords.map(kw => kw.keyword_text || kw.keyword || kw.keyword_id || '').filter(Boolean))].slice(0, 5) : 
-    [];
+  // 히트맵 데이터 처리
+  // API 응답 구조: heatmap: { matrix: [[...]], keywords: [...] }
+  const heatmapData = dashboardData?.heatmap || {};
+  const heatmapMatrix = heatmapData.matrix || [];
+  const heatmapKeywords = heatmapData.keywords || [];
   
-  const correlationMatrix = {}; // 키워드 데이터로부터 계산하거나 빈 객체로 유지
+  // keywords가 배열 형태로 오는 경우 (API에서 직접 제공)
+  // 또는 keyword_summary에서 추출
+  const correlationLabels = heatmapKeywords.length > 0 
+    ? heatmapKeywords.slice(0, 6) // 최대 6개 키워드
+    : (dashboardData?.keywords 
+        ? [...new Set(dashboardData.keywords.map(kw => kw.keyword_text || kw.keyword || kw.keyword_id || '').filter(Boolean))].slice(0, 6)
+        : []);
+  
+  // 2D 배열 형태의 matrix를 그대로 사용
+  const correlationMatrix = Array.isArray(heatmapMatrix) ? heatmapMatrix : [];
 
   const handlePDFDownload = () => {
     if (!dashboardContentRef.current) return;
@@ -1318,7 +1329,7 @@ function Dashboard() {
               <Heatmap 
                 labels={correlationLabels} 
                 matrix={correlationMatrix} 
-                loading={loading || !dashboardData?.keywords || correlationLabels.length === 0}
+                loading={loading || !dashboardData?.heatmap || correlationLabels.length === 0 || correlationMatrix.length === 0}
               />
             </div>
           </div>
@@ -1329,9 +1340,60 @@ function Dashboard() {
               <h2 className="text-xl font-semibold mb-4">
                 🌈 감정 워드클라우드
               </h2>
-              <div className="flex flex-wrap gap-3">
-                <span className="text-gray-500">데이터 없음</span>
-              </div>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <span className="text-gray-500">로딩 중...</span>
+                </div>
+              ) : dashboardData?.wordcloud ? (
+                <div className="wordcloud-image-container">
+                  <img 
+                    src={(() => {
+                      // URL 경로 정규화: 슬래시 중복 제거
+                      const baseURL = api.defaults.baseURL || import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+                      const wordcloudPath = dashboardData.wordcloud;
+                      // baseURL 끝의 슬래시와 wordcloudPath 시작의 슬래시 정리
+                      const cleanBaseURL = baseURL.replace(/\/$/, '');
+                      const cleanPath = wordcloudPath.startsWith('/') ? wordcloudPath : `/${wordcloudPath}`;
+                      return `${cleanBaseURL}${cleanPath}`;
+                    })()}
+                    alt="워드클라우드"
+                    className="wordcloud-image"
+                    crossOrigin="anonymous"
+                    onError={(e) => {
+                      console.error('워드클라우드 이미지 로드 실패:', {
+                        src: e.target.src,
+                        wordcloud: dashboardData.wordcloud,
+                        baseURL: api.defaults.baseURL
+                      });
+                      const errorDiv = e.target.nextElementSibling;
+                      if (errorDiv) {
+                        e.target.style.display = 'none';
+                        errorDiv.style.display = 'block';
+                      }
+                    }}
+                    onLoad={(e) => {
+                      console.log('워드클라우드 이미지 로드 성공:', {
+                        src: e.target.src,
+                        wordcloud: dashboardData.wordcloud
+                      });
+                    }}
+                  />
+                  <div style={{ display: 'none' }} className="text-center text-gray-500 py-8">
+                    <p>워드클라우드 이미지를 불러올 수 없습니다.</p>
+                    <p className="text-sm mt-2">경로: {dashboardData.wordcloud}</p>
+                    <p className="text-xs mt-1">전체 URL: {(() => {
+                      const baseURL = api.defaults.baseURL || import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+                      const cleanBaseURL = baseURL.replace(/\/$/, '');
+                      const cleanPath = dashboardData.wordcloud.startsWith('/') ? dashboardData.wordcloud : `/${dashboardData.wordcloud}`;
+                      return `${cleanBaseURL}${cleanPath}`;
+                    })()}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-8">
+                  <span className="text-gray-500">워드클라우드 데이터가 없습니다.</span>
+                </div>
+              )}
             </div>
 
             <div className="card">

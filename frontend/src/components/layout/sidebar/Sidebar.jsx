@@ -29,9 +29,13 @@ function Sidebar() {
 
   const isActive = (path) => location.pathname === path;
 
-  // 사이드바 상태가 변경될 때마다 localStorage에 저장
+  // 사이드바 상태가 변경될 때마다 localStorage에 저장하고 커스텀 이벤트 발생
   useEffect(() => {
     localStorage.setItem("sidebarOpen", sidebarOpen.toString());
+    // 사이드바 상태 변경 커스텀 이벤트 발생
+    window.dispatchEvent(new CustomEvent("sidebarStateChanged", {
+      detail: { sidebarOpen }
+    }));
   }, [sidebarOpen]);
 
   // 설정 탭 상태가 변경될 때마다 localStorage에 저장

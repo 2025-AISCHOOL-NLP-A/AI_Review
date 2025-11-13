@@ -13,21 +13,29 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // ==============================
-// 1. 개별 제품 조회
+// 1. 개별 제품 조회 (사용자 권한 확인)
 // ==============================
 export const getProductById = async (req, res) => {
   try {
     const { id: productId } = req.params;
+    const userId = req.user?.id;
+
     if (!productId) {
       return res.status(400).json({ message: "제품 ID가 필요합니다." });
     }
 
+    if (!userId) {
+      return res.status(401).json({ message: "인증된 사용자 정보가 없습니다." });
+    }
+
+    // ✅ 해당 사용자의 제품인지 확인
     const [rows] = await db.query(
-      "SELECT * FROM tb_product WHERE product_id = ?",
-      [productId]
+      "SELECT * FROM tb_product WHERE product_id = ? AND user_id = ?",
+      [productId, userId]
     );
+
     if (rows.length === 0) {
-      return res.status(404).json({ message: "제품을 찾을 수 없습니다." });
+      return res.status(404).json({ message: "제품을 찾을 수 없거나 접근 권한이 없습니다." });
     }
 
     return res.json({ data: rows[0] });
@@ -38,34 +46,30 @@ export const getProductById = async (req, res) => {
 };
 
 // ==============================
-// 2. 제품 목록 조회
+// 2. 제품 목록 조회 (사용자별)
 // ==============================
 export const productList = async (req, res) => {
   try {
-    // const [rows] = await db.query(`
-    //   SELECT 
-    //     p.product_id,
-    //     p.product_name,
-    //     p.brand,
-    //     c.category_name,
-    //     IFNULL(d.product_score, 0) AS product_score,
-    //     IFNULL(d.total_reviews, 0) AS total_reviews,
-    //     d.updated_at
-    //   FROM tb_product p
-    //   LEFT JOIN tb_productCategory c ON p.category_id = c.category_id
-    //   LEFT JOIN tb_productDashboard d ON p.product_id = d.product_id
-    //   ORDER BY p.product_id DESC
-    // `);
+    // ✅ JWT 토큰에서 추출한 사용자 ID (authMiddleware에서 설정)
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "인증된 사용자 정보가 없습니다." });
+    }
+
+    // ✅ 해당 사용자의 제품만 조회
     const [rows] = await db.query(`
       SELECT 
         p.product_id,
         p.product_name,
         p.brand,
         p.registered_date,
-        p.category_id
+        p.category_id,
+        p.user_id
       FROM tb_product p
+      WHERE p.user_id = ?
       ORDER BY p.product_id DESC
-    `);
+    `, [userId]);
 
     res.json({
       message: "제품 목록 조회 성공",
@@ -78,16 +82,33 @@ export const productList = async (req, res) => {
 };
 
 // ==============================
-// 📊 제품 대시보드 조회
+// 📊 제품 대시보드 조회 (사용자 권한 확인)
 // ==============================
-// export const dashboard = (req, res) => getProductDashboard(req, res);
-
 export const dashboard = async (req, res) => {
   try {
     const { id: productId } = req.params;
+    const userId = req.user?.id;
 
     if (!productId) {
       return res.status(400).json({ message: "제품 ID가 필요합니다." });
+    }
+
+    if (!userId) {
+      return res.status(401).json({ message: "인증된 사용자 정보가 없습니다." });
+    }
+
+    // ✅ 해당 사용자의 제품인지 먼저 확인
+    const [[productOwner]] = await db.query(
+      "SELECT user_id FROM tb_product WHERE product_id = ?",
+      [productId]
+    );
+
+    if (!productOwner) {
+      return res.status(404).json({ message: "제품을 찾을 수 없습니다." });
+    }
+
+    if (productOwner.user_id !== userId) {
+      return res.status(403).json({ message: "해당 제품에 대한 접근 권한이 없습니다." });
     }
 
     // 1. 대시보드 테이블 전체 조회
@@ -213,15 +234,30 @@ export const refreshDashboard = async (req, res, next) => {
 };
 
 // ==============================
-// 4. 키워드별 리뷰 조회
+// 4. 키워드별 리뷰 조회 (사용자 권한 확인)
 // ==============================
 export const keywordReview = async (req, res) => {
   try {
     const { id: productId } = req.params;
     const { keyword, page = 1, limit = 20 } = req.query;
+    const userId = req.user?.id;
 
     if (!productId) {
       return res.status(400).json({ message: "제품 ID가 필요합니다." });
+    }
+
+    if (!userId) {
+      return res.status(401).json({ message: "인증된 사용자 정보가 없습니다." });
+    }
+
+    // ✅ 해당 사용자의 제품인지 확인
+    const [[productOwner]] = await db.query(
+      "SELECT user_id FROM tb_product WHERE product_id = ?",
+      [productId]
+    );
+
+    if (!productOwner || productOwner.user_id !== userId) {
+      return res.status(403).json({ message: "해당 제품에 대한 접근 권한이 없습니다." });
     }
 
     const offset = (page - 1) * limit;
@@ -255,14 +291,29 @@ export const keywordReview = async (req, res) => {
 };
 
 // ==============================
-// 5. 리뷰 분석 요청 (Python API 호출)
+// 5. 리뷰 분석 요청 (Python API 호출, 사용자 권한 확인)
 // ==============================
 export const analysisRequest = async (req, res) => {
   try {
     const { id: productId } = req.params;
+    const userId = req.user?.id;
 
     if (!productId) {
       return res.status(400).json({ message: "제품 ID가 필요합니다." });
+    }
+
+    if (!userId) {
+      return res.status(401).json({ message: "인증된 사용자 정보가 없습니다." });
+    }
+
+    // ✅ 해당 사용자의 제품인지 확인
+    const [[productOwner]] = await db.query(
+      "SELECT user_id FROM tb_product WHERE product_id = ?",
+      [productId]
+    );
+
+    if (!productOwner || productOwner.user_id !== userId) {
+      return res.status(403).json({ message: "해당 제품에 대한 접근 권한이 없습니다." });
     }
 
     // ✅ analyzeReviews 함수 호출 (Python 서버 전체 파이프라인 사용)
@@ -308,17 +359,30 @@ export const analysisRequest = async (req, res) => {
 };*/
 
 // ==============================
-// 6. 제품 삭제
+// 6. 제품 삭제 (사용자 권한 확인)
 // ==============================
 export const deleteProduct = async (req, res) => {
   try {
     const { id: productId } = req.params;
+    const userId = req.user?.id;
 
     if (!productId) {
       return res.status(400).json({ message: "제품 ID가 필요합니다." });
     }
 
-    await db.query("DELETE FROM tb_product WHERE product_id = ?", [productId]);
+    if (!userId) {
+      return res.status(401).json({ message: "인증된 사용자 정보가 없습니다." });
+    }
+
+    // ✅ 해당 사용자의 제품인지 확인 후 삭제
+    const [result] = await db.query(
+      "DELETE FROM tb_product WHERE product_id = ? AND user_id = ?",
+      [productId, userId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "제품을 찾을 수 없거나 삭제 권한이 없습니다." });
+    }
 
     res.json({
       message: "제품이 성공적으로 삭제되었습니다.",
@@ -332,24 +396,30 @@ export const deleteProduct = async (req, res) => {
 };
 
 // ==============================
-// 7. 제품 생성 (추가 기능)
+// 7. 제품 생성 (사용자 ID 자동 설정)
 // ==============================
 export const createProduct = async (req, res) => {
   try {
     const { product_name, brand, category_id } = req.body;
+    const userId = req.user?.id;
 
     if (!product_name || !category_id) {
       return res.status(400).json({ message: "제품명과 카테고리는 필수입니다." });
     }
 
+    if (!userId) {
+      return res.status(401).json({ message: "인증된 사용자 정보가 없습니다." });
+    }
+
+    // ✅ 로그인한 사용자의 ID로 제품 생성
     const [result] = await db.query(
-      "INSERT INTO tb_product (product_name, brand, category_id, created_at) VALUES (?, ?, ?, NOW())",
-      [product_name, brand || null, category_id]
+      "INSERT INTO tb_product (product_name, brand, category_id, user_id, registered_date) VALUES (?, ?, ?, ?, NOW())",
+      [product_name, brand || null, category_id, userId]
     );
 
     res.status(201).json({
       message: "제품이 성공적으로 생성되었습니다.",
-      product: { product_id: result.insertId, product_name, brand, category_id }
+      product: { product_id: result.insertId, product_name, brand, category_id, user_id: userId }
     });
 
   } catch (err) {
@@ -359,23 +429,33 @@ export const createProduct = async (req, res) => {
 };
 
 // ==============================
-// 8. 제품 정보 수정 (추가 기능)
+// 8. 제품 정보 수정 (사용자 권한 확인)
 // ==============================
 export const updateProduct = async (req, res) => {
   try {
     const { id: productId } = req.params;
     const { product_name, brand, category_id } = req.body;
+    const userId = req.user?.id;
 
     if (!productId) {
       return res.status(400).json({ message: "제품 ID가 필요합니다." });
     }
 
-    await db.query(
+    if (!userId) {
+      return res.status(401).json({ message: "인증된 사용자 정보가 없습니다." });
+    }
+
+    // ✅ 해당 사용자의 제품인지 확인 후 수정
+    const [result] = await db.query(
       `UPDATE tb_product 
-       SET product_name = ?, brand = ?, category_id = ?, updated_at = NOW()
-       WHERE product_id = ?`,
-      [product_name, brand, category_id, productId]
+       SET product_name = ?, brand = ?, category_id = ?
+       WHERE product_id = ? AND user_id = ?`,
+      [product_name, brand, category_id, productId, userId]
     );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "제품을 찾을 수 없거나 수정 권한이 없습니다." });
+    }
 
     res.json({
       message: "제품 정보가 성공적으로 수정되었습니다.",

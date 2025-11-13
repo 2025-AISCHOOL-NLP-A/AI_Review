@@ -5,6 +5,7 @@ from app.domains.steam import pipeline as steam
 from app.domains.cosmetics import pipeline as cosmetics
 from app.domains.electronics import pipeline as electronics
 from utils.generate_wordcloud_from_db import generate_wordcloud_from_db
+from utils.generate_insight import generate_insight_from_db
 from utils.db_connect import get_connection
 import os
 from dotenv import load_dotenv
@@ -60,9 +61,9 @@ def analyze_product_reviews(product_id: int, domain: Optional[str] = None):
     1. DB에서 리뷰 및 제품 정보 조회
     2. 카테고리에 맞는 도메인 모델로 분석
     3. tb_reviewAnalysis에 분석 결과 저장
-    3-2. 리뷰와 분석 결과를 가지고 인사이트 요청(NEW)
-    4. tb_productDashboard 업데이트 (프로시저 호출)
-    5. 워드클라우드 생성
+    4. 인사이트 생성 (LangChain + OpenAI)
+    5. tb_productDashboard 업데이트 (프로시저 호출)
+    6. 워드클라우드 생성
     """
     conn = None
     try:
@@ -172,7 +173,20 @@ def analyze_product_reviews(product_id: int, domain: Optional[str] = None):
         conn.commit()
         print(f"💾 tb_reviewAnalysis에 {insert_count}건 저장 완료")
         
-        # 6️⃣ 대시보드 업데이트 (프로시저 호출)
+        # 6️⃣ 인사이트 생성 (NEW)
+        print(f"💡 인사이트 생성 시작...")
+        insight_id = None
+        try:
+            insight_id = generate_insight_from_db(product_id, user_id=None)
+            if insight_id:
+                print(f"✅ 인사이트 생성 완료 (insight_id={insight_id})")
+            else:
+                print(f"⚠️ 인사이트 생성 실패 (리뷰 데이터 부족 또는 오류)")
+        except Exception as insight_err:
+            print(f"⚠️ 인사이트 생성 오류: {insight_err}")
+            # 인사이트 생성 실패해도 계속 진행
+        
+        # 7️⃣ 대시보드 업데이트 (프로시저 호출)
         try:
             cursor.execute("CALL sp_update_product_dashboard(%s)", (product_id,))
             conn.commit()
@@ -181,10 +195,14 @@ def analyze_product_reviews(product_id: int, domain: Optional[str] = None):
             print(f"⚠️ 프로시저 호출 실패: {proc_err}")
             # 프로시저가 없어도 계속 진행
         
-        # 7️⃣ 워드클라우드 생성
+        # 8️⃣ 워드클라우드 생성
+        print(f"🌈 워드클라우드 생성 시작...")
         wc_path = generate_wordcloud_from_db(product_id, domain)
         
-        # 8️⃣ 최종 응답
+        if not wc_path:
+            print(f"⚠️ 워드클라우드 생성 실패")
+        
+        # 9️⃣ 최종 응답
         return {
             "success": True,
             "product_id": product_id,
@@ -193,8 +211,9 @@ def analyze_product_reviews(product_id: int, domain: Optional[str] = None):
             "review_count": len(reviews),
             "analyzed_count": len(analysis_results),
             "inserted_count": insert_count,
+            "insight_id": insight_id,
             "wordcloud_path": wc_path,
-            "message": "리뷰 분석 및 대시보드 업데이트 완료"
+            "message": "리뷰 분석, 인사이트 생성 및 대시보드 업데이트 완료"
         }
         
     except HTTPException:

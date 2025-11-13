@@ -1,0 +1,310 @@
+/* ===================== 컴포넌트 스타일 ===================== */
+
+/* Card */
+.dashboard-content .card {
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--card-radius) !important;
+  box-shadow: var(--card-shadow) !important;
+  padding: 1.25rem !important;
+}
+
+@media (min-width: 768px) {
+  .dashboard-content .card {
+    padding: 1.5rem !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .dashboard-content .card {
+    padding: 1.5rem !important;
+  }
+}
+
+/* Main Chart Section - 같은 높이 정렬 */
+.dashboard-content .grid.items-stretch > .card.flex.flex-col {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+}
+
+/* Section spacing - 각 주요 섹션 사이 간격 */
+.dashboard-content #main-chart-section {
+  margin-top: 0;
+  margin-bottom: 3rem;
+}
+
+.dashboard-content .grid[class*="lg:grid-cols-3"]:not(#main-chart-section) {
+  margin-top: 0;
+  margin-bottom: 3rem;
+}
+
+.dashboard-content .grid[class*="lg:grid-cols-2"]:not(#main-chart-section) {
+  margin-top: 0;
+  margin-bottom: 3rem;
+}
+
+.dashboard-content .grid[class*="grid-cols-1"]:not(.kpi-cards-container):not(#main-chart-section) {
+  margin-top: 0;
+  margin-bottom: 3rem;
+}
+
+/* ===================== Chart Styles ===================== */
+.dashboard-content canvas,
+.dashboard-content .chart-canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Chart container responsive */
+.dashboard-content .relative.h-96 {
+  height: 24rem;
+  min-height: 300px;
+  max-height: 500px;
+  position: relative;
+  width: 100%;
+}
+
+/* 레이더 차트 전용 스타일 */
+.dashboard-content .relative.h-96 canvas[class*="chart-canvas"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ===================== Word Cloud Styles ===================== */
+.dashboard-content .wordcloud-positive {
+  color: var(--main-color);
+}
+
+.dashboard-content .wordcloud-negative {
+  color: var(--neutral-color);
+}
+
+/* Word cloud font sizes - dynamic sizing based on index (responsive) */
+.dashboard-content .wordcloud-size-0 {
+  font-size: clamp(1.5rem, 2.25vw, 2.25rem);
+}
+
+.dashboard-content .wordcloud-size-1 {
+  font-size: clamp(1.25rem, 2vw, 2rem);
+}
+
+.dashboard-content .wordcloud-size-2 {
+  font-size: clamp(1.125rem, 1.75vw, 1.75rem);
+}
+
+.dashboard-content .wordcloud-size-3 {
+  font-size: clamp(1rem, 1.5vw, 1.5rem);
+}
+
+.dashboard-content .wordcloud-size-4 {
+  font-size: clamp(0.875rem, 1.25vw, 1.25rem);
+}
+
+.dashboard-content .wordcloud-size-5 {
+  font-size: clamp(0.75rem, 1vw, 1rem);
+}
+
+/* 워드클라우드 이미지 컨테이너 */
+.wordcloud-image-container {
+  width: 100%;
+  max-width: 100%;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.wordcloud-image {
+  max-width: 100% !important;
+  width: auto !important;
+  height: auto;
+  max-height: 400px;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  display: block;
+  box-sizing: border-box;
+}
+
+/* ===================== KPI Cards ===================== */
+.dashboard-content .kpi-cards-container {
+  gap: 2rem;
+  margin-top: 2.5rem;
+  margin-bottom: 3rem;
+}
+
+.dashboard-content .kpi-card {
+  padding: 1.5rem;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ===================== Insights Section ===================== */
+.dashboard-content #insights-section {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: grid !important;
+}
+
+/* ===================== Word Cloud & Review Sample Section ===================== */
+.dashboard-content #wordcloud-review-section {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: grid !important;
+}
+
+/* ===================== AI Insight Report Section ===================== */
+.dashboard-content #ai-insight-report-section {
+  grid-template-columns: 1fr !important;
+  width: 100% !important;
+}
+
+.dashboard-content #ai-insight-report-section .card {
+  width: 100% !important;
+  max-width: 100% !important;
+  grid-column: 1 / -1 !important;
+}
+
+/* AI 인사이트 리포트 마크다운 스타일링 - 글 사이 간격 조정 */
+.dashboard-content #ai-insight-report-section .prose {
+  line-height: 1.8 !important;
+}
+
+.dashboard-content #ai-insight-report-section .prose h1 {
+  margin-top: 0 !important;
+  margin-bottom: 1.5rem !important;
+  font-size: clamp(1.5rem, 2.5vw, 1.875rem) !important;
+  font-weight: 700 !important;
+  line-height: 1.4 !important;
+}
+
+.dashboard-content #ai-insight-report-section .prose h2 {
+  margin-top: 2rem !important;
+  margin-bottom: 1rem !important;
+  font-size: clamp(1.25rem, 2vw, 1.5rem) !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+}
+
+.dashboard-content #ai-insight-report-section .prose p {
+  margin-top: 0.75rem !important;
+  margin-bottom: 0.75rem !important;
+  line-height: 1.8 !important;
+}
+
+.dashboard-content #ai-insight-report-section .prose ul {
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+  padding-left: 1.5rem !important;
+}
+
+.dashboard-content #ai-insight-report-section .prose li {
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+  line-height: 1.8 !important;
+}
+
+.dashboard-content #ai-insight-report-section .prose hr {
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+  border-color: #E5E7EB !important;
+}
+
+.dashboard-content #ai-insight-report-section .prose strong {
+  font-weight: 600 !important;
+}
+
+/* ===================== Review Table Styles ===================== */
+.review-table-container {
+  width: 100%;
+  position: relative;
+  overflow: visible;
+}
+
+.review-text-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 100%;
+}
+
+.review-text-display {
+  display: inline-block;
+  max-width: 100%;
+  word-break: break-word;
+  cursor: default;
+}
+
+.review-tooltip {
+  position: absolute;
+  visibility: hidden;
+  opacity: 0;
+  z-index: 1000;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  top: 100%;
+  left: 0;
+  margin-top: 5px;
+  max-width: 400px;
+  min-width: 200px;
+}
+
+.review-text-wrapper:hover .review-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.review-tooltip-content {
+  background-color: #1F2937;
+  color: #FFFFFF;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  position: relative;
+}
+
+.review-tooltip-content::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 20px;
+  border: 6px solid transparent;
+  border-bottom-color: #1F2937;
+}
+
+/* 테이블 셀에서 툴팁이 바깥으로 나갈 수 있도록 */
+.dashboard-content #wordcloud-review-section .card {
+  overflow: visible !important;
+}
+
+.dashboard-content #wordcloud-review-section .card .review-table-container {
+  overflow: visible !important;
+}
+
+.dashboard-content #wordcloud-review-section .card table {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-content #wordcloud-review-section .card table tbody tr {
+  position: relative;
+}
+

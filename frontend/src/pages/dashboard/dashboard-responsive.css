@@ -1,0 +1,194 @@
+/* ===================== 반응형 미디어 쿼리 ===================== */
+
+/* Chart container responsive */
+@media (max-width: 1023px) {
+  .dashboard-content .relative.h-96 {
+    height: 20rem;
+    min-height: 250px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-content .relative.h-96 {
+    height: 16rem;
+    min-height: 200px;
+  }
+}
+
+/* KPI Cards Responsive */
+@media (min-width: 640px) {
+  .dashboard-content .kpi-card {
+    padding: 2rem 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .dashboard-content .kpi-cards-container {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2.5rem;
+    max-width: 100%;
+    margin-bottom: 3.5rem;
+  }
+  
+  .dashboard-content .kpi-card {
+    padding: 2.5rem 3.75rem;
+    min-height: 8.75rem;
+  }
+}
+
+@media (max-width: 639px) {
+  .dashboard-content .kpi-cards-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Insights Section Responsive */
+@media (min-width: 1024px) {
+  .dashboard-content #insights-section {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 2rem !important;
+    width: 100% !important;
+  }
+  
+  .dashboard-content #insights-section .card {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* Word Cloud & Review Section Responsive */
+@media (min-width: 1024px) {
+  .dashboard-content #wordcloud-review-section {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 2rem !important;
+    width: 100% !important;
+  }
+  
+  .dashboard-content #wordcloud-review-section .card {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  .dashboard-content #wordcloud-review-section .card > h2 {
+    flex-shrink: 0 !important;
+  }
+  
+  .dashboard-content #wordcloud-review-section .card > .wordcloud-image-container {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  .wordcloud-image-container {
+    padding: 0.75rem;
+  }
+  
+  .wordcloud-image {
+    max-height: 350px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .wordcloud-image-container {
+    padding: 0.75rem;
+  }
+  
+  .wordcloud-image {
+    max-height: 300px;
+  }
+}
+
+/* Main Chart Section Responsive */
+@media (min-width: 1024px) {
+  /* 메인 차트 섹션 - 3열 그리드에서 2/3, 1/3 비율 */
+  #main-chart-section {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    width: 100% !important;
+  }
+  
+  #daily-trend-card {
+    grid-column: span 2 / span 2 !important;
+    width: 100% !important;
+  }
+  
+  #main-chart-section > .card.lg\:col-span-1 {
+    grid-column: span 1 / span 1 !important;
+    width: 100% !important;
+  }
+  
+  /* 상세 분석 섹션 - 3열 그리드에서 2/3, 1/3 비율 */
+  #detailed-analysis-section {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    width: 100% !important;
+  }
+  
+  #split-bar-chart-card {
+    grid-column: span 2 / span 2 !important;
+    width: 100% !important;
+  }
+  
+  #heatmap-card {
+    grid-column: span 1 / span 1 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+  
+  #heatmap-card .heatmap-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  #heatmap-card .heatmap-body {
+    overflow: hidden !important;
+  }
+  
+  /* 히트맵 레이블 줄바꿈 지원 */
+  #heatmap-card .heatmap-header-label,
+  #heatmap-card .heatmap-row-label {
+    overflow: visible !important;
+    white-space: normal !important;
+  }
+  
+  #heatmap-card .heatmap-header-label .heatmap-label-part,
+  #heatmap-card .heatmap-row-label .heatmap-label-part {
+    display: block !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  #main-chart-section {
+    grid-template-columns: 1fr !important;
+  }
+  
+  #daily-trend-card {
+    grid-column: span 1 / span 1 !important;
+  }
+  
+  #main-chart-section > .card {
+    grid-column: span 1 / span 1 !important;
+  }
+  
+  .dashboard-content .grid[class*="lg:grid-cols-3"],
+  .dashboard-content .grid[class*="lg:grid-cols-2"] {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .dashboard-content .grid[class*="lg:grid-cols-4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  
+  .dashboard-content .grid[class*="lg:grid-cols-5"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+

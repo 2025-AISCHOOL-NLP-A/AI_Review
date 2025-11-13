@@ -90,7 +90,22 @@ export const processDashboardResponse = ({ responseData, productInfo = null }) =
     );
     let recentReviews = ensureArray(responseData?.recent_reviews, []);
 
-    const insight = responseData?.insight || null;
+    // insight 객체 처리 (content 필드가 JSON 문자열일 수 있으므로 파싱)
+    let insight = responseData?.insight || null;
+    if (insight && insight.content) {
+      // content가 JSON 문자열인 경우 파싱
+      if (typeof insight.content === 'string') {
+        try {
+          insight = {
+            ...insight,
+            content: JSON.parse(insight.content)
+          };
+        } catch (e) {
+          // JSON 파싱 실패 시 그대로 유지
+          console.warn("⚠️ insight.content JSON 파싱 실패:", e);
+        }
+      }
+    }
     // wordcloud는 API 응답의 최상위 레벨에서 직접 받아옴
     const wordcloud = responseData?.wordcloud || dashboard?.wordcloud || null;
 

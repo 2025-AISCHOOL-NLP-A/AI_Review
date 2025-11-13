@@ -22,7 +22,11 @@ AI_Review/
 
 ### Frontend Service (React)
 - **역할**: 웹 사용자 인터페이스
-- **기술스택**: React, Bootstrap, Axios
+- **기술스택**: React 19.2.0, Vite 7.1.12, React Router DOM 7.9.5, Axios 1.13.1, Chart.js 4.5.1, html2pdf.js 0.12.1
+- **주요 기능**:
+  - 인증 (회원가입, 로그인, 아이디/비밀번호 찾기, 이메일 인증)
+  - 대시보드 (KPI 카드, 차트, 워드클라우드, AI 인사이트 리포트, PDF 다운로드)
+  - 워크플레이스 (제품 목록, 제품 추가/삭제, 리뷰 분석 요청)
 
 ### AI Analysis Service (Python + FastAPI)
 - **역할**: 리뷰 분석, 워드클라우드 생성, 감정 분석
@@ -58,6 +62,7 @@ npm run dev
 
 # Frontend Web (터미널 2)
 cd frontend
+npm install
 npm run dev
 
 # AI Analysis (터미널 3)

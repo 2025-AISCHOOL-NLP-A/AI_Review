@@ -128,11 +128,16 @@ const dashboardService = {
   },
 
   /** 📦 제품 상세 조회 */
-  async getProduct(productId) {
+  async getProduct(productId, signal = null) {
     try {
-      const res = await api.get(`/products/${productId}`);
+      const config = signal ? { signal } : {};
+      const res = await api.get(`/products/${productId}`, config);
       return { success: true, data: res.data };
     } catch (err) {
+      // AbortError는 정상적인 취소이므로 에러로 처리하지 않음
+      if (err.name === "AbortError" || err.name === "CanceledError" || err.code === "ERR_CANCELED") {
+        throw err;
+      }
       const msg = err.response?.data?.message || "제품을 불러오는데 실패했습니다.";
       return { success: false, message: msg };
     }

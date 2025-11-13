@@ -29,6 +29,15 @@ const WordCloudSection = ({ loading, wordcloud }) => {
   };
 
   const handleImageError = (e) => {
+    // 개발 환경에서만 에러 로깅
+    if (import.meta.env.DEV) {
+      console.error("워드클라우드 이미지 로드 실패:", {
+        wordcloud: wordcloud ? wordcloud.substring(0, 50) + "..." : "null",
+        isBase64: typeof wordcloud === "string" && wordcloud.startsWith("data:image"),
+        imageSrc: e.target.src,
+      });
+    }
+    
     const errorDiv = e.target.nextElementSibling;
     if (errorDiv) {
       e.target.style.display = "none";

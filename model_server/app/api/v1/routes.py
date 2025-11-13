@@ -181,11 +181,7 @@ def analyze_product_reviews(product_id: int, domain: Optional[str] = None):
             # 프로시저가 없어도 계속 진행
         
         # 7️⃣ 워드클라우드 생성
-        print(f"🌈 워드클라우드 생성 시작...")
         wc_path = generate_wordcloud_from_db(product_id, domain)
-        
-        if not wc_path:
-            print(f"⚠️ 워드클라우드 생성 실패")
         
         # 8️⃣ 최종 응답
         return {

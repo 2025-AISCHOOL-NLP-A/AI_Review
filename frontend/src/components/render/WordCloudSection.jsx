@@ -29,13 +29,6 @@ const WordCloudSection = ({ loading, wordcloud }) => {
   };
 
   const handleImageError = (e) => {
-    console.error("워드클라우드 이미지 로드 실패:", {
-      wordcloud: wordcloud
-        ? wordcloud.substring(0, 50) + "..."
-        : "null",
-      isBase64:
-        typeof wordcloud === "string" && wordcloud.startsWith("data:image"),
-    });
     const errorDiv = e.target.nextElementSibling;
     if (errorDiv) {
       e.target.style.display = "none";
@@ -44,7 +37,7 @@ const WordCloudSection = ({ loading, wordcloud }) => {
   };
 
   const handleImageLoad = () => {
-    console.log("워드클라우드 이미지 로드 성공");
+    // 이미지 로드 성공
   };
 
   if (loading) {

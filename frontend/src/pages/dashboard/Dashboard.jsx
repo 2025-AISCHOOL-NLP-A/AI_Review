@@ -1375,18 +1375,9 @@ function Dashboard() {
               ) : dashboardData?.wordcloud ? (
                 <div className="wordcloud-image-container">
                   <img 
-                    src={(() => {
-                      // URL 경로 정규화: 슬래시 중복 제거
-                      const baseURL = api.defaults.baseURL || import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
-                      const wordcloudPath = dashboardData.wordcloud;
-                      // baseURL 끝의 슬래시와 wordcloudPath 시작의 슬래시 정리
-                      const cleanBaseURL = baseURL.replace(/\/$/, '');
-                      const cleanPath = wordcloudPath.startsWith('/') ? wordcloudPath : `/${wordcloudPath}`;
-                      return `${cleanBaseURL}${cleanPath}`;
-                    })()}
+                    src={dashboardData.wordcloud}
                     alt="워드클라우드"
                     className="wordcloud-image"
-                    crossOrigin="anonymous"
                     onError={(e) => {
                       console.error('워드클라우드 이미지 로드 실패:', {
                         src: e.target.src,

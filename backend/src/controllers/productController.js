@@ -2,8 +2,15 @@ import db from "../models/db.js";
 import { getProductDashboardData as getProductDashboard } from "./dashboardController.js";
 import { analyzeReviews } from "./reviewController.js"; // ✅ 실제 리뷰 분석 함수 import
 import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
+
+// ES 모듈에서 __dirname 사용을 위한 설정
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ==============================
 // 1. 개별 제품 조회
@@ -107,8 +114,24 @@ export const dashboard = async (req, res) => {
     // 2. 워드클라우드 이미지 처리
     let wordcloudImage = null;
     if (dashboardData.wordcloud_path) {
-      // TODO: 이미지 파일을 읽어서 base64로 인코딩하거나 URL로 제공
-      wordcloudImage = dashboardData.wordcloud_path;
+      try {
+        // model_server/static 경로 구성
+        const staticPath = path.join(__dirname, "../../../model_server/static");
+        const imagePath = path.join(staticPath, dashboardData.wordcloud_path.replace("/static/", ""));
+        
+        // 파일 존재 여부 확인
+        if (fs.existsSync(imagePath)) {
+          const imageBuffer = fs.readFileSync(imagePath);
+          wordcloudImage = `data:image/png;base64,${imageBuffer.toString("base64")}`;
+          console.log(`✅ 워드클라우드 이미지 로드 성공: ${imagePath}`);
+        } else {
+          console.log(`⚠️ 워드클라우드 이미지 파일 없음: ${imagePath}`);
+          wordcloudImage = null;
+        }
+      } catch (err) {
+        console.error("❌ 워드클라우드 이미지 로드 오류:", err);
+        wordcloudImage = null;
+      }
     }
 
     // 3. 인사이트 조회

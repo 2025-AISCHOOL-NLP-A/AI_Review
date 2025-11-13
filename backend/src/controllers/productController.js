@@ -251,7 +251,8 @@ export const dashboard = async (req, res) => {
           neg_top_keywords,
           insight_summary,
           improvement_suggestion,
-          created_at
+          created_at,
+          content
         FROM tb_productInsight
         WHERE insight_id = ?`,
         [dashboardData.insight_id]

@@ -1,12 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-export default function ProductInfoForm({ onNext, onClose }) {
+export default function ProductInfoForm({ onNext, onClose, initialData, onSave, isEditMode = false }) {
   const [form, setForm] = useState({
     category: "",
     productName: "",
     brand: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 수정 모드일 때 initialData로 폼 초기화
+  useEffect(() => {
+    if (isEditMode && initialData) {
+      setForm({
+        category: String(initialData.category_id || ""),
+        productName: initialData.product_name || "",
+        brand: initialData.brand || "",
+      });
+    }
+  }, [isEditMode, initialData]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -31,10 +42,26 @@ export default function ProductInfoForm({ onNext, onClose }) {
     }, 500);
   };
 
+  const handleSave = () => {
+    // 중복 클릭 방지
+    if (isSubmitting || !isFormValid) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    // onSave 호출 (수정 모드)
+    if (onSave) {
+      onSave(form);
+    }
+    setTimeout(() => {
+      setIsSubmitting(false);
+    }, 500);
+  };
+
   return (
     <>
       <h2>Product Information</h2>
-      <p>Please enter the basic information of the product to be analyzed.</p>
+      <p>{isEditMode ? "Please update the product information." : "Please enter the basic information of the product to be analyzed."}</p>
 
       <div className="form-group">
         <label>
@@ -87,13 +114,23 @@ export default function ProductInfoForm({ onNext, onClose }) {
         >
           Cancel
         </button>
-        <button
-          className="next"
-          disabled={!isFormValid || isSubmitting}
-          onClick={handleNext}
-        >
-          {isSubmitting ? "처리 중..." : "Next"}
-        </button>
+        {isEditMode ? (
+          <button
+            className="next"
+            disabled={!isFormValid || isSubmitting}
+            onClick={handleSave}
+          >
+            {isSubmitting ? "처리 중..." : "Save"}
+          </button>
+        ) : (
+          <button
+            className="next"
+            disabled={!isFormValid || isSubmitting}
+            onClick={handleNext}
+          >
+            {isSubmitting ? "처리 중..." : "Next"}
+          </button>
+        )}
       </div>
     </>
   );

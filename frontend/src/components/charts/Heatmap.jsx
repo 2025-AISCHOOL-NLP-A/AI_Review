@@ -44,13 +44,28 @@ const Heatmap = ({ labels, matrix, loading }) => {
       let rowCells = [];
       
       // 행 레이블 추가
+      // "/"를 기준으로 분할하여 각각을 줄바꿈으로 표시
+      const rowLabelStr = String(rowLabel || '').trim();
+      const hasSlash = rowLabelStr.includes('/');
+      const rowLabelParts = hasSlash
+        ? rowLabelStr.split('/').map(part => part.trim()).filter(part => part.length > 0)
+        : [rowLabelStr];
+      
       rowCells.push(
         <div
           key={`label-${rowIndex}`}
           className="heatmap-row-label"
           title={rowLabel}
         >
-          {rowLabel}
+          {rowLabelParts.map((part, partIdx) => (
+            <span 
+              key={partIdx} 
+              className="heatmap-label-part"
+              style={{ display: 'block', width: '100%' }}
+            >
+              {part}
+            </span>
+          ))}
         </div>
       );
 
@@ -125,9 +140,28 @@ const Heatmap = ({ labels, matrix, loading }) => {
       {/* 헤더: 열 레이블 */}
       <div className="heatmap-header" style={{ gridTemplateColumns: `minmax(50px, auto) repeat(${labels.length}, 1fr)` }}>
         <div className="heatmap-header-empty"></div>
-        {labels.map((label, idx) => (
-          <div key={idx} className="heatmap-header-label" title={label}>{label}</div>
-        ))}
+        {labels.map((label, idx) => {
+          // "/"를 기준으로 분할하여 각각을 줄바꿈으로 표시
+          const labelStr = String(label || '').trim();
+          const hasSlash = labelStr.includes('/');
+          const labelParts = hasSlash
+            ? labelStr.split('/').map(part => part.trim()).filter(part => part.length > 0)
+            : [labelStr];
+          
+          return (
+            <div key={idx} className="heatmap-header-label" title={label}>
+              {labelParts.map((part, partIdx) => (
+                <span 
+                  key={partIdx} 
+                  className="heatmap-label-part"
+                  style={{ display: 'block', width: '100%' }}
+                >
+                  {part}
+                </span>
+              ))}
+            </div>
+          );
+        })}
       </div>
       
       {/* 히트맵 본문 */}

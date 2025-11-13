@@ -606,6 +606,18 @@
   #heatmap-card .heatmap-body {
     overflow: hidden !important;
   }
+  
+  /* 히트맵 레이블 줄바꿈 지원 */
+  #heatmap-card .heatmap-header-label,
+  #heatmap-card .heatmap-row-label {
+    overflow: visible !important;
+    white-space: normal !important;
+  }
+  
+  #heatmap-card .heatmap-header-label .heatmap-label-part,
+  #heatmap-card .heatmap-row-label .heatmap-label-part {
+    display: block !important;
+  }
 }
 
 @media (max-width: 1023px) {

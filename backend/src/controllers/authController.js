@@ -133,10 +133,10 @@ export const sendVerification = async (req, res) => {
 
     // ✅ 메일 전송
     await transporter.sendMail({
-      from: `"꽤뚫어뷰 인증센터" <${process.env.EMAIL_USER}>`,
+      from: `"꿰뚫어뷰 인증센터" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "[꽤뚫어뷰] 이메일 인증번호 안내",
-      text: `안녕하세요! 꽤뚫어뷰입니다.\n인증번호는 [ ${code} ] 입니다.\n5분 내에 입력해주세요.`,
+      subject: "[꿰뚫어뷰] 이메일 인증번호 안내",
+      text: `안녕하세요! 꿰뚫어뷰입니다.\n인증번호는 [ ${code} ] 입니다.\n5분 내에 입력해주세요.`,
     });
 
     // ✅ 이전 인증 요청 삭제 (중복 방지)
@@ -252,9 +252,9 @@ export const findPassword = async (req, res) => {
     });
 
     await transporter.sendMail({
-      from: `"꽤뚫어뷰 비밀번호 재설정" <${process.env.EMAIL_USER}>`,
+      from: `"꿰뚫어뷰 비밀번호 재설정" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "[꽤뚫어뷰] 임시 비밀번호 안내",
+      subject: "[꿰뚫어뷰] 임시 비밀번호 안내",
       text: `안녕하세요 ${login_id}님,\n\n요청하신 임시 비밀번호는 다음과 같습니다:\n\n${tempPassword}\n\n로그인 후 반드시 비밀번호를 변경해주세요.`,
     });
 

@@ -4,14 +4,14 @@ import dashboardService from "../services/dashboardService";
 import "../styles/modal.css";
 
 /**
- * ProductUploadForm - 신규 제품 분석용 파일 업로드 폼
+ * AddReviewForm - 기존 제품에 리뷰 추가용 파일 업로드 폼
  * 
  * @param {Object} props
  * @param {Function} props.onClose - 모달 닫기
- * @param {Object} props.formData - 제품 정보 { productName, brand, category }
- * @param {Function} props.onSuccess - 성공 시 콜백 (product) => void
+ * @param {number} props.productId - 제품 ID
+ * @param {Function} props.onSuccess - 성공 시 콜백 () => void
  */
-export default function ProductUploadForm({ onClose, formData, onSuccess }) {
+export default function AddReviewForm({ onClose, productId, onSuccess }) {
   const [mappedFiles, setMappedFiles] = useState([]); // [{ file, mapping }]
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -29,8 +29,8 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
   const handleAnalyze = async () => {
     if (isSubmitting) return;
 
-    if (!formData) {
-      alert("제품 정보를 먼저 입력해주세요.");
+    if (!productId) {
+      alert("제품 ID가 없습니다.");
       return;
     }
 
@@ -41,28 +41,7 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
 
     setIsSubmitting(true);
     try {
-      // 1. 제품 생성
-      const productData = {
-        product_name: formData.productName,
-        brand: formData.brand || null,
-        category_id: parseInt(formData.category, 10),
-      };
-
-      const result = await dashboardService.createProduct(productData);
-
-      if (!result.success) {
-        alert(result.message || "제품 생성에 실패했습니다.");
-        return;
-      }
-
-      const productId = result.data?.product?.product_id || result.data?.product_id;
-
-      if (!productId) {
-        alert("제품 ID를 받아오지 못했습니다.");
-        return;
-      }
-
-      // 2. 파일 업로드 및 매핑 정보 전송
+      // 파일 업로드 및 매핑 정보 전송
       const uploadResult = await dashboardService.uploadReviewFiles(productId, mappedFiles);
 
       if (!uploadResult.success) {
@@ -70,15 +49,15 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
         return;
       }
 
-      alert("제품이 성공적으로 생성되고 리뷰가 업로드되었습니다.");
+      alert("리뷰가 성공적으로 업로드되었습니다.");
       
       if (onSuccess) {
-        onSuccess(result.data?.product);
+        onSuccess();
       } else {
         onClose();
       }
     } catch (error) {
-      console.error("제품 생성 및 파일 업로드 중 오류:", error);
+      console.error("파일 업로드 중 오류:", error);
       alert("처리 중 오류가 발생했습니다.");
     } finally {
       setIsSubmitting(false);
@@ -87,7 +66,7 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
 
   return (
     <>
-      <h2>Upload Projects</h2>
+      <h2>Add Review</h2>
       <p>Please upload your review files. (Excel, CSV files only)</p>
 
       <FileUploadForm 
@@ -106,7 +85,7 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
         <button
           className="next"
           onClick={handleAnalyze}
-          disabled={isSubmitting || !formData || !allFilesMapped}
+          disabled={isSubmitting || !allFilesMapped}
         >
           {isSubmitting ? "처리 중..." : "Analyze"}
         </button>
@@ -114,3 +93,4 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
     </>
   );
 }
+

@@ -6,6 +6,7 @@ import dashboardService from "../../services/dashboardService";
 import ProductModal from "../../components/ProductModal";
 import ProductInfoForm from "../../components/ProductInfoForm";
 import ProductUploadForm from "../../components/ProductUploadForm";
+import AddReviewForm from "../../components/AddReviewForm";
 import "../../styles/common.css";
 import "../../styles/modal.css";
 import "./dashboard.css";
@@ -26,13 +27,15 @@ function Workplace() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [modalStep, setModalStep] = useState(null); // 'info' | 'upload' | 'edit' | null
+  const [modalStep, setModalStep] = useState(null); // 'info' | 'upload' | 'edit' | 'addReview' | null
   const [productFormData, setProductFormData] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null); // 수정/추가 리뷰용 선택된 제품
   const [sortField, setSortField] = useState(null); // 'registered_date' | 'product_name' | 'brand' | 'category_id' | null
   const [sortDirection, setSortDirection] = useState('asc'); // 'asc' | 'desc'
   const [openMenuIndex, setOpenMenuIndex] = useState(null); // 열린 메뉴의 인덱스
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 }); // 드롭다운 위치
   const menuRefs = useRef({}); // 각 메뉴의 ref를 저장
+  const dropdownRef = useRef(null); // 드롭다운 메뉴 ref
   
   // 사이드바 상태를 localStorage에서 읽어오기
   const [sidebarOpen, setSidebarOpen] = useState(() => {
@@ -93,13 +96,67 @@ function Workplace() {
     };
   }, []);
 
+  // 드롭다운 위치 계산
+  useEffect(() => {
+    const updateDropdownPosition = () => {
+      if (openMenuIndex !== null) {
+        const menuElement = menuRefs.current[openMenuIndex];
+        if (menuElement) {
+          const rect = menuElement.getBoundingClientRect();
+          const dropdownHeight = 120; // 대략적인 드롭다운 높이
+          const dropdownWidth = 140; // 드롭다운 너비
+          
+          // 화면 하단에 가까우면 위로, 아니면 아래로
+          const spaceBelow = window.innerHeight - rect.bottom;
+          const spaceAbove = rect.top;
+          
+          let top, right;
+          
+          if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+            // 위로 표시
+            top = Math.max(4, rect.top - dropdownHeight - 4);
+          } else {
+            // 아래로 표시
+            top = Math.min(rect.bottom + 4, window.innerHeight - dropdownHeight - 4);
+          }
+          
+          // 오른쪽 정렬, 화면 밖으로 나가지 않도록
+          right = Math.max(4, window.innerWidth - rect.right);
+          // 왼쪽으로 넘어가지 않도록
+          if (rect.right - dropdownWidth < 0) {
+            right = window.innerWidth - rect.left;
+          }
+          
+          setDropdownPosition({ top, right });
+        }
+      }
+    };
+
+    if (openMenuIndex !== null) {
+      updateDropdownPosition();
+      
+      // 스크롤 및 리사이즈 시 위치 업데이트
+      window.addEventListener('scroll', updateDropdownPosition, true);
+      window.addEventListener('resize', updateDropdownPosition);
+      
+      return () => {
+        window.removeEventListener('scroll', updateDropdownPosition, true);
+        window.removeEventListener('resize', updateDropdownPosition);
+      };
+    }
+  }, [openMenuIndex, workplaceData]);
+
   // 외부 클릭 시 메뉴 닫기
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (openMenuIndex !== null) {
         const menuElement = menuRefs.current[openMenuIndex];
-        if (menuElement && !menuElement.contains(e.target)) {
-          setOpenMenuIndex(null);
+        const dropdownElement = dropdownRef.current;
+        if (menuElement && dropdownElement) {
+          // 메뉴 버튼이나 드롭다운 내부가 아니면 닫기
+          if (!menuElement.contains(e.target) && !dropdownElement.contains(e.target)) {
+            setOpenMenuIndex(null);
+          }
         }
       }
     };
@@ -443,11 +500,18 @@ function Workplace() {
     setOpenMenuIndex(null); // 메뉴 닫기
   };
 
-  // Add Review 버튼 클릭 - Upload 모달 열기
+  // Add Review 버튼 클릭 - Add Review 모달 열기
   const handleAddReview = (item) => {
     setSelectedItem(item);
-    setModalStep("upload");
+    setModalStep("addReview");
     setOpenMenuIndex(null); // 메뉴 닫기
+  };
+
+  // Add Review 완료 후 콜백
+  const handleAddReviewSuccess = () => {
+    setModalStep(null);
+    setSelectedItem(null);
+    setRefreshTrigger(prev => prev + 1); // 목록 새로고침
   };
 
   // Delete 버튼 클릭 - 제품 삭제
@@ -806,7 +870,14 @@ function Workplace() {
                           </button>
 
                           {openMenuIndex === index && (
-                            <div className="dropdown-menu">
+                            <div 
+                              ref={dropdownRef}
+                              className="dropdown-menu"
+                              style={{
+                                top: `${dropdownPosition.top}px`,
+                                right: `${dropdownPosition.right}px`
+                              }}
+                            >
                               <button
                                 onClick={() => handleEdit(item)}
                                 className="dropdown-item"
@@ -984,6 +1055,17 @@ function Workplace() {
             initialData={selectedItem}
             onSave={handleSaveEdit}
             onClose={handleCloseModal}
+          />
+        </ProductModal>
+      )}
+
+      {/* Add Review Modal */}
+      {modalStep === "addReview" && selectedItem && (
+        <ProductModal onClose={handleCloseModal}>
+          <AddReviewForm
+            onClose={handleCloseModal}
+            productId={selectedItem.product_id}
+            onSuccess={handleAddReviewSuccess}
           />
         </ProductModal>
       )}

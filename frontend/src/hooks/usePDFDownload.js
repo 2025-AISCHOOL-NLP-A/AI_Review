@@ -1,21 +1,10 @@
 import { useCallback } from "react";
 import html2pdf from "html2pdf.js";
-import {
-  applyPDFStyles,
-  applyPDFCardStyles,
-  restoreStyles,
-  restoreCardStyles,
-  createPDFOptions,
-} from "../utils/viewportUtils";
 
 /**
- * PDF 다운로드 기능을 제공하는 커스텀 훅
- * @param {Object} params - 파라미터
- * @param {React.RefObject} params.contentRef - PDF로 변환할 콘텐츠 요소의 ref
- * @param {React.RefObject} params.downloadButtonRef - 다운로드 버튼의 ref (선택사항)
- * @param {Object} params.productInfo - 제품 정보 (파일명 생성용)
- * @param {Object} params.dashboardData - 대시보드 데이터 (파일명 생성용)
- * @returns {Function} handlePDFDownload - PDF 다운로드 핸들러 함수
+ * 화면에 보이는 대시보드를 "그 크기 그대로" PDF 한 장으로 저장하는 훅
+ * - A4에 맞춰 리사이즈하지 않음
+ * - PDF 페이지 크기를 대시보드의 scrollWidth/scrollHeight와 동일하게 맞춤
  */
 export const usePDFDownload = ({
   contentRef,
@@ -24,73 +13,77 @@ export const usePDFDownload = ({
   dashboardData = null,
 }) => {
   const handlePDFDownload = useCallback(() => {
-    if (!contentRef?.current) {
-      console.warn("PDF 다운로드: 콘텐츠 요소가 없습니다.");
+    const element = contentRef?.current;
+    if (!element) {
+      console.warn("PDF 다운로드: contentRef가 비어 있습니다.");
       return;
     }
 
     const downloadButton = downloadButtonRef?.current;
-    const contentElement = contentRef.current;
 
-    // 다운로드 버튼 숨기기
+    // 1) 다운로드 버튼 잠시 숨기기
     if (downloadButton) {
       downloadButton.style.display = "none";
     }
 
-    // PDF 변환을 위한 스타일 적용 (viewport 유틸리티 사용)
-    const originalStyles = applyPDFStyles(contentElement, {
-      width: "210mm",
-      maxWidth: "210mm",
-      padding: "20px",
-    });
+    // 2) 현재 대시보드의 실제 크기 측정
+    const rect = element.getBoundingClientRect();
+    const scrollWidth = element.scrollWidth || rect.width || 1024;
+    const scrollHeight = element.scrollHeight || rect.height || 768;
 
-    // 모든 카드에 PDF 최적화 스타일 적용
-    const cards = contentElement.querySelectorAll(".card");
-    const originalCardStyles = applyPDFCardStyles(cards);
+    // PDF 페이지도 이 크기에 맞춰서 만들 것
+    const pageWidth = scrollWidth;
+    const pageHeight = scrollHeight;
 
-    // PDF 옵션 생성 (viewport 유틸리티 사용)
+    // 3) 파일명 생성
     const productName =
       productInfo?.product_name ||
       dashboardData?.product?.product_name ||
       "대시보드";
-    const pdfOptions = createPDFOptions(contentElement, {
-      filename: `${productName}_리뷰_분석_리포트.pdf`,
-      scale: 2,
-      dpi: 192,
-      margin: [10, 10, 10, 10],
-    });
 
-    // PDF 생성
+    const opt = {
+      margin: 0, // 페이지 크기를 콘텐츠와 동일하게 쓸 것이므로 여백 0
+      filename: `${productName}_리뷰_분석_리포트.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: {
+        scale: 2, // 해상도
+        useCORS: true,
+        scrollX: 0,
+        scrollY: 0,
+        width: pageWidth,
+        height: pageHeight,
+        windowWidth: pageWidth,
+        windowHeight: pageHeight,
+      },
+      jsPDF: {
+        // 👉 PDF 페이지 크기를 "픽셀 단위로 콘텐츠와 똑같이"
+        unit: "px",
+        format: [pageWidth, pageHeight],
+        orientation: "portrait",
+      },
+      // 한 장짜리 긴 PDF로 전체를 넣을 거라 pagebreak는 끔
+      pagebreak: {
+        mode: "none",
+      },
+    };
+
     html2pdf()
-      .set(pdfOptions)
-      .from(contentElement)
+      .set(opt)
+      .from(element)
       .save()
       .then(() => {
-        // 원본 스타일 복원
-        restoreStyles(contentElement, originalStyles);
-        restoreCardStyles(cards, originalCardStyles);
-
-        // 다운로드 버튼 다시 표시
         if (downloadButton) {
           downloadButton.style.display = "flex";
         }
       })
-      .catch((error) => {
-        console.error("PDF 생성 중 오류 발생:", error);
-
-        // 오류 발생 시에도 원본 스타일 복원
-        restoreStyles(contentElement, originalStyles);
-        restoreCardStyles(cards, originalCardStyles);
-
-        // 다운로드 버튼 다시 표시
+      .catch((err) => {
+        console.error("PDF 생성 중 오류:", err);
+        alert("PDF 생성 중 오류가 발생했습니다. 다시 시도해 주세요.");
         if (downloadButton) {
           downloadButton.style.display = "flex";
         }
-
-        alert("PDF 생성 중 오류가 발생했습니다. 다시 시도해주세요.");
       });
   }, [contentRef, downloadButtonRef, productInfo, dashboardData]);
 
   return handlePDFDownload;
 };
-

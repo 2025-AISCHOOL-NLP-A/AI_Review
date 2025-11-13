@@ -1,116 +1,132 @@
-import React, { useState } from "react";
-import FileUploadForm from "./FileUploadForm";
+import React, { useState, useRef } from "react";
 import dashboardService from "../services/dashboardService";
-import "../styles/modal.css";
 
-/**
- * ProductUploadForm - 신규 제품 분석용 파일 업로드 폼
- * 
- * @param {Object} props
- * @param {Function} props.onClose - 모달 닫기
- * @param {Object} props.formData - 제품 정보 { productName, brand, category }
- * @param {Function} props.onSuccess - 성공 시 콜백 (product) => void
- */
 export default function ProductUploadForm({ onClose, formData, onSuccess }) {
-  const [mappedFiles, setMappedFiles] = useState([]); // [{ file, mapping }]
+  const [files, setFiles] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
 
-  // FileUploadForm에서 파일이 준비되었을 때 호출
-  const handleFilesReady = (files) => {
-    setMappedFiles(files);
+  const handleFileSelect = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    setFiles(selectedFiles);
   };
 
-  // 모든 파일이 매핑되었는지 확인
-  const allFilesMapped = mappedFiles.length > 0 && mappedFiles.every((f) => {
-    return f.mapping && f.mapping.reviewColumn && f.mapping.dateColumn;
-  });
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    setFiles(droppedFiles);
+  };
 
-  // Analyze 버튼 클릭
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleBrowseClick = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleAnalyze = async () => {
-    if (isSubmitting) return;
+    // 중복 요청 방지
+    if (isSubmitting) {
+      return;
+    }
 
     if (!formData) {
       alert("제품 정보를 먼저 입력해주세요.");
       return;
     }
 
-    if (!allFilesMapped) {
-      alert("모든 파일의 컬럼 매핑을 완료해주세요.");
-      return;
-    }
-
     setIsSubmitting(true);
     try {
-      // 1. 제품 생성
+      // 제품 생성
       const productData = {
         product_name: formData.productName,
         brand: formData.brand || null,
-        category_id: parseInt(formData.category, 10),
-      };
+@ -47,26 +50,36 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
 
       const result = await dashboardService.createProduct(productData);
 
-      if (!result.success) {
-        alert(result.message || "제품 생성에 실패했습니다.");
-        return;
-      }
-
-      const productId = result.data?.product?.product_id || result.data?.product_id;
-
-      if (!productId) {
-        alert("제품 ID를 받아오지 못했습니다.");
-        return;
-      }
-
-      // 2. 파일 업로드 및 매핑 정보 전송
-      const uploadResult = await dashboardService.uploadReviewFiles(productId, mappedFiles);
-
-      if (!uploadResult.success) {
-        alert(uploadResult.message || "파일 업로드에 실패했습니다.");
-        return;
-      }
-
-      alert("제품이 성공적으로 생성되고 리뷰가 업로드되었습니다.");
-      
-      if (onSuccess) {
-        onSuccess(result.data?.product);
+      if (result.success) {
+        alert("제품이 성공적으로 생성되었습니다.");
+        // onSuccess 콜백이 있으면 onSuccess에서 모달을 닫도록 하고,
+        // 없으면 여기서 모달을 닫음
+        if (onSuccess) {
+          onSuccess(result.data?.product);
+        } else {
+          onClose();
+        }
+        
+        // TODO: 파일 업로드 및 분석 로직은 추후 구현
+        // if (files.length > 0) {
+        //   // 파일 업로드 및 분석 요청
+        // }
       } else {
-        onClose();
+        alert(result.message || "제품 생성에 실패했습니다.");
       }
     } catch (error) {
-      console.error("제품 생성 및 파일 업로드 중 오류:", error);
-      alert("처리 중 오류가 발생했습니다.");
+      console.error("제품 생성 중 오류:", error);
+      alert("제품 생성 중 오류가 발생했습니다.");
     } finally {
       setIsSubmitting(false);
     }
-  };
+@ -74,56 +87,26 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
 
   return (
     <>
-      <h2>Upload Projects</h2>
-      <p>Please upload your review files. (Excel, CSV files only)</p>
+      <h2>Upload Files</h2>
+      <p>Please upload your file.</p>
 
-      <FileUploadForm 
-        onFilesReady={handleFilesReady}
-        disabled={isSubmitting}
-      />
+      <div
+        className="upload-dropzone"
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+      >
+        {files.length > 0 ? (
+          <div className="upload-file-list">
+            {files.map((file, index) => (
+              <div key={index} className="upload-file-item">
+                <span>{file.name}</span>
+                <span className="file-size">
+                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            <p className="upload-text">Drop file or browse</p>
+            <button className="browse-btn" onClick={handleBrowseClick}>
+              Browse Files
+            </button>
+          </>
+        )}
+        <input
+          ref={fileInputRef}
+          id="product_file_upload"
+          name="product_files"
+          type="file"
+          multiple
+          onChange={handleFileSelect}
+          style={{ display: "none" }}
+        />
+      </div>
 
       <div className="button-row">
-        <button
-          className="cancel"
+        <button 
+          className="cancel" 
           onClick={onClose}
           disabled={isSubmitting}
         >
           Cancel
         </button>
-        <button
-          className="next"
+        <button 
+          className="next" 
           onClick={handleAnalyze}
-          disabled={isSubmitting || !formData || !allFilesMapped}
+          disabled={isSubmitting || !formData}
         >
           {isSubmitting ? "처리 중..." : "Analyze"}
         </button>
-      </div>
+@ -131,4 +114,3 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
     </>
   );
 }

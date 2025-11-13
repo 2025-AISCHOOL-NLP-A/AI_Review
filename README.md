@@ -92,6 +92,8 @@ python main.py
 ### 제품 API (/products)
 - `GET /products` - 제품 목록
 - `GET /products/{product_id}` - 개별 제품
+- `POST /products` - 제품 생성
+- `PUT /products/{id}` - 제품 정보 수정
 - `GET /products/{product_id}/dashboard` - 제품 대시보드
 - `GET /products/{product_id}/reviews` - 제품 리뷰(파라미터로 키워드)
 - `POST /products/{product_id}/reviews/analysis` - 해당 상품 리뷰 분석 요청(Python API)

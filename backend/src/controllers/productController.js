@@ -13,6 +13,71 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // ==============================
+// 헬퍼 함수: 제품 ID 검증 및 존재 확인
+// ==============================
+
+/**
+ * 제품 ID 검증 및 숫자 변환
+ * @param {string} productId - 제품 ID (문자열)
+ * @returns {object} { isValid: boolean, productIdNum: number, error: object | null }
+ */
+const validateProductId = (productId) => {
+  if (!productId) {
+    return {
+      isValid: false,
+      productIdNum: null,
+      error: { status: 400, message: "제품 ID가 필요합니다." }
+    };
+  }
+
+  const productIdNum = Number.parseInt(productId, 10);
+  if (isNaN(productIdNum) || productIdNum <= 0) {
+    return {
+      isValid: false,
+      productIdNum: null,
+      error: { status: 400, message: "유효한 제품 ID가 필요합니다." }
+    };
+  }
+
+  return {
+    isValid: true,
+    productIdNum,
+    error: null
+  };
+};
+
+/**
+ * 제품 존재 확인
+ * @param {number} productIdNum - 제품 ID (숫자)
+ * @returns {Promise<object>} { exists: boolean, error: object | null }
+ */
+const checkProductExists = async (productIdNum) => {
+  try {
+    const [[existingProduct]] = await db.query(
+      "SELECT product_id FROM tb_product WHERE product_id = ?",
+      [productIdNum]
+    );
+
+    if (!existingProduct) {
+      return {
+        exists: false,
+        error: { status: 404, message: "제품을 찾을 수 없습니다." }
+      };
+    }
+
+    return {
+      exists: true,
+      error: null
+    };
+  } catch (err) {
+    return {
+      exists: false,
+      error: { status: 500, message: "제품 존재 확인 중 서버 오류가 발생했습니다." }
+    };
+  }
+};
+
+// ==============================
 // 1. 개별 제품 조회
 // ==============================
 export const getProductById = async (req, res) => {
@@ -315,23 +380,15 @@ export const deleteProduct = async (req, res) => {
     const { id: productId } = req.params;
 
     // 제품 ID 검증
-    if (!productId) {
-      return res.status(400).json({ message: "제품 ID가 필요합니다." });
-    }
-
-    const productIdNum = Number.parseInt(productId, 10);
-    if (isNaN(productIdNum) || productIdNum <= 0) {
-      return res.status(400).json({ message: "유효한 제품 ID가 필요합니다." });
+    const { isValid, productIdNum, error: validationError } = validateProductId(productId);
+    if (!isValid) {
+      return res.status(validationError.status).json({ message: validationError.message });
     }
 
     // 제품 존재 확인
-    const [[existingProduct]] = await db.query(
-      "SELECT product_id FROM tb_product WHERE product_id = ?",
-      [productIdNum]
-    );
-
-    if (!existingProduct) {
-      return res.status(404).json({ message: "제품을 찾을 수 없습니다." });
+    const { exists, error: existsError } = await checkProductExists(productIdNum);
+    if (!exists) {
+      return res.status(existsError.status).json({ message: existsError.message });
     }
 
     // 제품 삭제
@@ -395,13 +452,9 @@ export const updateProduct = async (req, res) => {
     const { product_name, brand, category_id } = req.body;
 
     // 제품 ID 검증
-    if (!productId) {
-      return res.status(400).json({ message: "제품 ID가 필요합니다." });
-    }
-
-    const productIdNum = Number.parseInt(productId, 10);
-    if (isNaN(productIdNum) || productIdNum <= 0) {
-      return res.status(400).json({ message: "유효한 제품 ID가 필요합니다." });
+    const { isValid, productIdNum, error: validationError } = validateProductId(productId);
+    if (!isValid) {
+      return res.status(validationError.status).json({ message: validationError.message });
     }
 
     // 필수 필드 검증
@@ -419,13 +472,9 @@ export const updateProduct = async (req, res) => {
     }
 
     // 제품 존재 확인
-    const [[existingProduct]] = await db.query(
-      "SELECT product_id FROM tb_product WHERE product_id = ?",
-      [productIdNum]
-    );
-
-    if (!existingProduct) {
-      return res.status(404).json({ message: "제품을 찾을 수 없습니다." });
+    const { exists, error: existsError } = await checkProductExists(productIdNum);
+    if (!exists) {
+      return res.status(existsError.status).json({ message: existsError.message });
     }
 
     // 제품 정보 업데이트

@@ -16,14 +16,6 @@ def get_model_server_dir():
     current_file = os.path.abspath(__file__)  # generate_wordcloud_from_db.py의 절대 경로
     utils_dir = os.path.dirname(current_file)  # utils 디렉토리
     model_server_dir = os.path.dirname(utils_dir)  # model_server 디렉토리
-    
-    # 디버그: 경로 확인
-    print(f"🔍 [DEBUG] 경로 확인:")
-    print(f"   - __file__: {__file__}")
-    print(f"   - current_file (abs): {current_file}")
-    print(f"   - utils_dir: {utils_dir}")
-    print(f"   - model_server_dir: {model_server_dir}")
-    
     return model_server_dir
 
 
@@ -43,14 +35,12 @@ def load_stopwords(domain="steam"):
         if os.path.exists(path):
             with open(path, "r", encoding="utf-8-sig") as f:
                 for line in f:
-                    word = line.strip().replace("\ufeff", "")
-                    if word:
+                    # 공백, 탭, 개행 문자 모두 제거하고 정제
+                    word = line.strip().replace("\ufeff", "").replace("\t", "").replace(" ", "")
+                    # 빈 문자열이 아니고 의미있는 단어만 추가
+                    if word and len(word) > 0:
                         stopwords.add(word)
-        else:
-            print(f"⚠️ 불용어 파일 없음: {path}")
 
-    print(f"📘 불용어 {len(stopwords)}개 로드 완료 ({domain})")
-    print("🔹 일부 불용어 예시:", list(stopwords)[:15])
     return stopwords
 
 
@@ -68,11 +58,8 @@ def generate_wordcloud_from_db(product_id: int, domain="steam"):
     reviews = [r[0] for r in cursor.fetchall() if r[0]]
 
     if not reviews:
-        print(f"⚠️ 리뷰 없음 (product_id={product_id})")
         conn.close()
         return None
-
-    print(f"🎮 리뷰 {len(reviews)}개 불러옴 (product_id={product_id})")
 
     # 2️⃣ 텍스트 정제
     text_all = " ".join(reviews)
@@ -84,40 +71,20 @@ def generate_wordcloud_from_db(product_id: int, domain="steam"):
         t for t, pos in okt.pos(text_all) if pos in ["Noun", "Adjective"] and len(t) > 1
     ]
 
-    print(f"🧩 전체 토큰 수: {len(tokens)}")
-
     # 4️⃣ 불용어 제거
     stopwords = load_stopwords(domain)
-    before_count = len(tokens)
-    tokens = [t for t in tokens if t not in stopwords]
-    after_count = len(tokens)
-    removed_ratio = (
-        round((before_count - after_count) / before_count * 100, 2)
-        if before_count
-        else 0
-    )
-
-    print(
-        f"🧹 불용어 제거 완료: {before_count - after_count}개 제거 ({removed_ratio}% 필터링됨)"
-    )
-    print(f"🔸 최종 유효 토큰 수: {after_count}")
+    # 토큰도 공백 제거 후 비교
+    tokens = [t.strip() for t in tokens if t.strip() and t.strip() not in stopwords]
 
     # 5️⃣ 빈도 계산
     freq = dict(Counter(tokens).most_common(200))
     if not freq:
-        print("⚠️ 유효 토큰이 없어 워드클라우드 생성 생략")
         conn.close()
         return None
 
     # 6️⃣ 워드클라우드 생성 및 저장 (절대 경로 사용)
     model_server_dir = get_model_server_dir()
     static_dir = os.path.join(model_server_dir, "static", "wordclouds")
-
-    # 디버그: 최종 경로 확인
-    print(f"🔍 [DEBUG] 최종 저장 경로:")
-    print(f"   - model_server_dir: {model_server_dir}")
-    print(f"   - static_dir: {static_dir}")
-    print(f"   - 절대 경로 존재 여부: {os.path.exists(model_server_dir)}")
 
     os.makedirs(static_dir, exist_ok=True)
 
@@ -133,8 +100,6 @@ def generate_wordcloud_from_db(product_id: int, domain="steam"):
     ).generate_from_frequencies(freq)
 
     wc.to_file(save_path)
-    print(f"✅ 워드클라우드 생성 완료: {save_path}")
-    print(f"📂 저장 위치: {static_dir}")
 
     # 7️⃣ DB 경로 업데이트
     cursor.execute(
@@ -146,8 +111,6 @@ def generate_wordcloud_from_db(product_id: int, domain="steam"):
         (public_path, product_id),
     )
     conn.commit()
-    print(f"📦 DB 업데이트 완료 → {public_path}")
-
     conn.close()
     return public_path
 

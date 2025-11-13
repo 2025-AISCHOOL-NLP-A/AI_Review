@@ -123,13 +123,10 @@ export const dashboard = async (req, res) => {
         if (fs.existsSync(imagePath)) {
           const imageBuffer = fs.readFileSync(imagePath);
           wordcloudImage = `data:image/png;base64,${imageBuffer.toString("base64")}`;
-          console.log(`✅ 워드클라우드 이미지 로드 성공: ${imagePath}`);
         } else {
-          console.log(`⚠️ 워드클라우드 이미지 파일 없음: ${imagePath}`);
           wordcloudImage = null;
         }
       } catch (err) {
-        console.error("❌ 워드클라우드 이미지 로드 오류:", err);
         wordcloudImage = null;
       }
     }
@@ -268,40 +265,11 @@ export const analysisRequest = async (req, res) => {
       return res.status(400).json({ message: "제품 ID가 필요합니다." });
     }
 
-    /*
-    // 사용자의 인증정보 확인(JWT payload: { id, login_id })
-    const userId = req.user?.id; // JWT payload: { id, login_id }
-    if (!userId) {
-      return res.status(401).json({ message: "인증 정보가 없습니다." });
-    }
-    // 분석 이력 생성 (status: 'process' 로 접수)
-    const [result] = await db.query(
-      `INSERT INTO tb_analysisHistory (user_id, status, uploaded_at)
-       VALUES (?, 'process', NOW())`,
-      [userId]
-    );
-    const analysisId = result.insertId; // = history_id
-    */
-
-    // TODO: 리뷰 분석 요청 로직 구현
-    // - 중복 분석 요청 방지 체크
-    // - 제품 리뷰 데이터 수집
-    // - Python AI 서버로 분석 요청
-    // - 분석 상태 업데이트
-    // - 결과 저장
+    // ✅ analyzeReviews 함수 호출 (Python 서버 전체 파이프라인 사용)
+    // analyzeReviews는 req.params.id를 사용하므로, req.params를 그대로 전달
+    req.params.id = productId;
+    return await analyzeReviews(req, res);
     
-    // TODO: 분석 작업 생성 후 고유 ID 획득 (DB insert 등)
-    // const analysisId = Date.now().toString(); // 예시
-
-    res
-      //.status(202) //// 요청을 정상 수신했지만 처리(분석)가 아직 완료되지 않음을 타냄
-      //.set("Location", `/products/${productId}/review/analyses/${analysisId}`)
-      .json({
-      message: "리뷰 분석 요청이 접수되었습니다.",
-      productId,
-      status: "processing",
-      analysisId: null
-    });
   } catch (err) {
     console.error("❌ 리뷰 분석 요청 오류:", err);
     res.status(500).json({ message: "리뷰 분석 요청 중 서버 오류가 발생했습니다." });

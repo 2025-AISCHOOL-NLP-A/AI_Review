@@ -16,18 +16,6 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   
-  // 대시보드 요청인 경우 상세 로깅
-  if (config.url?.includes('/dashboard')) {
-    console.log("🔍 API 요청 인터셉터:", {
-      url: config.url,
-      method: config.method,
-      baseURL: config.baseURL,
-      hasToken: !!token,
-      headers: config.headers,
-      hasSignal: !!config.signal,
-    });
-  }
-  
   // AbortSignal은 axios가 자동으로 처리하므로 추가 작업 불필요
   return config;
 });

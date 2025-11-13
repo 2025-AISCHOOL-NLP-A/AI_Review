@@ -23,42 +23,43 @@
   padding: 1.5rem;
   background-color: var(--bg-color);
   max-width: 1280px;
-  margin: 0 auto;
-  margin-left: auto;
-  margin-right: auto;
   width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
   min-width: 0;
-  flex-shrink: 1;
-  flex-grow: 1;
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
-  /* 확대 시에도 사이드바와 겹치지 않도록 최소 너비 설정 */
-  min-width: 280px;
-}
-
-/* 사이드바가 열려있을 때 workplace 영역을 닫혀있을 때 기준으로 중앙 정렬 */
-/* 사이드바가 열려있을 때(256px)와 닫혀있을 때(64px)의 차이: 192px */
-/* 콘텐츠를 닫혀있을 때와 같은 화면상 위치에 오도록 하려면 왼쪽으로 96px 이동 */
-/* 하지만 확대 시 겹침 방지를 위해 transform 제거 (레이아웃이 자연스럽게 유지됨) */
-.dashboard-page.sidebar-open .dashboard-content {
-  /* transform 제거 - 확대 시에도 사이드바와 겹치지 않도록 */
-  /* margin-left와 margin-right는 자동으로 유지됨 */
+  /* 가운데 정렬을 위한 스타일 */
+  margin-left: auto;
+  margin-right: auto;
+  /* 사이드바 상태에 관계없이 가운데 정렬 유지 */
+  flex-shrink: 0;
 }
 
 @media (min-width: 1024px) {
   .dashboard-content {
     padding: 1.5rem 2rem;
+    max-width: min(1280px, calc(100% - 2rem));
   }
 }
 
 @media (max-width: 1023px) {
   .dashboard-content {
     padding: 1rem;
-    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+/* 사이드바가 닫혔을 때 콘텐츠 너비 조정 */
+.dashboard-page.sidebar-closed .dashboard-content {
+  max-width: min(1280px, calc(100% - 2rem));
+}
+
+@media (min-width: 1024px) {
+  .dashboard-page.sidebar-closed .dashboard-content {
+    max-width: min(1280px, calc(100% - 2rem));
   }
 }
 
@@ -606,6 +607,18 @@
   #heatmap-card .heatmap-body {
     overflow: hidden !important;
   }
+  
+  /* 히트맵 레이블 줄바꿈 지원 */
+  #heatmap-card .heatmap-header-label,
+  #heatmap-card .heatmap-row-label {
+    overflow: visible !important;
+    white-space: normal !important;
+  }
+  
+  #heatmap-card .heatmap-header-label .heatmap-label-part,
+  #heatmap-card .heatmap-row-label .heatmap-label-part {
+    display: block !important;
+  }
 }
 
 @media (max-width: 1023px) {
@@ -678,5 +691,85 @@
   .dashboard-content .md\:flex-row { flex-direction: row; }
   .dashboard-content .md\:items-center { align-items: center; }
   .dashboard-content .md\:mb-0 { margin-bottom: 0; }
+}
+
+/* 리뷰 테이블 스타일 */
+.review-table-container {
+  width: 100%;
+  position: relative;
+  overflow: visible;
+}
+
+.review-text-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 100%;
+}
+
+.review-text-display {
+  display: inline-block;
+  max-width: 100%;
+  word-break: break-word;
+  cursor: default;
+}
+
+.review-tooltip {
+  position: absolute;
+  visibility: hidden;
+  opacity: 0;
+  z-index: 1000;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  top: 100%;
+  left: 0;
+  margin-top: 5px;
+  max-width: 400px;
+  min-width: 200px;
+}
+
+.review-text-wrapper:hover .review-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.review-tooltip-content {
+  background-color: #1F2937;
+  color: #FFFFFF;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  position: relative;
+}
+
+.review-tooltip-content::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 20px;
+  border: 6px solid transparent;
+  border-bottom-color: #1F2937;
+}
+
+/* 테이블 셀에서 툴팁이 바깥으로 나갈 수 있도록 */
+.dashboard-content #wordcloud-review-section .card {
+  overflow: visible !important;
+}
+
+.dashboard-content #wordcloud-review-section .card .review-table-container {
+  overflow: visible !important;
+}
+
+.dashboard-content #wordcloud-review-section .card table {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-content #wordcloud-review-section .card table tbody tr {
+  position: relative;
 }
 

@@ -33,12 +33,17 @@ function Dashboard() {
   const downloadBtnRef = useRef(null);
   const abortControllerRef = useRef(null); // AbortController를 ref로 관리
 
+  // 사이드바 상태 확인 (localStorage에서 읽어오기)
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem("sidebarOpen");
+    return saved !== null ? saved === "true" : true;
+  });
+
   // State for dashboard data
   const [dashboardData, setDashboardData] = useState(null);
   const [originalDashboardData, setOriginalDashboardData] = useState(null); // 원본 데이터 저장
   const [productInfo, setProductInfo] = useState(null); // 제품 정보 (이름, 브랜드 등)
   const [loading, setLoading] = useState(true);
-  const [expandedReviews, setExpandedReviews] = useState(new Set());
   
   // Date filter state
   const [startDate, setStartDate] = useState("");
@@ -49,11 +54,47 @@ function Dashboard() {
   // Chart period state (daily, weekly, monthly)
   const [chartPeriod, setChartPeriod] = useState("monthly"); // "monthly" only
 
+  // 리뷰 확장/축소 상태
+  const [expandedReviews, setExpandedReviews] = useState(() => new Set());
+
   // Get productId from URL query parameter or use default
   const productId = useMemo(() => {
     const idFromUrl = searchParams.get("productId");
     return idFromUrl ? parseInt(idFromUrl, 10) : 1007; // 기본값 1007
   }, [searchParams]);
+
+  // 사이드바 상태 변경 감지 (커스텀 이벤트 리스너)
+  useEffect(() => {
+    const handleSidebarStateChange = (event) => {
+      if (event.detail && typeof event.detail.sidebarOpen === 'boolean') {
+        setSidebarOpen(event.detail.sidebarOpen);
+      } else {
+        // 이벤트에 detail이 없는 경우 localStorage에서 직접 확인
+        const saved = localStorage.getItem("sidebarOpen");
+        setSidebarOpen(saved !== null ? saved === "true" : true);
+      }
+    };
+
+    // storage 이벤트 리스너 등록 (다른 탭에서 변경된 경우)
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem("sidebarOpen");
+      setSidebarOpen(saved !== null ? saved === "true" : true);
+    };
+
+    // 초기 상태 확인
+    const saved = localStorage.getItem("sidebarOpen");
+    setSidebarOpen(saved !== null ? saved === "true" : true);
+
+    // 커스텀 이벤트 리스너 등록 (같은 탭에서 변경된 경우)
+    window.addEventListener("sidebarStateChanged", handleSidebarStateChange);
+    // storage 이벤트 리스너 등록 (다른 탭에서 변경된 경우)
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("sidebarStateChanged", handleSidebarStateChange);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
 
 
   // Fetch dashboard data
@@ -340,7 +381,7 @@ function Dashboard() {
 
 
   return (
-    <div className={`dashboard-page sidebar-open`}>
+    <div className={`dashboard-page ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
       {/* Sidebar */}
       <Sidebar />
 
@@ -395,7 +436,7 @@ function Dashboard() {
 
             <div className="card">
               <h2 className="text-xl font-semibold mb-4">💬 리뷰 원문 샘플</h2>
-              <div className="overflow-x-auto">
+              <div className="review-table-container">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead>
                     <tr className="text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">

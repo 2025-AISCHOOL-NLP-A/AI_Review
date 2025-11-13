@@ -4,8 +4,8 @@ from typing import List, Optional
 from app.domains.steam import pipeline as steam
 from app.domains.cosmetics import pipeline as cosmetics
 from app.domains.electronics import pipeline as electronics
-from utils.generate_wordcloud_from_db import generate_wordcloud_from_db, get_connection
-import pymysql
+from utils.generate_wordcloud_from_db import generate_wordcloud_from_db
+from utils.db_connect import get_connection
 import os
 from dotenv import load_dotenv
 
@@ -60,6 +60,7 @@ def analyze_product_reviews(product_id: int, domain: Optional[str] = None):
     1. DB에서 리뷰 및 제품 정보 조회
     2. 카테고리에 맞는 도메인 모델로 분석
     3. tb_reviewAnalysis에 분석 결과 저장
+    3-2. 리뷰와 분석 결과를 가지고 인사이트 요청(NEW)
     4. tb_productDashboard 업데이트 (프로시저 호출)
     5. 워드클라우드 생성
     """

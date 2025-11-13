@@ -1,10 +1,10 @@
 import os
 import re
-import pymysql
 from konlpy.tag import Okt
 from collections import Counter
 from wordcloud import WordCloud
 from dotenv import load_dotenv
+from utils.db_connect import get_connection
 
 load_dotenv()
 
@@ -25,21 +25,6 @@ def get_model_server_dir():
     print(f"   - model_server_dir: {model_server_dir}")
     
     return model_server_dir
-
-
-# ======================================
-# 🔹 DB 연결 함수
-# ======================================
-def get_connection():
-    return pymysql.connect(
-        host=os.getenv("DB_HOST"),
-        port=int(os.getenv("DB_PORT", "3306")),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        database=os.getenv("DB_NAME"),
-        charset="utf8mb4",
-        autocommit=True,
-    )
 
 
 # ======================================

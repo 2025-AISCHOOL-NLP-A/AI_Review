@@ -20,9 +20,28 @@ print("📦 utils 존재 여부:", os.path.exists(os.path.join(_model_server_dir
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from contextlib import asynccontextmanager
 from app.api.v1.routes import router as v1_router
+from utils.db_connect import init_db_pool, close_db_pool
 
-app = FastAPI(title="ABSA Steam Service", version="1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """앱 시작/종료 시 실행되는 라이프사이클 이벤트"""
+    # 시작 시
+    print("🚀 서버 시작: DB Connection Pool 초기화")
+    init_db_pool()
+    yield
+    # 종료 시
+    print("🛑 서버 종료: DB Connection Pool 정리")
+    close_db_pool()
+
+
+app = FastAPI(
+    title="ABSA Steam Service", 
+    version="1.0",
+    lifespan=lifespan
+)
 
 # ✅ 정적 파일 서빙 (절대 경로 사용)
 static_dir = os.path.join(_model_server_dir, "static")

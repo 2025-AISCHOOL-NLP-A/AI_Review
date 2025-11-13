@@ -50,8 +50,10 @@ def load_stopwords(domain="steam"):
         if os.path.exists(path):
             with open(path, "r", encoding="utf-8-sig") as f:
                 for line in f:
-                    word = line.strip().replace("\ufeff", "")
-                    if word:
+                    # 공백, 탭, 개행 문자 모두 제거하고 정제
+                    word = line.strip().replace("\ufeff", "").replace("\t", "").replace(" ", "")
+                    # 빈 문자열이 아니고 의미있는 단어만 추가
+                    if word and len(word) > 0:
                         stopwords.add(word)
 
     return stopwords
@@ -86,7 +88,8 @@ def generate_wordcloud_from_db(product_id: int, domain="steam"):
 
     # 4️⃣ 불용어 제거
     stopwords = load_stopwords(domain)
-    tokens = [t for t in tokens if t not in stopwords]
+    # 토큰도 공백 제거 후 비교
+    tokens = [t.strip() for t in tokens if t.strip() and t.strip() not in stopwords]
 
     # 5️⃣ 빈도 계산
     freq = dict(Counter(tokens).most_common(200))

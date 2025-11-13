@@ -26,10 +26,13 @@ function Workplace() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [modalStep, setModalStep] = useState(null); // 'info' | 'upload' | null
+  const [modalStep, setModalStep] = useState(null); // 'info' | 'upload' | 'edit' | null
   const [productFormData, setProductFormData] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null); // 수정/추가 리뷰용 선택된 제품
   const [sortField, setSortField] = useState(null); // 'registered_date' | 'product_name' | 'brand' | 'category_id' | null
   const [sortDirection, setSortDirection] = useState('asc'); // 'asc' | 'desc'
+  const [openMenuIndex, setOpenMenuIndex] = useState(null); // 열린 메뉴의 인덱스
+  const menuRefs = useRef({}); // 각 메뉴의 ref를 저장
   
   // 사이드바 상태를 localStorage에서 읽어오기
   const [sidebarOpen, setSidebarOpen] = useState(() => {
@@ -89,6 +92,26 @@ function Workplace() {
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
+
+  // 외부 클릭 시 메뉴 닫기
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (openMenuIndex !== null) {
+        const menuElement = menuRefs.current[openMenuIndex];
+        if (menuElement && !menuElement.contains(e.target)) {
+          setOpenMenuIndex(null);
+        }
+      }
+    };
+
+    if (openMenuIndex !== null) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [openMenuIndex]);
 
   // 제품 목록 가져오기 (전체 데이터를 한 번만 가져옴)
   useEffect(() => {
@@ -400,6 +423,7 @@ function Workplace() {
   const handleCloseModal = () => {
     setModalStep(null);
     setProductFormData(null);
+    setSelectedItem(null);
   };
 
   // 제품 추가 성공 시 호출되는 콜백
@@ -410,6 +434,68 @@ function Workplace() {
     setCurrentPage(1);
     // 제품 목록 새로고침
     setRefreshTrigger(prev => prev + 1);
+  };
+
+  // Edit 버튼 클릭 - 수정 모드로 ProductInfoForm 열기
+  const handleEdit = (item) => {
+    setSelectedItem(item);
+    setModalStep("edit");
+    setOpenMenuIndex(null); // 메뉴 닫기
+  };
+
+  // Add Review 버튼 클릭 - Upload 모달 열기
+  const handleAddReview = (item) => {
+    setSelectedItem(item);
+    setModalStep("upload");
+    setOpenMenuIndex(null); // 메뉴 닫기
+  };
+
+  // Delete 버튼 클릭 - 제품 삭제
+  const handleDelete = async (productId) => {
+    setOpenMenuIndex(null); // 메뉴 닫기
+    
+    if (window.confirm("정말 삭제하시겠습니까?")) {
+      setLoading(true);
+      try {
+        const result = await dashboardService.deleteProduct(productId);
+        if (result.success) {
+          // 제품 목록 새로고침
+          setRefreshTrigger(prev => prev + 1);
+        } else {
+          alert(result.message || "제품 삭제에 실패했습니다.");
+        }
+      } catch (error) {
+        console.error("제품 삭제 중 오류:", error);
+        alert("제품 삭제 중 오류가 발생했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // 제품 수정 저장
+  const handleSaveEdit = async (formData) => {
+    if (!selectedItem) return;
+
+    setLoading(true);
+    try {
+      // TODO: 백엔드 API 연결 (나중에 구현)
+      // const result = await dashboardService.updateProduct(selectedItem.product_id, {
+      //   product_name: formData.productName,
+      //   brand: formData.brand || null,
+      //   category_id: parseInt(formData.category, 10),
+      // });
+      
+      // 임시로 성공 처리
+      alert("제품 정보가 수정되었습니다. (백엔드 연결 예정)");
+      handleCloseModal();
+      setRefreshTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error("제품 수정 중 오류:", error);
+      alert("제품 수정 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 선택된 제품들 삭제
@@ -614,18 +700,19 @@ function Workplace() {
                   <th style={{ textAlign: 'center' }}>제품명</th>
                   <th style={{ textAlign: 'center' }}>브랜드</th>
                   <th style={{ textAlign: 'center' }}>카테고리</th>
+                  <th className="action-column"></th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="5" style={{ textAlign: "center", padding: "2rem" }}>
+                    <td colSpan="6" style={{ textAlign: "center", padding: "2rem" }}>
                       로딩 중...
                     </td>
                   </tr>
                 ) : workplaceData.length === 0 ? (
                   <tr>
-                    <td colSpan="5" style={{ textAlign: "center", padding: "2rem" }}>
+                    <td colSpan="6" style={{ textAlign: "center", padding: "2rem" }}>
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
                         <p style={{ margin: 0, fontSize: "1rem", color: "#6b7280" }}>
                           등록된 제품이 없습니다.
@@ -637,7 +724,7 @@ function Workplace() {
                     </td>
                   </tr>
                 ) : (
-                  workplaceData.map((item) => {
+                  workplaceData.map((item, index) => {
                     return (
                     <tr 
                       key={item.product_id}
@@ -661,26 +748,112 @@ function Workplace() {
                       </td>
                       <td style={{ textAlign: 'center' }}>{formatDate(item)}</td>
                       <td className="product-cell" style={{ textAlign: 'center' }}>
-                        <span
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            navigate(`/dashboard?productId=${item.product_id}`);
-                          }}
-                          style={{
-                            cursor: 'pointer',
-                            color: '#5B8EFF',
-                            textDecoration: 'underline',
-                            fontWeight: '500'
-                          }}
-                          onMouseEnter={(e) => e.target.style.color = '#4A7CFF'}
-                          onMouseLeave={(e) => e.target.style.color = '#5B8EFF'}
-                        >
-                          {item.product_name || "-"}
-                        </span>
+                        {item.product_name || "-"}
                       </td>
                       <td style={{ textAlign: 'center' }}>{item.brand && item.brand.trim() !== "" ? item.brand : "-"}</td>
                       <td style={{ textAlign: 'center' }}>{getCategoryName(item.category_id)}</td>
+                      <td className="action-column" onClick={(e) => e.stopPropagation()}>
+                        <div 
+                          className="meatballs-menu"
+                          ref={(el) => {
+                            if (el) {
+                              menuRefs.current[index] = el;
+                            } else {
+                              delete menuRefs.current[index];
+                            }
+                          }}
+                        >
+                          <button
+                            className="meatballs-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuIndex(openMenuIndex === index ? null : index);
+                            }}
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <circle cx="12" cy="12" r="1"></circle>
+                              <circle cx="12" cy="5" r="1"></circle>
+                              <circle cx="12" cy="19" r="1"></circle>
+                            </svg>
+                          </button>
+
+                          {openMenuIndex === index && (
+                            <div className="dropdown-menu">
+                              <button
+                                onClick={() => handleEdit(item)}
+                                className="dropdown-item"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleAddReview(item)}
+                                className="dropdown-item"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                                </svg>
+                                Add Review
+                              </button>
+                              <button
+                                onClick={() => handleDelete(item.product_id)}
+                                className="dropdown-item delete-item"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <polyline points="3 6 5 6 21 6"></polyline>
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                     );
                   })
@@ -781,6 +954,18 @@ function Workplace() {
             onClose={handleCloseModal}
             formData={productFormData}
             onSuccess={handleProductAdded}
+          />
+        </ProductModal>
+      )}
+
+      {/* Edit Modal */}
+      {modalStep === "edit" && selectedItem && (
+        <ProductModal onClose={handleCloseModal}>
+          <ProductInfoForm
+            isEditMode={true}
+            initialData={selectedItem}
+            onSave={handleSaveEdit}
+            onClose={handleCloseModal}
           />
         </ProductModal>
       )}

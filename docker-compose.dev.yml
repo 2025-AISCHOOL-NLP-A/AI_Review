@@ -1,0 +1,83 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: ai-review-frontend-dev
+    restart: always
+    ports:
+      - "5173:5173"
+    volumes:
+      # 코드만 마운트 (node_modules는 이미지에 설치됨)
+      - ./frontend:/app
+      # 컨테이너의 node_modules 보호
+      - /app/node_modules
+    working_dir: /app
+    networks:
+      - app-network
+    command: npm run dev -- --host
+    environment:
+      - VITE_API_URL=http://localhost:3001
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: ai-review-backend-dev
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+      - PYTHON_API_URL=http://model-server:8000
+      - PYTHON_ABSA_URL=http://model-server:8000/
+    volumes:
+      # 코드만 마운트 (node_modules는 이미지에 설치됨)
+      - ./backend:/app
+      # 컨테이너의 node_modules 보호
+      - /app/node_modules
+    depends_on:
+      - model-server
+    networks:
+      - app-network
+    command: npm run dev
+
+  model-server:
+    build:
+      context: ./model_server
+      dockerfile: Dockerfile.dev
+    container_name: ai-review-model-server-dev
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONIOENCODING=utf-8
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      # 코드만 마운트 (패키지는 이미지에 설치됨)
+      - ./model_server:/app
+      # node_modules처럼 컨테이너의 패키지 폴더 보호
+      - /app/.venv
+    working_dir: /app
+    networks:
+      - app-network
+    command: python -m uvicorn model_server.main:app --host 0.0.0.0 --port 8000 --reload
+
+networks:
+  app-network:
+    driver: bridge

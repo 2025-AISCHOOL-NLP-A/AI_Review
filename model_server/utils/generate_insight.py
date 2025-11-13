@@ -299,7 +299,7 @@ if __name__ == "__main__":
     from utils.db_connect import init_db_pool, close_db_pool
     
     # 테스트용
-    product_id = 1012
+    product_id = 1013
     user_id = 10001
     
     try:

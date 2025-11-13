@@ -12,11 +12,11 @@ if _parent_dir not in sys.path:
 if _model_server_dir not in sys.path:
     sys.path.insert(0, _model_server_dir)
 
-print("📂 Current working dir:", os.getcwd())
-print("📦 sys.path[0]:", sys.path[0])
-print("📦 model_server dir:", _model_server_dir)
-print("📦 utils 경로 확인:", os.path.join(_model_server_dir, "utils"))
-print("📦 utils 존재 여부:", os.path.exists(os.path.join(_model_server_dir, "utils")))
+print("[INFO] Current working dir:", os.getcwd())
+print("[INFO] sys.path[0]:", sys.path[0])
+print("[INFO] model_server dir:", _model_server_dir)
+print("[INFO] utils path:", os.path.join(_model_server_dir, "utils"))
+print("[INFO] utils exists:", os.path.exists(os.path.join(_model_server_dir, "utils")))
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -29,11 +29,11 @@ from utils.db_connect import init_db_pool, close_db_pool
 async def lifespan(app: FastAPI):
     """앱 시작/종료 시 실행되는 라이프사이클 이벤트"""
     # 시작 시
-    print("🚀 서버 시작: DB Connection Pool 초기화")
+    print("[STARTUP] DB Connection Pool initialized")
     init_db_pool()
     yield
     # 종료 시
-    print("🛑 서버 종료: DB Connection Pool 정리")
+    print("[SHUTDOWN] DB Connection Pool closed")
     close_db_pool()
 
 

@@ -8,6 +8,7 @@ import {
     analysisRequest,
     deleteProduct,
     getProductById,
+    updateProduct,
     //getAnalysisStatus
 } from "../controllers/productController.js";
 
@@ -29,6 +30,9 @@ router.get("/:id/dashboard", dashboard); // productController.dashboard 별칭 �
 
 // 제품 삭제
 router.delete("/:id", deleteProduct);
+
+// 제품 정보 수정
+router.put("/:id", updateProduct);
 
 //워크 플레이스용 제품 리스트 
 router.get("/", productList);

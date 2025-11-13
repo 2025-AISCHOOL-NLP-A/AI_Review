@@ -165,6 +165,24 @@ const dashboardService = {
     }
   },
 
+  /** ✏️ 제품 정보 수정 */
+  async updateProduct(productId, productData) {
+    try {
+      console.log("📤 제품 수정 API 호출:", `/products/${productId}`, productData);
+      const res = await api.put(`/products/${productId}`, productData);
+      console.log("📥 제품 수정 API 응답:", res.data);
+      return { success: true, data: res.data };
+    } catch (err) {
+      console.error("❌ 제품 수정 API 오류:", {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message
+      });
+      const msg = err.response?.data?.message || "제품 정보 수정에 실패했습니다.";
+      return { success: false, message: msg };
+    }
+  },
+
   /** 🔬 제품 리뷰 분석 요청 */
   async requestReviewAnalysis(productId) {
     try {

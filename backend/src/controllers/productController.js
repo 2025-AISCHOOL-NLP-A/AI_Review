@@ -314,19 +314,46 @@ export const deleteProduct = async (req, res) => {
   try {
     const { id: productId } = req.params;
 
+    // 제품 ID 검증
     if (!productId) {
       return res.status(400).json({ message: "제품 ID가 필요합니다." });
     }
 
-    await db.query("DELETE FROM tb_product WHERE product_id = ?", [productId]);
+    const productIdNum = Number.parseInt(productId, 10);
+    if (isNaN(productIdNum) || productIdNum <= 0) {
+      return res.status(400).json({ message: "유효한 제품 ID가 필요합니다." });
+    }
+
+    // 제품 존재 확인
+    const [[existingProduct]] = await db.query(
+      "SELECT product_id FROM tb_product WHERE product_id = ?",
+      [productIdNum]
+    );
+
+    if (!existingProduct) {
+      return res.status(404).json({ message: "제품을 찾을 수 없습니다." });
+    }
+
+    // 제품 삭제
+    const [result] = await db.query("DELETE FROM tb_product WHERE product_id = ?", [productIdNum]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "제품을 찾을 수 없습니다." });
+    }
 
     res.json({
       message: "제품이 성공적으로 삭제되었습니다.",
-      productId
+      productId: productIdNum
     });
 
   } catch (err) {
     console.error("❌ 제품 삭제 오류:", err);
+    console.error("❌ 에러 상세:", {
+      message: err.message,
+      stack: err.stack,
+      code: err.code,
+      sqlMessage: err.sqlMessage
+    });
     res.status(500).json({ message: "제품 삭제 중 서버 오류가 발생했습니다." });
   }
 };
@@ -363,29 +390,71 @@ export const createProduct = async (req, res) => {
 // ==============================
 export const updateProduct = async (req, res) => {
   try {
+    console.log("📝 제품 수정 요청 받음:", req.params, req.body);
     const { id: productId } = req.params;
     const { product_name, brand, category_id } = req.body;
 
+    // 제품 ID 검증
     if (!productId) {
       return res.status(400).json({ message: "제품 ID가 필요합니다." });
     }
 
+    const productIdNum = Number.parseInt(productId, 10);
+    if (isNaN(productIdNum) || productIdNum <= 0) {
+      return res.status(400).json({ message: "유효한 제품 ID가 필요합니다." });
+    }
+
+    // 필수 필드 검증
+    if (!product_name || product_name.trim() === "") {
+      return res.status(400).json({ message: "제품명은 필수입니다." });
+    }
+
+    if (!category_id) {
+      return res.status(400).json({ message: "카테고리는 필수입니다." });
+    }
+
+    const categoryIdNum = Number.parseInt(category_id, 10);
+    if (isNaN(categoryIdNum) || categoryIdNum <= 0) {
+      return res.status(400).json({ message: "유효한 카테고리 ID가 필요합니다." });
+    }
+
+    // 제품 존재 확인
+    const [[existingProduct]] = await db.query(
+      "SELECT product_id FROM tb_product WHERE product_id = ?",
+      [productIdNum]
+    );
+
+    if (!existingProduct) {
+      return res.status(404).json({ message: "제품을 찾을 수 없습니다." });
+    }
+
+    // 제품 정보 업데이트
     await db.query(
       `UPDATE tb_product 
-       SET product_name = ?, brand = ?, category_id = ?, updated_at = NOW()
+       SET product_name = ?, brand = ?, category_id = ?
        WHERE product_id = ?`,
-      [product_name, brand, category_id, productId]
+      [product_name.trim(), brand && brand.trim() !== "" ? brand.trim() : null, categoryIdNum, productIdNum]
     );
 
     res.json({
       message: "제품 정보가 성공적으로 수정되었습니다.",
-      productId,
-      updated: { product_name, brand, category_id }
+      productId: productIdNum,
+      updated: { product_name: product_name.trim(), brand: brand && brand.trim() !== "" ? brand.trim() : null, category_id: categoryIdNum }
     });
 
   } catch (err) {
     console.error("❌ 제품 정보 수정 오류:", err);
-    res.status(500).json({ message: "제품 정보 수정 중 서버 오류가 발생했습니다." });
+    console.error("❌ 에러 상세:", {
+      message: err.message,
+      stack: err.stack,
+      code: err.code,
+      sqlMessage: err.sqlMessage,
+      sql: err.sql
+    });
+    res.status(500).json({ 
+      message: "제품 정보 수정 중 서버 오류가 발생했습니다.",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
 

@@ -475,24 +475,42 @@ function Workplace() {
 
   // 제품 수정 저장
   const handleSaveEdit = async (formData) => {
-    if (!selectedItem) return;
+    if (!selectedItem) {
+      console.error("❌ selectedItem이 없습니다.");
+      return;
+    }
+
+    console.log("📝 제품 수정 시작:", {
+      product_id: selectedItem.product_id,
+      formData: formData
+    });
 
     setLoading(true);
     try {
-      // TODO: 백엔드 API 연결 (나중에 구현)
-      // const result = await dashboardService.updateProduct(selectedItem.product_id, {
-      //   product_name: formData.productName,
-      //   brand: formData.brand || null,
-      //   category_id: parseInt(formData.category, 10),
-      // });
+      const result = await dashboardService.updateProduct(selectedItem.product_id, {
+        product_name: formData.productName,
+        brand: formData.brand || null,
+        category_id: parseInt(formData.category, 10),
+      });
       
-      // 임시로 성공 처리
-      alert("제품 정보가 수정되었습니다. (백엔드 연결 예정)");
-      handleCloseModal();
-      setRefreshTrigger(prev => prev + 1);
+      console.log("📝 제품 수정 결과:", result);
+      
+      if (result.success) {
+        alert("제품 정보가 수정되었습니다.");
+        handleCloseModal();
+        setRefreshTrigger(prev => prev + 1);
+      } else {
+        console.error("❌ 제품 수정 실패:", result.message);
+        alert(result.message || "제품 정보 수정에 실패했습니다.");
+      }
     } catch (error) {
-      console.error("제품 수정 중 오류:", error);
-      alert("제품 수정 중 오류가 발생했습니다.");
+      console.error("❌ 제품 수정 중 오류:", error);
+      console.error("❌ 에러 상세:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      alert(`제품 수정 중 오류가 발생했습니다: ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
     }

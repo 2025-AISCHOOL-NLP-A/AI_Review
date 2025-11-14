@@ -407,10 +407,7 @@
 }
 
 .dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 4px;
+  position: fixed;
   background: #fff;
   border: 1px solid #E5E7EB;
   border-radius: 8px;

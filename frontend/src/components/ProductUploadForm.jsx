@@ -42,7 +42,7 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
       const productData = {
         product_name: formData.productName,
         brand: formData.brand || null,
-        category_id: parseInt(formData.category, 10),
+        category_id: formData.category || null,
       };
 
       const result = await dashboardService.createProduct(productData);
@@ -131,4 +131,3 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
     </>
   );
 }
-

@@ -193,6 +193,34 @@ const dashboardService = {
       return { success: false, message: msg };
     }
   },
+
+  /** 📤 리뷰 파일 업로드 및 매핑 정보 전송 */
+  async uploadReviewFiles(productId, files) {
+    try {
+      const formData = new FormData();
+      
+      // 각 파일과 매핑 정보를 FormData에 추가
+      files.forEach((fileData, index) => {
+        formData.append(`files`, fileData.file);
+        formData.append(`mappings`, JSON.stringify({
+          reviewColumn: fileData.mapping.reviewColumn,
+          dateColumn: fileData.mapping.dateColumn,
+          ratingColumn: fileData.mapping.ratingColumn || null,
+        }));
+      });
+
+      const res = await api.post(`/products/${productId}/reviews/upload`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      return { success: true, data: res.data };
+    } catch (err) {
+      const msg = err.response?.data?.message || "파일 업로드에 실패했습니다.";
+      return { success: false, message: msg };
+    }
+  },
 };
 
 export default dashboardService;

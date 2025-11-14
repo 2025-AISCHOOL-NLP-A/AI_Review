@@ -10,6 +10,7 @@ import {
     updateProduct,
     uploadReviews,
     upload,
+    createProductWithReviews,
     //getAnalysisStatus
 } from "../controllers/productController.js";
 
@@ -40,6 +41,9 @@ router.put("/:id", updateProduct);
 
 //워크 플레이스용 제품 리스트 
 router.get("/", productList);
+
+// 제품 생성 + 리뷰 업로드 + 분석
+router.post("/", upload.array('files', 10), createProductWithReviews);
 
 
 

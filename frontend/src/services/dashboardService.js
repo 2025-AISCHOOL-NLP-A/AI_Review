@@ -1,5 +1,5 @@
 import api from "./api";
-import { processDashboardResponse, findFirstReviewDate } from "./dashboardResponseProcessor";
+import { processDashboardResponse } from "./dashboardResponseProcessor";
 
 const dashboardService = {
   /** 📊 대시보드 데이터 조회 및 처리 */

@@ -24,9 +24,24 @@ function Login() {
   }, [error]);
 
   // 이미 로그인된 사용자가 로그인 페이지에 접근하면 워크플레이스로 리다이렉트
+  // 단, 실제로 유효한 토큰이 있을 때만 리다이렉트
   useEffect(() => {
-    if (!userLoading && isAuthenticated) {
-      navigate("/wp", { replace: true });
+    // 로딩이 완료되고 실제로 인증된 상태인지 확인
+    if (!userLoading && isAuthenticated === true) {
+      // 토큰이 실제로 유효한지 한 번 더 확인
+      const token = sessionStorage.getItem("token");
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const exp = payload.exp * 1000;
+          // 토큰이 만료되지 않았을 때만 리다이렉트
+          if (Date.now() < exp) {
+            navigate("/wp", { replace: true });
+          }
+        } catch (error) {
+          // 토큰 파싱 실패 시 리다이렉트하지 않음 (로그인 페이지에 머무름)
+        }
+      }
     }
   }, [isAuthenticated, userLoading, navigate]);
 

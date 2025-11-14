@@ -254,6 +254,12 @@
   align-items: stretch;
   margin-bottom: 30px; /* Footer와의 간격 */
   border-radius: 15px;
+  transition: width 0.3s ease, max-width 0.3s ease;
+}
+
+/* 사이드바가 닫혔을 때: 회원정보 수정 카드 너비 확대 */
+.dashboard-sidebar.sidebar-closed + .dashboard-wrapper .join-container {
+  width: min(100%, 760px); /* 660px → 760px 정도로 살짝 넓게 */
 }
 
 .join-card,

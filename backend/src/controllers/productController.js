@@ -38,34 +38,29 @@ export const getProductById = async (req, res) => {
 };
 
 // ==============================
-// 2. 제품 목록 조회
+// 2. 제품 목록 조회 (사용자별)
 // ==============================
 export const productList = async (req, res) => {
   try {
-    // const [rows] = await db.query(`
-    //   SELECT 
-    //     p.product_id,
-    //     p.product_name,
-    //     p.brand,
-    //     c.category_name,
-    //     IFNULL(d.product_score, 0) AS product_score,
-    //     IFNULL(d.total_reviews, 0) AS total_reviews,
-    //     d.updated_at
-    //   FROM tb_product p
-    //   LEFT JOIN tb_productCategory c ON p.category_id = c.category_id
-    //   LEFT JOIN tb_productDashboard d ON p.product_id = d.product_id
-    //   ORDER BY p.product_id DESC
-    // `);
+    // 사용자 인증 확인
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "인증된 사용자 정보가 없습니다." });
+    }
+
+    // 해당 사용자의 제품만 조회
     const [rows] = await db.query(`
       SELECT 
         p.product_id,
         p.product_name,
         p.brand,
         p.registered_date,
-        p.category_id
+        p.category_id,
+        p.user_id
       FROM tb_product p
+      WHERE p.user_id = ?
       ORDER BY p.product_id DESC
-    `);
+    `, [userId]);
 
     res.json({
       message: "제품 목록 조회 성공",

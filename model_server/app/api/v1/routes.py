@@ -86,7 +86,7 @@ def analyze_product_reviews(product_id: int, domain: Optional[str] = None):
         if not product_info:
             raise HTTPException(status_code=404, detail=f"제품을 찾을 수 없습니다 (product_id={product_id})")
         
-        category_id = product_info[1]
+        category_id = product_info["category_id"]
         
         # 도메인 결정 (파라미터가 없으면 카테고리로 자동 결정)
         if domain is None:
@@ -112,7 +112,9 @@ def analyze_product_reviews(product_id: int, domain: Optional[str] = None):
         # 3️⃣ 리뷰 분석 수행
         print(f"🧠 {domain} 도메인 모델로 분석 시작...")
         analysis_results = []
-        for review_id, review_text in reviews:
+        for review in reviews:
+            review_id = review["review_id"]
+            review_text = review["review_text"]
             result = pipeline.analyze_review(review_text)
             analysis_results.append({
                 "review_id": review_id,
@@ -131,7 +133,7 @@ def analyze_product_reviews(product_id: int, domain: Optional[str] = None):
             (category_id,)
         )
         keywords = cursor.fetchall()
-        keyword_map = {kw[1]: kw[0] for kw in keywords}
+        keyword_map = {kw["keyword_text"]: kw["keyword_id"] for kw in keywords}
         
         print(f"🔑 키워드 {len(keyword_map)}개 매핑 완료")
         

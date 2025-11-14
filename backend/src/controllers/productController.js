@@ -786,7 +786,7 @@ analysisRequest
 };
 
 // ==============================
-// 10. 제품 생성 + 리뷰 업로드 + 분석 통합
+// 10. 제품 생성 (프론트엔드 방식에 맞춤)
 // ==============================
 export const createProductWithReviews = async (req, res) => {
   try {
@@ -801,7 +801,7 @@ export const createProductWithReviews = async (req, res) => {
       return res.status(400).json({ message: "제품명과 카테고리는 필수입니다." });
     }
     
-    // 1단계: 제품 생성
+    // 제품 생성
     const [result] = await db.query(
       "INSERT INTO tb_product (product_name, brand, category_id, user_id, registered_date) VALUES (?, ?, ?, ?, NOW())",
       [product_name, brand || null, category_id, userId]
@@ -810,135 +810,15 @@ export const createProductWithReviews = async (req, res) => {
     const productId = result.insertId;
     console.log(`✅ 제품 생성 완료: ${productId}`);
     
-    // 2단계: 리뷰 파일 처리
-    const files = req.files || [];
-    const mappingsRaw = req.body.mappings || [];
-    const mappings = Array.isArray(mappingsRaw) 
-      ? mappingsRaw.map(m => typeof m === 'string' ? JSON.parse(m) : m)
-      : [typeof mappingsRaw === 'string' ? JSON.parse(mappingsRaw) : mappingsRaw];
-    
-    let totalInserted = 0;
-    let totalSkipped = 0;
-    let totalDuplicated = 0;
-    const errors = [];
-    
-    if (files.length > 0) {
-      if (files.length !== mappings.length) {
-        return res.status(400).json({ 
-          message: `파일과 매핑 정보의 개수가 일치하지 않습니다. (파일: ${files.length}, 매핑: ${mappings.length})` 
-        });
-      }
-      
-      // 각 파일 처리 (uploadReviews 로직 재사용)
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const mapping = mappings[i];
-        
-        if (!mapping || !mapping.reviewColumn || !mapping.dateColumn) {
-          errors.push(`${file.originalname}: 리뷰 컬럼과 날짜 컬럼 매핑이 필요합니다.`);
-          continue;
-        }
-        
-        try {
-          let rows = [];
-          const ext = path.extname(file.originalname).toLowerCase();
-          
-          if (ext === '.csv') {
-            rows = await parseCSV(file.buffer);
-          } else if (ext === '.xlsx' || ext === '.xls') {
-            rows = parseExcel(file.buffer);
-          } else {
-            errors.push(`${file.originalname}: 지원하지 않는 파일 형식입니다.`);
-            continue;
-          }
-          
-          if (!rows || rows.length === 0) {
-            errors.push(`${file.originalname}: 데이터가 없습니다.`);
-            continue;
-          }
-          
-          const firstRow = rows[0] || {};
-          const availableColumns = Object.keys(firstRow);
-          const hasVotedUp = availableColumns.includes('voted_up');
-          const hasWeightedScore = availableColumns.includes('weighted_vote_score');
-          const isSteamFormat = hasVotedUp && hasWeightedScore;
-          
-          for (const row of rows) {
-            try {
-              const reviewText = String(row[mapping.reviewColumn] || '').trim();
-              const dateValue = row[mapping.dateColumn];
-              const ratingValue = mapping.ratingColumn ? row[mapping.ratingColumn] : null;
-              
-              if (!reviewText) {
-                totalSkipped++;
-                continue;
-              }
-              
-              const reviewDate = parseDate(dateValue);
-              if (!reviewDate) {
-                totalSkipped++;
-                continue;
-              }
-              
-              let rating = 3.0;
-              
-              if (isSteamFormat && mapping.ratingColumn === 'voted_up') {
-                const votedUp = row['voted_up'];
-                const weightedScore = row['weighted_vote_score'];
-                rating = calculateSteamRating(votedUp, weightedScore);
-              } else if (ratingValue !== null && ratingValue !== undefined) {
-                const parsedRating = parseFloat(ratingValue);
-                if (!isNaN(parsedRating) && parsedRating >= 0 && parsedRating <= 5) {
-                  rating = parsedRating;
-                }
-              }
-              
-              const isDuplicate = await checkDuplicateReview(productId, reviewText, reviewDate);
-              if (isDuplicate) {
-                totalDuplicated++;
-                continue;
-              }
-              
-              await db.query(
-                `INSERT INTO tb_review (product_id, review_text, rating, review_date, source)
-                 VALUES (?, ?, ?, ?, ?)`,
-                [productId, reviewText, rating, reviewDate, null]
-              );
-              
-              totalInserted++;
-            } catch (rowError) {
-              console.error(`❌ 리뷰 삽입 오류 (${file.originalname}):`, rowError);
-              totalSkipped++;
-            }
-          }
-        } catch (fileError) {
-          console.error(`❌ 파일 처리 오류 (${file.originalname}):`, fileError);
-          errors.push(`${file.originalname}: ${fileError.message}`);
-        }
-      }
-      
-      // 3단계: 리뷰 분석 실행
-      if (totalInserted > 0) {
-        await performAnalysis(productId);
-      }
-    }
-    
-    // 4단계: 결과 반환
+    // 결과 반환
     res.status(201).json({
-      message: "제품 생성 및 리뷰 분석 완료",
+      message: "제품이 성공적으로 생성되었습니다.",
       product: { 
         product_id: productId, 
         product_name, 
         brand, 
         category_id 
-      },
-      summary: {
-        totalInserted,
-        totalSkipped,
-        totalDuplicated,
-        totalProcessed: totalInserted + totalSkipped + totalDuplicated
-      },
-      errors: errors.length > 0 ? errors : undefined
+      }
     });
     
   } catch (err) {

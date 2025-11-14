@@ -4,3 +4,4 @@
 BOOST_KEYWORDS = { } # 사용 안 함
 
 NEG_TRIGGERS = [ ] # 사용 안 함
+

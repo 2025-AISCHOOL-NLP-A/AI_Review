@@ -160,15 +160,29 @@ def analyze_review(text, debug=False):
     return {"text": text, "aspects": detected_aspects, "results": results}
 
 # =========================================================
-# 5. 테스트 코드
+# 5. 테스트
 # =========================================================
+""""
+if __name__ == "__main__":
+    import argparse
 
-"""
-text = "끈적이고 흡수력이 안 좋아요. 여러 가지 화장품 바르는 걸 싫어해서 한 번에 해결된다는 이 화장품으로 선택했는데 유분기가 많아서 별로예요. 잘 발리지 않고 제형이 묽어서 사용하기 불편해요."
-result = analyze_review(text, debug=False)
+    parser = argparse.ArgumentParser(description="화장품 ABSA 파이프라인 테스트")
+    parser.add_argument("--text", type=str, help="분석할 리뷰 텍스트")
+    parser.add_argument("--debug", action="store_true", help="디버그 모드 (aspect별 상세 출력)")
+    args = parser.parse_args()
 
-print("\n--- 6개 그룹 키워드 분석 결과 --- ")
-print(f"리뷰 텍스트: {result['text']}")
-for item in result['results']:
-    print(f"  - {item['aspect']}: {item['label']} (POS: {item['POS']}, NEG: {item['NEG']})")
-"""
+    sample_texts = [
+        "끈적이고 흡수력이 안 좋아요. 여러 가지 화장품 바르는 걸 싫어해서 한 번에 해결된다는 이 화장품으로 선택했는데 유분기가 많아서 별로예요. 잘 발리지 않고 제형이 묽어서 사용하기 불편해요.",
+        "가격은 합리적이고 향도 은은해서 하루 종일 기분이 좋아요. 발림성이 좋아서 소량만 써도 충분합니다.",
+    ]
+
+    texts_to_run = [args.text] if args.text else sample_texts
+
+    for idx, text in enumerate(texts_to_run, start=1):
+        result = analyze_review(text, debug=args.debug)
+
+        print("\n--- 6개 그룹 키워드 분석 결과 ---")
+        print(f"[{idx}] 리뷰 텍스트: {result['text']}")
+        for item in result["results"]:
+            print(f"  - {item['aspect']}: {item['label']} (POS: {item['POS']}, NEG: {item['NEG']})")
+            """

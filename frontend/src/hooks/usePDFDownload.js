@@ -1,11 +1,8 @@
+// usePDFDownload.js
 import { useCallback } from "react";
 import html2pdf from "html2pdf.js";
+import { getElementScrollSize } from "../hooks/useViewport";
 
-/**
- * 화면에 보이는 대시보드를 "그 크기 그대로" PDF 한 장으로 저장하는 훅
- * - A4에 맞춰 리사이즈하지 않음
- * - PDF 페이지 크기를 대시보드의 scrollWidth/scrollHeight와 동일하게 맞춤
- */
 export const usePDFDownload = ({
   contentRef,
   downloadButtonRef = null,
@@ -21,49 +18,77 @@ export const usePDFDownload = ({
 
     const downloadButton = downloadButtonRef?.current;
 
-    // 1) 다운로드 버튼 잠시 숨기기
+    // 1) 다운로드 버튼 숨기기
     if (downloadButton) {
       downloadButton.style.display = "none";
     }
 
-    // 2) 현재 대시보드의 실제 크기 측정
-    const rect = element.getBoundingClientRect();
-    const scrollWidth = element.scrollWidth || rect.width || 1024;
-    const scrollHeight = element.scrollHeight || rect.height || 768;
+    // 2) 실제 콘텐츠 전체 크기(스크롤 기준) 측정
+    const { width: scrollWidth, height: scrollHeight } =
+      getElementScrollSize(element);
 
-    // PDF 페이지도 이 크기에 맞춰서 만들 것
-    const pageWidth = scrollWidth;
-    const pageHeight = scrollHeight;
+    const contentWidth = scrollWidth || element.clientWidth || 1024;
+    const contentHeight = scrollHeight || element.clientHeight || 768;
 
-    // 3) 파일명 생성
+    // 3) 화면 폭 및 최대 허용 폭 기준으로 PDF 가로 폭 제한
+    //    - viewportWidth: 현재 브라우저 화면 폭
+    //    - MAX_PDF_WIDTH: PDF 최대 폭 (모니터 너무 커도 이 이상으로는 안 키움)
+    const viewportWidth =
+      (typeof window !== "undefined" && window.innerWidth) ||
+      document.documentElement.clientWidth ||
+      contentWidth;
+
+    const MAX_PDF_WIDTH = 1280; // 필요하면 1200/1024 등으로 조절 가능
+    const sidePadding = 40; // 화면 좌우 여유 (스크롤 안 생기게 약간 줄이기)
+
+    // "화면을 넘지 않도록" + "너무 넓지 않도록" + "콘텐츠보다 더 키우지는 않기"
+    const targetWidth = Math.min(
+      contentWidth,
+      Math.max(320, viewportWidth - sidePadding),
+      MAX_PDF_WIDTH
+    );
+
+    // 4) targetWidth에 맞게 전체를 축소
+    const scaleToFitWidth = targetWidth / contentWidth;
+    const pageWidth = targetWidth;
+    const pageHeight = contentHeight * scaleToFitWidth;
+
+    // 5) orientation (크게 의미는 없지만 넣어둠)
+    const orientation =
+      contentWidth >= contentHeight ? "landscape" : "portrait";
+
+    // 6) 파일명
     const productName =
       productInfo?.product_name ||
       dashboardData?.product?.product_name ||
       "대시보드";
 
     const opt = {
-      margin: 0, // 페이지 크기를 콘텐츠와 동일하게 쓸 것이므로 여백 0
+      margin: 0,
       filename: `${productName}_리뷰_분석_리포트.pdf`,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: {
-        scale: 2, // 해상도
+        // DOM 캡처 해상도
+        scale: 2,
         useCORS: true,
         scrollX: 0,
         scrollY: 0,
-        width: pageWidth,
-        height: pageHeight,
-        windowWidth: pageWidth,
-        windowHeight: pageHeight,
+
+        // 실제 DOM 전체를 캡처
+        width: contentWidth,
+        height: contentHeight,
+
+        // 반응형 기준이 되는 가상 창 크기 (레이아웃 깨지지 않게)
+        windowWidth: contentWidth,
+        windowHeight: contentHeight,
       },
       jsPDF: {
-        // 👉 PDF 페이지 크기를 "픽셀 단위로 콘텐츠와 똑같이"
         unit: "px",
-        format: [pageWidth, pageHeight],
-        orientation: "portrait",
+        format: [pageWidth, pageHeight], // 가로 = 제한된 폭, 세로 = 비율대로
+        orientation,
       },
-      // 한 장짜리 긴 PDF로 전체를 넣을 거라 pagebreak는 끔
       pagebreak: {
-        mode: "none",
+        mode: "none", // 한 장짜리 긴 페이지
       },
     };
 

@@ -42,7 +42,8 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
       const productData = {
         product_name: formData.productName,
         brand: formData.brand || null,
-@ -47,26 +50,36 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
+        category_id: formData.category || null,
+      };
 
       const result = await dashboardService.createProduct(productData);
 
@@ -69,7 +70,7 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
     } finally {
       setIsSubmitting(false);
     }
-@ -74,56 +87,26 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
+  };
 
   return (
     <>
@@ -126,7 +127,7 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
         >
           {isSubmitting ? "처리 중..." : "Analyze"}
         </button>
-@ -131,4 +114,3 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
+      </div>
     </>
   );
 }

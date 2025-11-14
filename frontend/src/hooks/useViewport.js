@@ -232,4 +232,3 @@ export const isElementInViewport = (element, threshold = 0) => {
 
   return visibleRatio >= threshold;
 };
-

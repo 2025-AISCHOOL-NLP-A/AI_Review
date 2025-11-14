@@ -10,6 +10,7 @@ import {
     updateProduct,
     uploadReviews,
     upload,
+    createProductWithReviews,
     //getAnalysisStatus
 } from "../controllers/productController.js";
 
@@ -23,8 +24,8 @@ const router = express.Router();
 // 리뷰 파일 업로드 (더 구체적인 라우트를 먼저 배치)
 router.post("/:id/reviews/upload", upload.array('files', 10), uploadReviews);
 
-// 수집된 리뷰들에 대한 감성분석 요청
-router.post("/:id/reviews/analysis", analysisRequest);
+// 수집된 리뷰들에 대한 감성분석 요청 (내부 함수로 변경 예정)
+// router.post("/:id/reviews/analysis", analysisRequest);
 
 //특정 키워드에 대한 리뷰 조회
 router.get("/:id/reviews", keywordReview);
@@ -40,6 +41,9 @@ router.put("/:id", updateProduct);
 
 //워크 플레이스용 제품 리스트 
 router.get("/", productList);
+
+// 제품 생성 (파일 업로드 없음)
+router.post("/", createProductWithReviews);
 
 
 

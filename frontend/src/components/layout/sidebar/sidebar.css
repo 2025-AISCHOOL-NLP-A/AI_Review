@@ -167,6 +167,16 @@
   background-color: #e5e7eb;
   color: var(--main-color);
 }
+.sidebar-submenu-item.active {
+  background-color: #eff6ff;
+  color: var(--main-color);
+  border-left: 3px solid var(--main-color);
+  font-weight: 600;
+  padding-left: calc(2.5rem - 3px); /* 3px border를 고려하여 패딩 조정 */
+}
+.sidebar-submenu-item.active svg {
+  color: var(--main-color);
+}
 .sidebar-submenu-item svg {
   flex-shrink: 0;
   width: 1rem;
@@ -462,6 +472,18 @@
   padding: 0.5rem 0 !important;
   border-bottom: 1px solid #e5e7eb !important;
   position: relative !important;
+}
+/* 닫힘 상태: active 서브메뉴 아이템 스타일 */
+.dashboard-sidebar.sidebar-closed
+  .sidebar-submenu.collapsed
+  .sidebar-submenu-item.active {
+  background-color: #eff6ff !important;
+  border-left: none !important; /* 닫힘 상태에서는 왼쪽 보더 제거 */
+}
+.dashboard-sidebar.sidebar-closed
+  .sidebar-submenu.collapsed
+  .sidebar-submenu-item.active svg {
+  color: var(--main-color) !important;
 }
 
 /* 닫힘 상태: 텍스트(스팬) 강제 숨김 — 혹시 JSX가 잘못 렌더되어도 방어 */

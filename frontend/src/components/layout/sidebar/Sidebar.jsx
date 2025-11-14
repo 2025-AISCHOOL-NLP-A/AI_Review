@@ -22,10 +22,12 @@ function Sidebar() {
   });
 
   // Context에서 사용자 정보 가져오기 (API 호출 없음)
-  const userInfo = user ? {
-    login_id: user?.login_id || "",
-    email: user?.email || "",
-  } : { login_id: "", email: "" };
+  const userInfo = user
+    ? {
+        login_id: user?.login_id || "",
+        email: user?.email || "",
+      }
+    : { login_id: "", email: "" };
 
   const isActive = (path) => location.pathname === path;
 
@@ -33,9 +35,11 @@ function Sidebar() {
   useEffect(() => {
     localStorage.setItem("sidebarOpen", sidebarOpen.toString());
     // 사이드바 상태 변경 커스텀 이벤트 발생
-    window.dispatchEvent(new CustomEvent("sidebarStateChanged", {
-      detail: { sidebarOpen }
-    }));
+    window.dispatchEvent(
+      new CustomEvent("sidebarStateChanged", {
+        detail: { sidebarOpen },
+      })
+    );
   }, [sidebarOpen]);
 
   // 설정 탭 상태가 변경될 때마다 localStorage에 저장
@@ -290,13 +294,15 @@ function Sidebar() {
                 ? "설정메뉴 닫기"
                 : "설정메뉴 더보기"
             }
-            className={`sidebar-nav-item ${settingsOpen ? "active" : ""} ${
-              isActive("/memberupdate") ||
-              isActive("/pricingsystem") ||
-              isActive("/memberdrop")
-                ? "active"
-                : ""
-            }`}
+            className={`sidebar-nav-item 
+              ${settingsOpen ? "settings-open" : ""} 
+              ${
+                isActive("/memberupdate") ||
+                isActive("/pricingsystem") ||
+                isActive("/memberdrop")
+                  ? "active"
+                  : ""
+              }`}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();

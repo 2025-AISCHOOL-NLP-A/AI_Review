@@ -163,12 +163,21 @@ export const dashboard = async (req, res) => {
       [productId]
     );
 
+    //5. 상품 이름 조회
+    const [[productInfo]] = await db.query(
+      `SELECT 
+        product_name
+      FROM tb_product
+      WHERE product_id = ?
+      LIMIT 1`,
+      [productId]
+    );
     // 5. 응답 데이터 구성
     res.json({
       message: "대시보드 조회 성공",
       dashboard: {
         product_id: dashboardData.product_id,
-        product_name: dashboardData.product_name,
+        product_name: productInfo?.product_name,
         total_reviews: dashboardData.total_reviews,
         sentiment_distribution: dashboardData.sentiment_distribution,
         product_score: dashboardData.product_score,

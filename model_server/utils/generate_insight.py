@@ -202,6 +202,10 @@ def save_insight_to_db(product_id: int, user_id: int, insight_data: dict) -> int
     try:
         cursor = conn.cursor()
         
+        # user_id가 None이면 기본값 사용 (시스템 자동 생성)
+        if user_id is None:
+            user_id = 10001  # 시스템 자동 생성용 기본 user_id
+        
         # 데이터 추출
         summary = insight_data.get("summary", {})
         pos_keywords = ", ".join(summary.get("keywords", {}).get("positive", []))

@@ -168,6 +168,7 @@ export const dashboard = async (req, res) => {
       message: "대시보드 조회 성공",
       dashboard: {
         product_id: dashboardData.product_id,
+        product_name: dashboardData.product_name,
         total_reviews: dashboardData.total_reviews,
         sentiment_distribution: dashboardData.sentiment_distribution,
         product_score: dashboardData.product_score,

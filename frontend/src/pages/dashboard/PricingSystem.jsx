@@ -190,4 +190,3 @@ function PricingSystem() {
 }
 
 export default PricingSystem;
-

@@ -10,12 +10,12 @@ const authService = {
         password,
       });
 
-      // ✅ JWT 토큰 저장
+      // ✅ JWT 토큰 저장 (sessionStorage 사용 - 탭을 닫으면 자동 삭제)
       if (res.data && res.data.token) {
-        localStorage.setItem("token", res.data.token);
-        // 이메일 정보도 localStorage에 저장
+        sessionStorage.setItem("token", res.data.token);
+        // 이메일 정보도 sessionStorage에 저장
         if (res.data.user && res.data.user.email) {
-          localStorage.setItem("userEmail", res.data.user.email);
+          sessionStorage.setItem("userEmail", res.data.user.email);
         }
         return { success: true, data: res.data };
       }
@@ -36,8 +36,8 @@ const authService = {
 
   /** 🚪 로그아웃 */
   logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userEmail");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("userEmail");
   },
 
   /** 🧍 회원가입 */
@@ -160,8 +160,8 @@ const authService = {
       const res = await api.get("/auth/verify", config);
       if (res.data.valid && res.data.user) {
         // JWT에 있는 정보만 반환 (id, login_id)
-        // email은 localStorage에서 가져오기 (로그인 시 저장됨)
-        const email = localStorage.getItem("userEmail") || "";
+        // email은 sessionStorage에서 가져오기 (로그인 시 저장됨)
+        const email = sessionStorage.getItem("userEmail") || "";
         return {
           id: res.data.user.id,
           login_id: res.data.user.login_id,

@@ -2,7 +2,9 @@
 
 /* ===================== 기본 레이아웃 ===================== */
 .dashboard-page {
-  font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif !important;
+  font-family: "Inter", "Noto Sans KR", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
+    "Droid Sans", "Helvetica Neue", sans-serif !important;
   background-color: var(--bg-color);
   color: var(--font-color);
   min-height: 100vh;
@@ -36,12 +38,23 @@
   margin-right: auto;
   /* 사이드바 상태에 관계없이 가운데 정렬 유지 */
   flex-shrink: 0;
+  /* 사이드바 열고 닫을 때 폭/패딩 애니메이션 */
+  transition: max-width 0.25s ease, padding 0.25s ease;
 }
 
 @media (min-width: 1024px) {
-  .dashboard-content {
+  /* 사이드바 열린 상태 (기본 폭) */
+  .dashboard-page.sidebar-open .dashboard-content {
     padding: 1.5rem 2rem;
-    max-width: min(1280px, calc(100% - 2rem));
+    /* 대략 사이드바 폭만큼 여유를 두고 1200px 기준 */
+    max-width: min(1200px, calc(100% - 18rem));
+  }
+
+  /* 사이드바 닫힌 상태 (약 1.4배 정도 넓게) */
+  .dashboard-page.sidebar-closed .dashboard-content {
+    padding: 1.5rem 2rem;
+    /* 1200px × 1.4 ≈ 1680px 느낌 */
+    max-width: min(1680px, calc(100% - 2rem));
   }
 }
 
@@ -90,7 +103,6 @@
   cursor: pointer;
   font-weight: 500;
   transition: background 0.2s ease;
-  font-family: 'Inter', 'Noto Sans KR', sans-serif;
+  font-family: "Inter", "Noto Sans KR", sans-serif;
   color: white !important;
 }
-

@@ -1,6 +1,7 @@
 import db from "../models/db.js";
 import { getProductDashboardData as getProductDashboard } from "./dashboardController.js";
 import { analyzeReviews } from "./reviewController.js"; // ✅ 실제 리뷰 분석 함수 import
+import { analyzeProductReviews } from "../services/absaService.js"; // Python 서버 직접 호출
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
@@ -265,8 +266,25 @@ export const keywordReview = async (req, res) => {
 };
 
 // ==============================
-// 5. 리뷰 분석 요청 (Python API 호출)
+// 5. 리뷰 분석 요청 (내부 함수로 변경)
 // ==============================
+// 내부에서 사용할 리뷰 분석 함수 (응답 없이 분석만 수행)
+const performAnalysis = async (productId, domain = null) => {
+  try {
+    console.log(`📦 ${productId}번 제품 리뷰 분석 시작 (도메인: ${domain || "자동"})`);
+    
+    // Python 서버 직접 호출
+    const result = await analyzeProductReviews(productId, domain);
+    
+    console.log(`✅ 분석 완료:`, result);
+    return result;
+  } catch (err) {
+    console.error("❌ 분석 실행 오류:", err);
+    throw err;
+  }
+};
+
+// 기존 API 엔드포인트 (필요시 사용)
 export const analysisRequest = async (req, res) => {
   try {
     const { id: productId } = req.params;
@@ -384,9 +402,14 @@ export const createProduct = async (req, res) => {
       [product_name, brand || null, category_id]
     );
 
+    const productId = result.insertId;
+
+    // TODO: 제품 생성 후 리뷰 분석 자동 실행
+    // await requestAnalysis(productId);
+
     res.status(201).json({
       message: "제품이 성공적으로 생성되었습니다.",
-      product: { product_id: result.insertId, product_name, brand, category_id }
+      product: { product_id: productId, product_name, brand, category_id }
     });
 
   } catch (err) {
@@ -721,7 +744,7 @@ export const uploadReviews = async (req, res) => {
             await db.query(
               `INSERT INTO tb_review (product_id, review_text, rating, review_date, source)
                VALUES (?, ?, ?, ?, ?)`,
-              [productId, reviewText, rating, reviewDate, file.originalname]
+              [productId, reviewText, rating, reviewDate, null]
             );
             
             totalInserted++;
@@ -736,6 +759,12 @@ export const uploadReviews = async (req, res) => {
       }
     }
     
+// TODO: 리뷰 업로드 후 리뷰 분석 자동 실행
+if (totalInserted > 0) {
+  await performAnalysis(productId);
+}
+
+analysisRequest
     res.json({
       message: "리뷰 업로드 완료",
       summary: {

@@ -8,6 +8,8 @@ import {
     analysisRequest,
     deleteProduct,
     updateProduct,
+    uploadReviews,
+    upload,
     //getAnalysisStatus
 } from "../controllers/productController.js";
 
@@ -17,6 +19,9 @@ const router = express.Router();
 // 더 구체적인 라우트를 먼저 배치
 // *현재는 미사용*/ 대시보드 새로고침 요청(refreshDashboard 라는 미들웨어를 만들어야함. refreshDashboard 로 대시보드 새로고침 한 뒤 대시보드 로드) 
 //router.post("/:id/dashboard/refresh", refreshDashboard, dashboard);
+
+// 리뷰 파일 업로드 (더 구체적인 라우트를 먼저 배치)
+router.post("/:id/reviews/upload", upload.array('files', 10), uploadReviews);
 
 // 수집된 리뷰들에 대한 감성분석 요청
 router.post("/:id/reviews/analysis", analysisRequest);

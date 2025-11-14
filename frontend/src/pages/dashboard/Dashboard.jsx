@@ -132,21 +132,20 @@ function Dashboard() {
       setLoading(true);
 
       try {
-        // 제품 정보와 대시보드 데이터를 병렬로 요청 (AbortSignal 전달)
-        const [productResult, dashboardResult] = await Promise.all([
-          dashboardService.getProduct(productId, abortController.signal).catch(err => {
-            // AbortError는 무시하고 null 반환
-            if (err.name === 'AbortError' || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
-              return null;
-            }
-            throw err;
-          }),
-          dashboardService.getDashboardData(
-            productId, 
-            abortController.signal, 
-            null // 제품 정보는 나중에 설정
-          )
-        ]);
+        // 제품 정보를 먼저 가져오기
+        let fetchedProductInfo = null;
+        try {
+          const productResult = await dashboardService.getProduct(productId, abortController.signal);
+          if (productResult?.success && productResult.data?.data) {
+            fetchedProductInfo = productResult.data.data;
+            setProductInfo(fetchedProductInfo);
+          }
+        } catch (err) {
+          // AbortError는 정상적인 취소이므로 무시
+          if (err.name !== 'AbortError' && err.name !== 'CanceledError' && err.code !== 'ERR_CANCELED') {
+            console.warn("제품 정보 조회 실패:", err);
+          }
+        }
 
         // 요청이 취소되었거나 컴포넌트가 언마운트된 경우 상태 업데이트 방지
         if (!isMounted || abortController.signal.aborted) {
@@ -155,17 +154,12 @@ function Dashboard() {
           return;
         }
 
-        // 제품 정보 추출 및 설정
-        const fetchedProductInfo = productResult?.success && productResult.data?.data 
-          ? productResult.data.data 
-          : null;
-
-        if (fetchedProductInfo) {
-          setProductInfo(fetchedProductInfo);
-        }
-
-        // 대시보드 데이터 처리
-        const result = dashboardResult;
+        // 대시보드 데이터 가져오기 (제품 정보 전달)
+        const result = await dashboardService.getDashboardData(
+          productId, 
+          abortController.signal, 
+          fetchedProductInfo // 제품 정보 전달
+        );
 
         // 요청이 취소되었거나 컴포넌트가 언마운트된 경우 상태 업데이트 방지
         if (!isMounted || abortController.signal.aborted) {

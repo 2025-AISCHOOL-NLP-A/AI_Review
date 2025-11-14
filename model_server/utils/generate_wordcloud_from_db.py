@@ -1,9 +1,18 @@
 import os
 import re
+import sys
 from konlpy.tag import Okt
 from collections import Counter
 from wordcloud import WordCloud
 from dotenv import load_dotenv
+
+# 경로 설정 (독립 실행 시)
+if __name__ == "__main__":
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    model_server_dir = os.path.dirname(current_dir)
+    if model_server_dir not in sys.path:
+        sys.path.insert(0, model_server_dir)
+
 from utils.db_connect import get_connection
 
 load_dotenv()
@@ -55,7 +64,7 @@ def generate_wordcloud_from_db(product_id: int, domain="steam"):
     cursor.execute(
         "SELECT review_text FROM tb_review WHERE product_id = %s", (product_id,)
     )
-    reviews = [r[0] for r in cursor.fetchall() if r[0]]
+    reviews = [r["review_text"] for r in cursor.fetchall() if r["review_text"]]
 
     if not reviews:
         conn.close()
@@ -119,5 +128,29 @@ def generate_wordcloud_from_db(product_id: int, domain="steam"):
 # 🔹 실행 (테스트)
 # ======================================
 if __name__ == "__main__":
-    product_id = 1011  # 테스트할 제품 ID 입력
-    generate_wordcloud_from_db(product_id, domain="steam")
+    from utils.db_connect import init_db_pool, close_db_pool
+    
+    # 테스트용 product_id
+    product_id = int(sys.argv[1]) if len(sys.argv) > 1 else 1008
+    domain = sys.argv[2] if len(sys.argv) > 2 else "electronics"
+    
+    try:
+        print("🔧 DB Connection Pool 초기화 중...")
+        init_db_pool()
+        
+        print(f"\n🌈 워드클라우드 생성 시작 (product_id={product_id}, domain={domain})")
+        wc_path = generate_wordcloud_from_db(product_id, domain)
+        
+        if wc_path:
+            print(f"\n✅ 테스트 성공! 워드클라우드 경로: {wc_path}")
+        else:
+            print("\n❌ 테스트 실패")
+    
+    except Exception as e:
+        print(f"\n❌ 테스트 실패: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    finally:
+        print("\n🧹 DB Connection Pool 정리 중...")
+        close_db_pool()

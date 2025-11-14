@@ -74,7 +74,7 @@ def analyze_product_reviews(product_id: int, domain: Optional[str] = None):
         # 제품 정보 및 카테고리 조회
         cursor.execute(
             """
-            SELECT p.product_id, p.category_id, c.category_name
+            SELECT p.product_id, p.category_id, p.user_id, c.category_name
             FROM tb_product p
             LEFT JOIN tb_productCategory c ON p.category_id = c.category_id
             WHERE p.product_id = %s
@@ -87,7 +87,7 @@ def analyze_product_reviews(product_id: int, domain: Optional[str] = None):
             raise HTTPException(status_code=404, detail=f"제품을 찾을 수 없습니다 (product_id={product_id})")
         
         category_id = product_info["category_id"]
-        
+        user_id = product_info["user_id"]
         # 도메인 결정 (파라미터가 없으면 카테고리로 자동 결정)
         if domain is None:
             domain = CATEGORY_TO_DOMAIN.get(category_id, "steam")
@@ -179,7 +179,7 @@ def analyze_product_reviews(product_id: int, domain: Optional[str] = None):
         print(f"💡 인사이트 생성 시작...")
         insight_id = None
         try:
-            insight_id = generate_insight_from_db(product_id, user_id=None)
+            insight_id = generate_insight_from_db(product_id, user_id=user_id)
             if insight_id:
                 print(f"✅ 인사이트 생성 완료 (insight_id={insight_id})")
             else:

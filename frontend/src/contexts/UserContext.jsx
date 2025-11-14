@@ -8,15 +8,43 @@ export const UserProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(null);
 
+  // JWT 토큰 만료 시간 체크 함수
+  const isTokenExpired = (token) => {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const exp = payload.exp * 1000; // JWT exp는 초 단위이므로 밀리초로 변환
+      return Date.now() >= exp;
+    } catch (error) {
+      return true; // 토큰 파싱 실패 시 만료된 것으로 간주
+    }
+  };
+
   // 사용자 정보 로드
   useEffect(() => {
     const abortController = new AbortController();
     let isMounted = true;
 
     const loadUser = async () => {
-      const token = localStorage.getItem("token");
+      // 초기 상태: 로딩 중으로 설정
+      if (isMounted && !abortController.signal.aborted) {
+        setLoading(true);
+      }
+
+      const token = sessionStorage.getItem("token");
       if (!token) {
         if (isMounted && !abortController.signal.aborted) {
+          setUser(null);
+          setIsAuthenticated(false);
+          setLoading(false);
+        }
+        return;
+      }
+
+      // 토큰 만료 체크 - 만료된 토큰은 즉시 제거하고 로그아웃 처리
+      if (isTokenExpired(token)) {
+        if (isMounted && !abortController.signal.aborted) {
+          sessionStorage.removeItem("token");
+          sessionStorage.removeItem("userEmail");
           setUser(null);
           setIsAuthenticated(false);
           setLoading(false);
@@ -27,8 +55,18 @@ export const UserProvider = ({ children }) => {
       try {
         const userData = await authService.getMe(abortController.signal);
         if (isMounted && !abortController.signal.aborted) {
-          setUser(userData);
-          setIsAuthenticated(true);
+          // 토큰이 다시 체크되어 유효한 경우에만 인증 상태 설정
+          const currentToken = sessionStorage.getItem("token");
+          if (currentToken && !isTokenExpired(currentToken)) {
+            setUser(userData);
+            setIsAuthenticated(true);
+          } else {
+            // 요청 중에 토큰이 만료된 경우
+            setUser(null);
+            setIsAuthenticated(false);
+            sessionStorage.removeItem("token");
+            sessionStorage.removeItem("userEmail");
+          }
           setLoading(false);
         }
       } catch (error) {
@@ -42,8 +80,8 @@ export const UserProvider = ({ children }) => {
             setUser(null);
             setIsAuthenticated(false);
             setLoading(false);
-            localStorage.removeItem("token");
-            localStorage.removeItem("userEmail");
+            sessionStorage.removeItem("token");
+            sessionStorage.removeItem("userEmail");
           }
         } else {
           if (isMounted && !abortController.signal.aborted) {
@@ -65,8 +103,17 @@ export const UserProvider = ({ children }) => {
 
   // 사용자 정보 새로고침
   const refreshUser = async () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) {
+      setUser(null);
+      setIsAuthenticated(false);
+      return;
+    }
+
+    // 토큰 만료 체크
+    if (isTokenExpired(token)) {
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("userEmail");
       setUser(null);
       setIsAuthenticated(false);
       return;
@@ -74,14 +121,23 @@ export const UserProvider = ({ children }) => {
 
     try {
       const userData = await authService.getMe();
-      setUser(userData);
-      setIsAuthenticated(true);
+      // 토큰이 여전히 유효한지 다시 확인
+      const currentToken = sessionStorage.getItem("token");
+      if (currentToken && !isTokenExpired(currentToken)) {
+        setUser(userData);
+        setIsAuthenticated(true);
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("userEmail");
+      }
     } catch (error) {
       if (error.response && error.response.status === 401) {
         setUser(null);
         setIsAuthenticated(false);
-        localStorage.removeItem("token");
-        localStorage.removeItem("userEmail");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("userEmail");
       } else {
         // 다른 오류도 처리
         setUser(null);

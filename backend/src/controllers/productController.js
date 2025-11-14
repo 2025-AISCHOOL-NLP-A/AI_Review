@@ -5,6 +5,10 @@ import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import multer from "multer";
+import XLSX from "xlsx";
+import csv from "csv-parser";
+import { Readable } from "stream";
 
 dotenv.config();
 
@@ -38,34 +42,29 @@ export const getProductById = async (req, res) => {
 };
 
 // ==============================
-// 2. 제품 목록 조회
+// 2. 제품 목록 조회 (사용자별)
 // ==============================
 export const productList = async (req, res) => {
   try {
-    // const [rows] = await db.query(`
-    //   SELECT 
-    //     p.product_id,
-    //     p.product_name,
-    //     p.brand,
-    //     c.category_name,
-    //     IFNULL(d.product_score, 0) AS product_score,
-    //     IFNULL(d.total_reviews, 0) AS total_reviews,
-    //     d.updated_at
-    //   FROM tb_product p
-    //   LEFT JOIN tb_productCategory c ON p.category_id = c.category_id
-    //   LEFT JOIN tb_productDashboard d ON p.product_id = d.product_id
-    //   ORDER BY p.product_id DESC
-    // `);
+    // 사용자 인증 확인
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "인증된 사용자 정보가 없습니다." });
+    }
+
+    // 해당 사용자의 제품만 조회
     const [rows] = await db.query(`
       SELECT 
         p.product_id,
         p.product_name,
         p.brand,
         p.registered_date,
-        p.category_id
+        p.category_id,
+        p.user_id
       FROM tb_product p
+      WHERE p.user_id = ?
       ORDER BY p.product_id DESC
-    `);
+    `, [userId]);
 
     res.json({
       message: "제품 목록 조회 성공",
@@ -168,11 +167,21 @@ export const dashboard = async (req, res) => {
       [productId]
     );
 
+    //5. 상품 이름 조회
+    const [[productInfo]] = await db.query(
+      `SELECT 
+        product_name
+      FROM tb_product
+      WHERE product_id = ?
+      LIMIT 1`,
+      [productId]
+    );
     // 5. 응답 데이터 구성
     res.json({
       message: "대시보드 조회 성공",
       dashboard: {
         product_id: dashboardData.product_id,
+        product_name: productInfo?.product_name,
         total_reviews: dashboardData.total_reviews,
         sentiment_distribution: dashboardData.sentiment_distribution,
         product_score: dashboardData.product_score,
@@ -462,3 +471,290 @@ export const updateProduct = async (req, res) => {
 export const test = async (req, res) => {
   res.json({ message: "제품 테스트 API 작동 중" });
 };
+
+// ==============================
+// 9. 리뷰 파일 업로드 및 삽입
+// ==============================
+// Multer 설정 (메모리 스토리지)
+const storage = multer.memoryStorage();
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB 제한
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['.csv', '.xlsx', '.xls'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowedTypes.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error('CSV 또는 Excel 파일만 업로드할 수 있습니다.'), false);
+    }
+  }
+});
+
+// CSV 파일 파싱
+const parseCSV = async (buffer) => {
+  return new Promise((resolve, reject) => {
+    const results = [];
+    const stream = Readable.from(buffer);
+    
+    stream
+      .pipe(csv())
+      .on('data', (data) => results.push(data))
+      .on('end', () => resolve(results))
+      .on('error', (error) => reject(error));
+  });
+};
+
+// Excel 파일 파싱
+const parseExcel = (buffer) => {
+  try {
+    const workbook = XLSX.read(buffer, { type: 'buffer' });
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+    return jsonData;
+  } catch (error) {
+    throw new Error(`Excel 파일 파싱 오류: ${error.message}`);
+  }
+};
+
+// 날짜 파싱 (다양한 형식 지원)
+const parseDate = (dateValue) => {
+  if (!dateValue) return null;
+  
+  // 이미 Date 객체인 경우
+  if (dateValue instanceof Date) {
+    return dateValue;
+  }
+  
+  // 문자열인 경우
+  if (typeof dateValue === 'string') {
+    // ISO 형식
+    if (dateValue.includes('T') || dateValue.includes('-')) {
+      const date = new Date(dateValue);
+      if (!isNaN(date.getTime())) return date;
+    }
+    
+    // YYYY-MM-DD 형식
+    const dateMatch = dateValue.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+    if (dateMatch) {
+      const date = new Date(dateMatch[1], dateMatch[2] - 1, dateMatch[3]);
+      if (!isNaN(date.getTime())) return date;
+    }
+  }
+  
+  // 숫자 타임스탬프인 경우
+  if (typeof dateValue === 'number') {
+    // Excel 날짜 형식 (1900-01-01 기준 일수) 또는 Unix 타임스탬프
+    if (dateValue > 25569) { // Excel 날짜로 보이는 경우
+      const date = new Date((dateValue - 25569) * 86400 * 1000);
+      if (!isNaN(date.getTime())) return date;
+    } else {
+      // Unix 타임스탬프 (초 단위)
+      const date = new Date(dateValue * 1000);
+      if (!isNaN(date.getTime())) return date;
+    }
+  }
+  
+  return null;
+};
+
+// 스팀 리뷰 평점 계산 (voted_up + weighted_vote_score)
+const calculateSteamRating = (votedUp, weightedScore) => {
+  const voted_up = votedUp === true || votedUp === 'True' || votedUp === 'true' || votedUp === 1 || votedUp === '1';
+  const score = parseFloat(weightedScore) || 0.5;
+  
+  if (voted_up) {
+    return 3.0 + (score * 2.0);   // 긍정 리뷰 → 3.0~5.0점
+  } else {
+    return score * 2.0;           // 부정 리뷰 → 0.0~2.0점
+  }
+};
+
+// 중복 리뷰 체크
+const checkDuplicateReview = async (productId, reviewText, reviewDate) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT review_id FROM tb_review 
+       WHERE product_id = ? AND review_text = ? AND DATE(review_date) = DATE(?)`,
+      [productId, reviewText, reviewDate]
+    );
+    return rows.length > 0;
+  } catch (error) {
+    console.error("❌ 중복 체크 오류:", error);
+    return false;
+  }
+};
+
+// 리뷰 업로드 메인 함수
+export const uploadReviews = async (req, res) => {
+  try {
+    const { id: productId } = req.params;
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ message: "인증된 사용자 정보가 없습니다." });
+    }
+    
+    if (!productId) {
+      return res.status(400).json({ message: "제품 ID가 필요합니다." });
+    }
+    
+    // 제품 소유권 확인
+    const [productRows] = await db.query(
+      "SELECT product_id, user_id FROM tb_product WHERE product_id = ?",
+      [productId]
+    );
+    
+    if (productRows.length === 0) {
+      return res.status(404).json({ message: "제품을 찾을 수 없습니다." });
+    }
+    
+    if (productRows[0].user_id !== userId) {
+      return res.status(403).json({ message: "해당 제품에 대한 권한이 없습니다." });
+    }
+    
+    // 파일과 매핑 정보 확인
+    const files = req.files || [];
+    // 프론트엔드에서 각 파일마다 mappings를 append하므로 배열로 받음
+    const mappingsRaw = req.body.mappings || [];
+    const mappings = Array.isArray(mappingsRaw) 
+      ? mappingsRaw.map(m => typeof m === 'string' ? JSON.parse(m) : m)
+      : [typeof mappingsRaw === 'string' ? JSON.parse(mappingsRaw) : mappingsRaw];
+    
+    if (files.length === 0) {
+      return res.status(400).json({ message: "업로드할 파일이 없습니다." });
+    }
+    
+    if (files.length !== mappings.length) {
+      return res.status(400).json({ 
+        message: `파일과 매핑 정보의 개수가 일치하지 않습니다. (파일: ${files.length}, 매핑: ${mappings.length})` 
+      });
+    }
+    
+    let totalInserted = 0;
+    let totalSkipped = 0;
+    let totalDuplicated = 0;
+    const errors = [];
+    
+    // 각 파일 처리
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const mapping = mappings[i];
+      
+      if (!mapping || !mapping.reviewColumn || !mapping.dateColumn) {
+        errors.push(`${file.originalname}: 리뷰 컬럼과 날짜 컬럼 매핑이 필요합니다.`);
+        continue;
+      }
+      
+      try {
+        let rows = [];
+        const ext = path.extname(file.originalname).toLowerCase();
+        
+        // 파일 파싱
+        if (ext === '.csv') {
+          rows = await parseCSV(file.buffer);
+        } else if (ext === '.xlsx' || ext === '.xls') {
+          rows = parseExcel(file.buffer);
+        } else {
+          errors.push(`${file.originalname}: 지원하지 않는 파일 형식입니다.`);
+          continue;
+        }
+        
+        if (!rows || rows.length === 0) {
+          errors.push(`${file.originalname}: 데이터가 없습니다.`);
+          continue;
+        }
+        
+        // 첫 번째 행에서 사용 가능한 컬럼명 확인 (스팀 리뷰용)
+        const firstRow = rows[0] || {};
+        const availableColumns = Object.keys(firstRow);
+        const hasVotedUp = availableColumns.includes('voted_up');
+        const hasWeightedScore = availableColumns.includes('weighted_vote_score');
+        const isSteamFormat = hasVotedUp && hasWeightedScore;
+        
+        // 각 행 처리
+        for (const row of rows) {
+          try {
+            const reviewText = String(row[mapping.reviewColumn] || '').trim();
+            const dateValue = row[mapping.dateColumn];
+            const ratingValue = mapping.ratingColumn ? row[mapping.ratingColumn] : null;
+            
+            // 필수 필드 검증
+            if (!reviewText) {
+              totalSkipped++;
+              continue;
+            }
+            
+            // 날짜 파싱
+            const reviewDate = parseDate(dateValue);
+            if (!reviewDate) {
+              totalSkipped++;
+              continue;
+            }
+            
+            // 평점 처리
+            let rating = 3.0; // 기본값
+            
+            // 스팀 리뷰 형식인 경우 (voted_up이 평점 컬럼으로 선택된 경우)
+            if (isSteamFormat && mapping.ratingColumn === 'voted_up') {
+              const votedUp = row['voted_up'];
+              const weightedScore = row['weighted_vote_score'];
+              rating = calculateSteamRating(votedUp, weightedScore);
+            } 
+            // 일반 평점 컬럼이 선택된 경우
+            else if (ratingValue !== null && ratingValue !== undefined) {
+              const parsedRating = parseFloat(ratingValue);
+              if (!isNaN(parsedRating) && parsedRating >= 0 && parsedRating <= 5) {
+                rating = parsedRating;
+              }
+            }
+            
+            // 중복 체크
+            const isDuplicate = await checkDuplicateReview(productId, reviewText, reviewDate);
+            if (isDuplicate) {
+              totalDuplicated++;
+              continue;
+            }
+            
+            // 리뷰 삽입
+            await db.query(
+              `INSERT INTO tb_review (product_id, review_text, rating, review_date, source)
+               VALUES (?, ?, ?, ?, ?)`,
+              [productId, reviewText, rating, reviewDate, file.originalname]
+            );
+            
+            totalInserted++;
+          } catch (rowError) {
+            console.error(`❌ 리뷰 삽입 오류 (${file.originalname}):`, rowError);
+            totalSkipped++;
+          }
+        }
+      } catch (fileError) {
+        console.error(`❌ 파일 처리 오류 (${file.originalname}):`, fileError);
+        errors.push(`${file.originalname}: ${fileError.message}`);
+      }
+    }
+    
+    res.json({
+      message: "리뷰 업로드 완료",
+      summary: {
+        totalInserted,
+        totalSkipped,
+        totalDuplicated,
+        totalProcessed: totalInserted + totalSkipped + totalDuplicated
+      },
+      errors: errors.length > 0 ? errors : undefined
+    });
+    
+  } catch (err) {
+    console.error("❌ 리뷰 업로드 오류:", err);
+    res.status(500).json({ 
+      message: "리뷰 업로드 중 서버 오류가 발생했습니다.",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+// Multer 미들웨어 export
+export { upload };

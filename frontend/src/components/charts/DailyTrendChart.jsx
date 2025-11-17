@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
+import { getChartColors } from '../../utils/chartColors';
 import './DailyTrendChart.css';
 
 const DailyTrendChart = ({ data, loading }) => {
@@ -7,18 +8,6 @@ const DailyTrendChart = ({ data, loading }) => {
   const chartInstance = useRef(null);
   const containerRef = useRef(null);
   const actualDataLengthRef = useRef(0); // 실제 사용되는 데이터 길이 저장
-
-  // CSS 변수에서 색상 가져오기 (더 안전한 방법)
-  const getColor = (varName, fallback) => {
-    try {
-      // containerRef가 있으면 그것을 사용, 없으면 document.documentElement 사용
-      const element = containerRef.current || document.documentElement;
-      const value = getComputedStyle(element).getPropertyValue(varName).trim();
-      return value || fallback;
-    } catch (error) {
-      return fallback;
-    }
-  };
 
   useEffect(() => {
     // 기존 차트 제거
@@ -53,10 +42,11 @@ const DailyTrendChart = ({ data, loading }) => {
     // containerRef가 준비될 때까지 대기
     const initChart = () => {
       // CSS 변수에서 색상 가져오기
-      const primaryColor = getColor('--chart-primary-color', "#5B8EFF");
-      const neutralColor = getColor('--chart-neutral-color', "#CBD5E1");
-      const newReviewColor = getColor('--chart-new-review-color', "#111827");
-      const fontColor = getColor('--chart-font-color', "#333333");
+      const colors = getChartColors(containerRef.current);
+      const primaryColor = colors.primary;
+      const neutralColor = colors.neutral;
+      const newReviewColor = colors.newReview;
+      const fontColor = colors.font;
 
       try {
         // 데이터 검증 및 준비

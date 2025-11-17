@@ -1,7 +1,7 @@
 // usePDFDownload.js
 import { useCallback } from "react";
 import html2pdf from "html2pdf.js";
-import { getElementScrollSize } from "../hooks/useViewport";
+import { getElementScrollSize } from "../utils/viewportUtils";
 
 export const usePDFDownload = ({
   contentRef,

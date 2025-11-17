@@ -1,4 +1,9 @@
 import axios from "axios";
+import { getToken, removeToken, clearAuthData } from "../utils/storage";
+
+/**
+ * API 설정 및 인터셉터
+ */
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 
 const api = axios.create({
@@ -9,7 +14,11 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// JWT 토큰 만료 시간 체크 함수
+/**
+ * JWT 토큰 만료 시간 체크
+ * @param {string} token - JWT 토큰
+ * @returns {boolean} 만료 여부
+ */
 const isTokenExpired = (token) => {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
@@ -20,15 +29,16 @@ const isTokenExpired = (token) => {
   }
 };
 
-// ✅ 요청 인터셉터: JWT 자동 첨부 및 만료 체크
+/**
+ * 요청 인터셉터: JWT 자동 첨부 및 만료 체크
+ */
 api.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem("token");
+  const token = getToken();
   if (token) {
     // 토큰 만료 체크
     if (isTokenExpired(token)) {
       // 만료된 토큰은 제거하고 요청을 취소
-      sessionStorage.removeItem("token");
-      sessionStorage.removeItem("userEmail");
+      clearAuthData();
       // 요청을 취소하여 401 에러를 명시적으로 발생시킴
       return Promise.reject({
         response: {
@@ -44,14 +54,16 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+/**
+ * 응답 인터셉터: 401 에러 시 인증 정보 제거
+ */
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response && error.response.status === 401) {
             // 토큰 만료 또는 인증 실패 시 토큰만 제거
             // 브라우저 이동은 제거 - 각 컴포넌트에서 react-router-dom의 navigate() 사용
-            sessionStorage.removeItem("token");
-            sessionStorage.removeItem("userEmail");
+            clearAuthData();
         }
         return Promise.reject(error);
     }

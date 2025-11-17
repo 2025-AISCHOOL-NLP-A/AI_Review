@@ -1,5 +1,5 @@
 import React from "react";
-import { TERMS_OF_SERVICE, PRIVACY_POLICY } from "../../constants/terms";
+import { TERMS_OF_SERVICE, PRIVACY_POLICY } from "../../constants";
 
 /**
  * 약관 동의 섹션 컴포넌트

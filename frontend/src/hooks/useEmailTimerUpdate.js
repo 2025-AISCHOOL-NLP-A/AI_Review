@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 /**
- * 이메일 인증 타이머 커스텀 훅
- * localStorage를 사용하여 페이지 새로고침 후에도 타이머 유지
+ * 회원정보 수정 페이지용 이메일 타이머 커스텀 훅
+ * localStorage 키를 다르게 사용하여 회원가입 타이머와 구분
  */
-const TIMER_STORAGE_KEY = "emailVerificationTimerEnd";
+const TIMER_STORAGE_KEY = "emailVerificationTimerEndUpdate";
 const DEFAULT_TIMER_SECONDS = 60;
 
-export function useEmailTimer(initialTimer = 0) {
+export const useEmailTimerUpdate = (initialTimer = 0) => {
   const [timer, setTimer] = useState(initialTimer);
+  const [isEmailSent, setIsEmailSent] = useState(false);
   const timerRef = useRef(null);
 
   // localStorage에서 타이머 복원
@@ -21,6 +22,7 @@ export function useEmailTimer(initialTimer = 0) {
 
       if (remaining > 0) {
         setTimer(remaining);
+        setIsEmailSent(true);
         return true;
       } else {
         localStorage.removeItem(TIMER_STORAGE_KEY);
@@ -37,7 +39,6 @@ export function useEmailTimer(initialTimer = 0) {
   // 타이머 실행
   useEffect(() => {
     if (timer > 0) {
-      // localStorage에 타이머 종료 시간 저장
       const endTime = Date.now() + timer * 1000;
       localStorage.setItem(TIMER_STORAGE_KEY, endTime.toString());
 
@@ -45,7 +46,6 @@ export function useEmailTimer(initialTimer = 0) {
         setTimer((prev) => prev - 1);
       }, 1000);
     } else {
-      // 타이머가 0이 되면 localStorage에서 제거
       localStorage.removeItem(TIMER_STORAGE_KEY);
       if (timerRef.current) {
         clearTimeout(timerRef.current);
@@ -66,6 +66,7 @@ export function useEmailTimer(initialTimer = 0) {
     setTimer(seconds);
     const endTime = Date.now() + seconds * 1000;
     localStorage.setItem(TIMER_STORAGE_KEY, endTime.toString());
+    setIsEmailSent(true);
   }, []);
 
   // 타이머 초기화
@@ -91,6 +92,8 @@ export function useEmailTimer(initialTimer = 0) {
     resetTimer,
     formatTimer,
     isActive: timer > 0,
+    isEmailSent,
+    setIsEmailSent,
   };
-}
+};
 

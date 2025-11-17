@@ -54,14 +54,23 @@
   }
 }
 
-/* 사이드바가 닫혔을 때 콘텐츠 너비 조정 */
+/* 사이드바가 열렸을 때 콘텐츠 너비 조정 (사이드바 256px 고려) */
+.dashboard-page.sidebar-open .dashboard-content {
+  max-width: min(1280px, calc(100% - 256px - 2rem));
+}
+
+/* 사이드바가 닫혔을 때 콘텐츠 너비 조정 (사이드바 64px 고려) */
 .dashboard-page.sidebar-closed .dashboard-content {
-  max-width: min(1280px, calc(100% - 2rem));
+  max-width: min(1280px, calc(100% - 64px - 2rem));
 }
 
 @media (min-width: 1024px) {
+  .dashboard-page.sidebar-open .dashboard-content {
+    max-width: min(1280px, calc(100% - 256px - 2rem));
+  }
+  
   .dashboard-page.sidebar-closed .dashboard-content {
-    max-width: min(1280px, calc(100% - 2rem));
+    max-width: min(1280px, calc(100% - 64px - 2rem));
   }
 }
 

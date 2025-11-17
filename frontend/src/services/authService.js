@@ -1,5 +1,8 @@
 // src/services/authService.js
 import api from "./api";
+import { handleApiError, getErrorMessage, isAbortError } from "../utils/errorHandler";
+import { setToken, setUserEmail, clearAuthData, getUserEmail } from "../utils/storage";
+import { createApiConfig } from "../utils/apiHelpers";
 
 const authService = {
   /** 🔐 로그인 */
@@ -12,10 +15,10 @@ const authService = {
 
       // ✅ JWT 토큰 저장 (sessionStorage 사용 - 탭을 닫으면 자동 삭제)
       if (res.data && res.data.token) {
-        sessionStorage.setItem("token", res.data.token);
+        setToken(res.data.token);
         // 이메일 정보도 sessionStorage에 저장
         if (res.data.user && res.data.user.email) {
-          sessionStorage.setItem("userEmail", res.data.user.email);
+          setUserEmail(res.data.user.email);
         }
         return { success: true, data: res.data };
       }
@@ -24,20 +27,19 @@ const authService = {
       return { success: false, message: "로그인에 실패했습니다." };
     } catch (err) {
       // 401 에러는 정상적인 로그인 실패이므로 에러를 throw하지 않고 처리
-      if (err.response && err.response.status === 401) {
-        const msg = err.response?.data?.message || "아이디 또는 비밀번호가 올바르지 않습니다.";
-        return { success: false, message: msg };
-      }
-      // 기타 에러
-      const msg = err.response?.data?.message || "로그인에 실패했습니다.";
-      return { success: false, message: msg };
+      const defaultMessage = err.response?.status === 401
+        ? "아이디 또는 비밀번호가 올바르지 않습니다."
+        : "로그인에 실패했습니다.";
+      return handleApiError(err, defaultMessage, null) || {
+        success: false,
+        message: getErrorMessage(err, defaultMessage),
+      };
     }
   },
 
   /** 🚪 로그아웃 */
   logout() {
-    sessionStorage.removeItem("token");
-    sessionStorage.removeItem("userEmail");
+    clearAuthData();
   },
 
   /** 🧍 회원가입 */
@@ -51,8 +53,10 @@ const authService = {
       return { success: true, message: res.data.message };
     } catch (err) {
       console.error("회원가입 요청 중 오류:", err);
-      const msg = err.response?.data?.message || "회원가입 중 오류가 발생했습니다.";
-      return { success: false, message: msg };
+      return handleApiError(err, "회원가입 중 오류가 발생했습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "회원가입 중 오류가 발생했습니다."),
+      };
     }
   },
 
@@ -62,8 +66,10 @@ const authService = {
       const res = await api.post("/auth/check-duplicate", { user_id: userId });
       return { success: true, exists: res.data.exists };
     } catch (err) {
-      const msg = err.response?.data?.message || "중복 검사 중 오류가 발생했습니다.";
-      return { success: false, message: msg };
+      return handleApiError(err, "중복 검사 중 오류가 발생했습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "중복 검사 중 오류가 발생했습니다."),
+      };
     }
   },
 
@@ -99,8 +105,6 @@ const authService = {
             success: false, 
             message: errorMessage || "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요." 
           };
-        } else {
-          return { success: false, message: errorMessage || "이메일 발송 중 오류가 발생했습니다." };
         }
       }
       
@@ -109,7 +113,7 @@ const authService = {
         return { success: false, message: "서버에 연결할 수 없습니다. 네트워크를 확인해주세요." };
       }
       
-      return { success: false, message: "이메일 발송 중 오류가 발생했습니다." };
+      return { success: false, message: getErrorMessage(err, "이메일 발송 중 오류가 발생했습니다.") };
     }
   },
 
@@ -119,8 +123,10 @@ const authService = {
       const res = await api.post("/auth/verify-code", { email, code });
       return { success: true, message: res.data.message };
     } catch (err) {
-      const msg = err.response?.data?.message || "인증번호가 일치하지 않습니다.";
-      return { success: false, message: msg };
+      return handleApiError(err, "인증번호가 일치하지 않습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "인증번호가 일치하지 않습니다."),
+      };
     }
   },
 
@@ -134,8 +140,10 @@ const authService = {
         message: res.data.message,
       };
     } catch (err) {
-      const msg = err.response?.data?.message || "일치하는 정보를 찾을 수 없습니다.";
-      return { success: false, message: msg };
+      return handleApiError(err, "일치하는 정보를 찾을 수 없습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "일치하는 정보를 찾을 수 없습니다."),
+      };
     }
   },
 
@@ -148,20 +156,22 @@ const authService = {
       });
       return { success: true, message: res.data.message };
     } catch (err) {
-      const msg = err.response?.data?.message || "비밀번호 찾기 중 오류가 발생했습니다.";
-      return { success: false, message: msg };
+      return handleApiError(err, "비밀번호 찾기 중 오류가 발생했습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "비밀번호 찾기 중 오류가 발생했습니다."),
+      };
     }
   },
 
   /** 👤 현재 사용자 정보 가져오기 */
   async getMe(signal = null) {
     try {
-      const config = signal ? { signal } : {};
+      const config = createApiConfig(signal);
       const res = await api.get("/auth/verify", config);
       if (res.data.valid && res.data.user) {
         // JWT에 있는 정보만 반환 (id, login_id)
         // email은 sessionStorage에서 가져오기 (로그인 시 저장됨)
-        const email = sessionStorage.getItem("userEmail") || "";
+        const email = getUserEmail() || "";
         return {
           id: res.data.user.id,
           login_id: res.data.user.login_id,
@@ -171,7 +181,7 @@ const authService = {
       throw new Error("사용자 정보를 가져올 수 없습니다.");
     } catch (err) {
       // AbortError는 정상적인 취소이므로 에러로 처리하지 않음
-      if (err.name === 'AbortError' || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+      if (isAbortError(err)) {
         throw err;
       }
       // 401 오류는 토큰이 만료되었거나 유효하지 않은 경우이므로 조용히 처리
@@ -193,8 +203,10 @@ const authService = {
       const res = await api.post("/auth/update-profile", payload);
       return { success: true, message: res.data.message };
     } catch (err) {
-      const msg = err.response?.data?.message || "회원정보 수정 중 오류가 발생했습니다.";
-      return { success: false, message: msg };
+      return handleApiError(err, "회원정보 수정 중 오류가 발생했습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "회원정보 수정 중 오류가 발생했습니다."),
+      };
     }
   },
 
@@ -205,8 +217,10 @@ const authService = {
       return { success: true, message: res.data.message };
     } catch (err) {
       console.error("회원탈퇴 요청 중 오류:", err);
-      const msg = err.response?.data?.message || "회원탈퇴 중 오류가 발생했습니다.";
-      return { success: false, message: msg };
+      return handleApiError(err, "회원탈퇴 중 오류가 발생했습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "회원탈퇴 중 오류가 발생했습니다."),
+      };
     }
   },
 };

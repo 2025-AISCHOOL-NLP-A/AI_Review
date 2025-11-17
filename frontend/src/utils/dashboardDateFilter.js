@@ -2,15 +2,10 @@
  * 대시보드 날짜 필터링 유틸리티 함수
  * 날짜 필터링 관련 로직을 담당합니다.
  */
+import { getTodayDate, formatDateToYYYYMMDD, isDateInRange } from "./dateUtils";
 
-/**
- * 오늘 날짜를 YYYY-MM-DD 형식으로 가져오기
- * @returns {string} YYYY-MM-DD 형식의 오늘 날짜
- */
-export const getTodayDate = () => {
-  const today = new Date();
-  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-};
+// getTodayDate를 dateUtils에서 re-export
+export { getTodayDate, formatDateToYYYYMMDD, isDateInRange };
 
 /**
  * 날짜 필터링 함수
@@ -35,20 +30,7 @@ export const applyDateFilter = ({ originalDashboardData, startDate, endDate }) =
   if (filteredData.reviews && filteredData.reviews.length > 0) {
     filteredData.reviews = filteredData.reviews.filter((review) => {
       if (!review.review_date) return false;
-
-      const reviewDate = new Date(review.review_date);
-      if (isNaN(reviewDate.getTime())) return false;
-
-      const reviewDateStr = `${reviewDate.getFullYear()}-${String(reviewDate.getMonth() + 1).padStart(2, "0")}-${String(reviewDate.getDate()).padStart(2, "0")}`;
-
-      if (startDate && endDate) {
-        return reviewDateStr >= startDate && reviewDateStr <= endDate;
-      } else if (startDate) {
-        return reviewDateStr >= startDate;
-      } else if (endDate) {
-        return reviewDateStr <= endDate;
-      }
-      return true;
+      return isDateInRange(review.review_date, startDate, endDate);
     });
   }
 

@@ -118,13 +118,18 @@ canvas {
 /* ===================== 대시보드 전체 폭 / 오버플로우 제어 ===================== */
 
 /* PDF 캡처 대상인 메인 컨테이너가 화면 밖으로 안 나가게 */
+/* 사이드바 반응형 스타일은 dashboard-layout.css에서 처리 */
 #dashboard-content,
 .dashboard-content {
-  width: 100% !important;
-  max-width: 100% !important;
+  width: 100%;
   overflow-x: hidden !important;
   box-sizing: border-box;
   transform-origin: top left;
+}
+
+/* 사이드바 반응형 스타일이 없는 경우를 위한 기본값 */
+.dashboard-content:not([class*="sidebar"]) {
+  max-width: 100%;
 }
 
 /* 📌 내부 모든 요소가 부모 폭을 넘지 않도록 강제 */

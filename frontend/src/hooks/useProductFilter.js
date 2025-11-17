@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { applyAllFilters } from "../utils/productFilters";
 
 /**
  * 제품 필터링 및 페이지네이션 커스텀 훅
@@ -25,92 +26,15 @@ export function useProductFilter(
 
   // 필터링 및 페이지네이션
   useEffect(() => {
-    let filtered = [...allProducts];
-
-    // 검색 필터 적용
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter((item) => {
-        const productName = item.product_name ? item.product_name.toLowerCase() : "";
-        const brand = item.brand && item.brand.trim() ? item.brand.toLowerCase() : "";
-        return productName.includes(query) || brand.includes(query);
-      });
-    }
-
-    // 카테고리 필터 적용
-    if (selectedCategoryFilter) {
-      filtered = filtered.filter(
-        (item) => item.category_id === Number(selectedCategoryFilter)
-      );
-    }
-
-    // 등록일 날짜 범위 필터 적용
-    if (startDate || endDate) {
-      filtered = filtered.filter((item) => {
-        const itemDate = item.registered_date
-          ? new Date(item.registered_date)
-          : item.updated_at
-          ? new Date(item.updated_at)
-          : item.created_at
-          ? new Date(item.created_at)
-          : null;
-
-        if (!itemDate || isNaN(itemDate.getTime())) return false;
-
-        const itemDateStr = `${itemDate.getFullYear()}-${String(itemDate.getMonth() + 1).padStart(2, "0")}-${String(itemDate.getDate()).padStart(2, "0")}`;
-
-        if (startDate && endDate) {
-          return itemDateStr >= startDate && itemDateStr <= endDate;
-        } else if (startDate) {
-          return itemDateStr >= startDate;
-        } else if (endDate) {
-          return itemDateStr <= endDate;
-        }
-
-        return true;
-      });
-    }
-
-    // 정렬 적용
-    if (sortField) {
-      filtered.sort((a, b) => {
-        let aValue = a[sortField];
-        let bValue = b[sortField];
-
-        // 숫자 필드인 경우
-        if (sortField === "category_id") {
-          aValue = aValue !== null && aValue !== undefined ? Number(aValue) : 0;
-          bValue = bValue !== null && bValue !== undefined ? Number(bValue) : 0;
-        }
-        // 날짜 필드인 경우
-        else if (sortField === "registered_date") {
-          aValue = aValue ? new Date(aValue) : new Date(0);
-          bValue = bValue ? new Date(bValue) : new Date(0);
-        }
-        // 문자열 필드인 경우
-        else {
-          if (aValue === null || aValue === undefined) aValue = "";
-          if (bValue === null || bValue === undefined) bValue = "";
-
-          if (typeof aValue === "string" && typeof bValue === "string") {
-            aValue = aValue.toLowerCase();
-            bValue = bValue.toLowerCase();
-          }
-        }
-
-        const result =
-          aValue < bValue
-            ? sortDirection === "asc"
-              ? -1
-              : 1
-            : aValue > bValue
-            ? sortDirection === "asc"
-              ? 1
-              : -1
-            : 0;
-        return result;
-      });
-    }
+    // 모든 필터 적용
+    const filtered = applyAllFilters(allProducts, {
+      searchQuery,
+      categoryId: selectedCategoryFilter,
+      startDate,
+      endDate,
+      sortField,
+      sortDirection,
+    });
 
     // 전체 개수 설정
     const total = filtered.length;

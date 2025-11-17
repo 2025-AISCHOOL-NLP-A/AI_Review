@@ -1,0 +1,84 @@
+/* ========================================
+   CSS 변수 정의
+   모든 스타일에서 공통으로 사용되는 변수들
+   ======================================== */
+
+:root {
+  /* ===== 색상 변수 ===== */
+  /* 메인 색상 */
+  --main-color: #5b8eff;
+  --main-color-hover: #4a7ae8;
+  --main-color-light: #c8e3ff;
+  --main-color-dark: #3b6dd9;
+  
+  /* 배경 색상 */
+  --bg-color: #f9fafb;
+  --bg-color-hover: #f3f4f6;
+  --card-bg: #ffffff;
+  
+  /* 테두리 색상 */
+  --border-color: #e5e7eb;
+  --border-color-light: #f0f0f0;
+  --border-color-dark: #d1d5db;
+  
+  /* 텍스트 색상 */
+  --font-color: #333333;
+  --font-color-secondary: #666666;
+  --font-color-tertiary: #999999;
+  --font-color-dark: #111827;
+  --font-color-light: #ffffff;
+  
+  /* 강조 색상 */
+  --positive-highlight: #10b981;
+  --negative-highlight: #ef4444;
+  --neutral-color: #cbd5e1;
+  --warning-color: #f59e0b;
+  
+  /* 에러 및 성공 색상 */
+  --error-color: #ef4444;
+  --error-bg: #fee2e2;
+  --error-text: #991b1b;
+  --success-color: #10b981;
+  --success-bg: #d1fae5;
+  --success-text: #065f46;
+  
+  /* ===== 스페이싱 변수 ===== */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
+  --spacing-3xl: 32px;
+  --spacing-4xl: 40px;
+  
+  /* ===== 레이아웃 변수 ===== */
+  --card-radius: 12px;
+  --card-radius-sm: 6px;
+  --card-radius-lg: 16px;
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --card-shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.08);
+  
+  /* ===== 전환 효과 변수 ===== */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+  --transition-slow: 0.3s ease;
+  
+  /* ===== 그라데이션 변수 ===== */
+  --gradient-blue: linear-gradient(225deg, #c8e3ff 0%, #f0f4ff 100%);
+  
+  /* ===== 폰트 변수 ===== */
+  --font-family: "Pretendard", "Noto Sans KR", sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  
+  /* ===== Z-index 변수 ===== */
+  --z-index-dropdown: 100;
+  --z-index-modal: 1000;
+  --z-index-tooltip: 2000;
+}
+

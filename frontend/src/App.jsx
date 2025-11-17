@@ -17,6 +17,7 @@ import Workplace from "./pages/dashboard/Workplace";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import { UserProvider } from "./contexts/UserContext";
 import "./App.css";
+import "./styles/variables.css";
 import "./styles/common.css";
 
 function App() {

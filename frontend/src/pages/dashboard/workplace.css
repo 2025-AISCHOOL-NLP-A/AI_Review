@@ -19,6 +19,7 @@
 }
 
 /* ===== 기본 컨테이너 ===== */
+/* dashboard-content 내부에 위치하므로 사이드바 반응형을 상속받음 */
 .workplace-container {
   background: white;
   padding: 2rem;
@@ -30,6 +31,12 @@
   overflow-x: hidden;
   min-width: 0;
   position: relative;
+}
+
+/* dashboard-content의 사이드바 반응형 스타일 상속 */
+.dashboard-content .workplace-container {
+  width: 100%;
+  max-width: 100%;
 }
 
 /* ===== 헤더 ===== */

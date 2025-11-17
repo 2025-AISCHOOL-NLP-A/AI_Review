@@ -12,6 +12,9 @@ import ProductListTable from "../../components/workplace/ProductListTable";
 import ProductPagination from "../../components/workplace/ProductPagination";
 import { useProductFilter } from "../../hooks/useProductFilter";
 import { useProductSort } from "../../hooks/useProductSort";
+import { getTodayDate } from "../../utils/dateUtils";
+import { useSidebar } from "../../hooks/useSidebar";
+import { CATEGORY_NAMES } from "../../constants";
 import "../../styles/common.css";
 import "../../styles/modal.css";
 import "./dashboard.css";
@@ -61,17 +64,8 @@ function Workplace() {
     productsPerPage
   );
   
-  // 사이드바 상태를 localStorage에서 읽어오기
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    const saved = localStorage.getItem("sidebarOpen");
-    return saved !== null ? saved === "true" : true;
-  });
-
-  // 오늘 날짜를 YYYY-MM-DD 형식으로 가져오기
-  const getTodayDate = () => {
-    const today = new Date();
-    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  };
+  // 사이드바 상태 관리 (커스텀 훅 사용)
+  const sidebarOpen = useSidebar();
 
   // 날짜 변경 핸들러 (시작일)
   const handleStartDateChange = (e) => {
@@ -95,28 +89,6 @@ function Workplace() {
     setEndDate(newEndDate);
   };
 
-  // 사이드바 상태 변경 감지 (CustomEvent 사용)
-  useEffect(() => {
-    const handleSidebarToggle = (e) => {
-      setSidebarOpen(e.detail.isOpen);
-    };
-
-    // CustomEvent 리스너 등록
-    window.addEventListener("sidebar-toggle", handleSidebarToggle);
-    
-    // localStorage 변경 감지 (다른 탭에서 변경된 경우)
-    const handleStorageChange = (e) => {
-      if (e.key === "sidebarOpen") {
-        setSidebarOpen(e.newValue === "true");
-      }
-    };
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("sidebar-toggle", handleSidebarToggle);
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
 
   // 드롭다운 위치 계산
   useEffect(() => {
@@ -288,14 +260,9 @@ function Workplace() {
     setCurrentPage(1);
   };
 
-  // 카테고리 ID를 이름으로 변환
+  // 카테고리 ID를 이름으로 변환 (상수 사용)
   const getCategoryName = (categoryId) => {
-    const categoryMap = {
-      101: '전자기기',
-      102: '화장품',
-      103: '게임'
-    };
-    return categoryMap[categoryId] || (categoryId ? `카테고리 ${categoryId}` : '-');
+    return CATEGORY_NAMES[categoryId] || (categoryId ? `카테고리 ${categoryId}` : '-');
   };
 
   // 날짜 포맷팅 (registered_date 우선 사용, 없으면 updated_at 사용)

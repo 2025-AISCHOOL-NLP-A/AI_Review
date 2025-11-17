@@ -1,3 +1,7 @@
+/* ========================================
+   모달 스타일 (Modal Styles)
+   ======================================== */
+
 /* Modal Overlay */
 .modal-overlay {
   position: fixed;
@@ -6,7 +10,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-index-modal);
   backdrop-filter: blur(4px);
 }
 
@@ -15,69 +19,67 @@
   width: 650px;
   min-width: 650px;
   max-width: 90vw;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  padding: 24px 28px;
+  background: var(--card-bg);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow-lg);
+  padding: var(--spacing-2xl) var(--spacing-3xl);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-md);
   box-sizing: border-box;
   max-height: 90vh;
   overflow-y: auto;
 }
 
 .modal-container h2 {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 600;
-  margin-bottom: 4px;
-  color: #222;
   margin: 0;
+  color: var(--font-color-dark);
 }
 
 .modal-container p {
-  font-size: 13px;
-  color: #666;
-  margin-bottom: 16px;
-  margin-top: 0;
+  font-size: var(--font-size-sm);
+  color: var(--font-color-secondary);
+  margin: 0 0 var(--spacing-lg) 0;
 }
 
-/* Form Group */
-.form-group {
+/* Form Group (모달 전용) */
+.modal-container .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--spacing-xs);
   width: 100%;
   align-items: flex-start;
 }
 
-.form-group label {
-  font-size: 13px;
-  color: #333;
+.modal-container .form-group label {
+  font-size: var(--font-size-sm);
+  color: var(--font-color);
   text-align: left;
 }
 
-.form-group select,
-.form-group input {
+.modal-container .form-group select,
+.modal-container .form-group input {
   width: 100%;
   height: 38px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 0 10px;
-  font-size: 14px;
+  border: 1px solid var(--border-color-dark);
+  border-radius: var(--card-radius-sm);
+  padding: 0 var(--spacing-md);
+  font-size: var(--font-size-base);
   box-sizing: border-box;
-  color: #333;
-  transition: all 0.2s;
+  color: var(--font-color);
+  transition: all var(--transition-base);
 }
 
-.form-group select:focus,
-.form-group input:focus {
+.modal-container .form-group select:focus,
+.modal-container .form-group input:focus {
   outline: none;
-  border-color: #5b8eff;
+  border-color: var(--main-color);
   box-shadow: 0 0 0 3px rgba(91, 142, 255, 0.1);
 }
 
-.form-group select {
+.modal-container .form-group select {
   cursor: pointer;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23333'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
@@ -87,12 +89,12 @@
   padding-right: 2.5rem;
 }
 
-.form-group input::placeholder {
-  color: #999;
+.modal-container .form-group input::placeholder {
+  color: var(--font-color-tertiary);
 }
 
-.required {
-  color: red;
+.modal-container .required {
+  color: var(--error-color);
   margin-left: 2px;
 }
 
@@ -100,39 +102,39 @@
 .button-row {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 16px;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-lg);
 }
 
 .button-row button {
   height: 40px;
-  padding: 0 20px;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 0 var(--spacing-xl);
+  border-radius: var(--card-radius-sm);
+  font-size: var(--font-size-base);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-base);
   box-sizing: border-box;
 }
 
 .button-row .cancel {
-  background: #fff;
-  border: 1px solid #ddd;
-  color: #555;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color-dark);
+  color: var(--font-color-secondary);
 }
 
 .button-row .cancel:hover {
-  background: #f9fafb;
-  border-color: #bbb;
+  background: var(--bg-color);
+  border-color: var(--border-color);
 }
 
 .button-row .next {
-  background: #5b8eff;
+  background: var(--main-color);
   border: none;
-  color: white;
+  color: var(--font-color-light);
 }
 
 .button-row .next:hover:not(:disabled) {
-  background: #4a7ae8;
+  background: var(--main-color-hover);
 }
 
 .button-row .next:disabled {
@@ -142,43 +144,43 @@
 
 /* Upload Dropzone */
 .upload-dropzone {
-  border: 2px dashed #c9d8ff;
-  border-radius: 8px;
+  border: 2px dashed var(--main-color-light);
+  border-radius: var(--spacing-sm);
   height: 160px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  background: #f9fafb;
-  transition: all 0.2s;
+  gap: var(--spacing-md);
+  background: var(--bg-color);
+  transition: all var(--transition-base);
   cursor: pointer;
   box-sizing: border-box;
 }
 
 .upload-dropzone:hover {
-  border-color: #5b8eff;
-  background: #f3f4f6;
+  border-color: var(--main-color);
+  background: var(--bg-color-hover);
 }
 
 .upload-text {
   margin: 0;
-  font-size: 13px;
-  color: #666;
+  font-size: var(--font-size-sm);
+  color: var(--font-color-secondary);
 }
 
 .upload-format-text {
   margin: 0;
-  font-size: 12px;
-  color: #999;
+  font-size: var(--font-size-xs);
+  color: var(--font-color-tertiary);
 }
 
 .upload-file-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm);
   width: 100%;
-  padding: 12px;
+  padding: var(--spacing-md);
   max-height: 120px;
   overflow-y: auto;
   box-sizing: border-box;
@@ -188,33 +190,33 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 13px;
-  color: #333;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color-dark);
+  border-radius: var(--card-radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--font-color);
 }
 
 .file-size {
-  color: #666;
-  font-size: 12px;
+  color: var(--font-color-secondary);
+  font-size: var(--font-size-xs);
 }
 
 .browse-btn {
-  background: #5b8eff;
+  background: var(--main-color);
   border: none;
-  color: white;
+  color: var(--font-color-light);
   height: 40px;
-  padding: 0 20px;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 0 var(--spacing-xl);
+  border-radius: var(--card-radius-sm);
+  font-size: var(--font-size-base);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-base);
   box-sizing: border-box;
 }
 
 .browse-btn:hover {
-  background: #4a7ae8;
+  background: var(--main-color-hover);
 }
 

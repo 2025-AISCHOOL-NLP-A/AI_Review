@@ -3,37 +3,37 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-let db;
+const db = mysql.createPool({
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT || 3306,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  charset: "utf8mb4",
+  // 연결 풀 설정
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  // 타임아웃 설정
+  acquireTimeout: 60000, // 60초
+  timeout: 60000, // 60초
+  // 재연결 설정
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0,
+});
 
-async function connectDB() {
-  try {
-    db = await mysql.createConnection({
-      host: process.env.DB_HOST,
-      port: process.env.DB_PORT,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-      charset: "utf8mb4",
-      connectTimeout: 10000,
-      authPlugins: {
-        mysql_native_password: () => () => Buffer.alloc(0)
-      }
-    });
-    
-    console.log("[DB] MySQL connected successfully");
-    return db;
-  } catch (error) {
-    console.error("[DB] Connection failed:", error.message);
-    console.error("[DB] Server will start without database connection");
-    console.error("[DB] Please check:");
-    console.error("  - DB server is running");
-    console.error("  - Network/VPN connection");
-    console.error("  - Credentials in .env file");
-    return null;
+// 연결 풀 이벤트 리스너
+db.on("connection", (connection) => {
+  console.log("✅ 새로운 DB 연결 생성");
+});
+
+db.on("error", (err) => {
+  console.error("❌ DB 연결 풀 오류:", err);
+  if (err.code === "PROTOCOL_CONNECTION_LOST") {
+    console.log("🔄 DB 연결이 끊어졌습니다. 자동 재연결 시도...");
   }
-}
+});
 
-// DB 연결 시도 (실패해도 서버는 시작됨)
-db = await connectDB();
+console.log("✅ MySQL 연결 풀 초기화 완료");
 
 export default db;

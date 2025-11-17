@@ -91,16 +91,11 @@ python main.py
 
 ### 제품 API (/products)
 - `GET /products` - 제품 목록
-- `GET /products/{product_id}` - 개별 제품
+- `POST /products` - 제품 생성 및 리뷰 분석
+- `PUT /products/{product_id}` - 제품 정보 수정
+- `DELETE /products/{product_id}` - 제품 삭제
 - `GET /products/{product_id}/dashboard` - 제품 대시보드
-- `GET /products/{product_id}/reviews` - 제품 리뷰(파라미터로 키워드)
-- `POST /products/{product_id}/reviews/analysis` - 해당 상품 리뷰 분석 요청(Python API)
-- `DELETE /products/{id}` - 제품 삭제
-
-### 인사이트 API (/insights)
-- `GET /insights` - 인사이트 목록(파라미터로 제품 id 받으면 그 제품 리스트만)
-- `GET /insights/{id}` - 인사이트 상세
-- `POST /insights/request` - 분석 요청(파라미터로 제품 id, 기간, 요청사항등)
+- `POST /products/{product_id}/reviews/upload - 리뷰 추가 및 분석
 
 
 ## 🔧 개발 환경

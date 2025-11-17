@@ -12,11 +12,6 @@ if _parent_dir not in sys.path:
 if _model_server_dir not in sys.path:
     sys.path.insert(0, _model_server_dir)
 
-print("[INFO] Current working dir:", os.getcwd())
-print("[INFO] sys.path[0]:", sys.path[0])
-print("[INFO] model_server dir:", _model_server_dir)
-print("[INFO] utils path:", os.path.join(_model_server_dir, "utils"))
-print("[INFO] utils exists:", os.path.exists(os.path.join(_model_server_dir, "utils")))
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -29,11 +24,11 @@ from utils.db_connect import init_db_pool, close_db_pool
 async def lifespan(app: FastAPI):
     """앱 시작/종료 시 실행되는 라이프사이클 이벤트"""
     # 시작 시
-    print("[STARTUP] DB Connection Pool initialized")
+    print("🚀 서버 시작: DB Connection Pool 초기화")
     init_db_pool()
     yield
     # 종료 시
-    print("[SHUTDOWN] DB Connection Pool closed")
+    print("🛑 서버 종료: DB Connection Pool 정리")
     close_db_pool()
 
 
@@ -43,11 +38,11 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# ✅ 정적 파일 서빙 (절대 경로 사용)
+# 정적 파일 서빙
 static_dir = os.path.join(_model_server_dir, "static")
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-# ✅ API 라우트 등록
+# API 라우트 등록
 app.include_router(v1_router)
 
 @app.get("/")

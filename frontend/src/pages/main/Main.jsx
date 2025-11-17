@@ -21,9 +21,25 @@ function Main() {
   const controlsTimeoutRef = useRef(null);
 
   // 이미 로그인된 사용자가 메인 페이지에 접근하면 워크플레이스로 리다이렉트
+  // 단, 로딩이 완전히 끝나고 실제로 인증된 상태일 때만 리다이렉트
   useEffect(() => {
-    if (!userLoading && isAuthenticated) {
-      navigate('/wp', { replace: true });
+    // 로딩이 완료되고 실제로 인증된 상태인지 확인
+    // isAuthenticated가 null이 아닌 경우에만 체크 (초기 상태 제외)
+    if (!userLoading && isAuthenticated === true) {
+      // 토큰이 실제로 유효한지 한 번 더 확인
+      const token = sessionStorage.getItem("token");
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const exp = payload.exp * 1000;
+          // 토큰이 만료되지 않았을 때만 리다이렉트
+          if (Date.now() < exp) {
+            navigate('/wp', { replace: true });
+          }
+        } catch (error) {
+          // 토큰 파싱 실패 시 리다이렉트하지 않음
+        }
+      }
     }
   }, [isAuthenticated, userLoading, navigate]);
 
@@ -214,7 +230,7 @@ function Main() {
                 }
               }}
             >
-              <source src="/videos/test.mp4" type="video/mp4" />
+              <source src="/videos/test_video.mp4" type="video/mp4" />
               브라우저가 비디오 태그를 지원하지 않습니다.
             </video>
             {!isPlaying && (

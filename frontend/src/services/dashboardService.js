@@ -1,11 +1,13 @@
 import api from "./api";
-import { processDashboardResponse, findFirstReviewDate } from "./dashboardResponseProcessor";
+import { processDashboardResponse } from "./dashboardResponseProcessor";
+import { handleApiError, isAbortError, getErrorMessage } from "../utils/errorHandler";
+import { createApiConfig, createApiConfigWithParams } from "../utils/apiHelpers";
 
 const dashboardService = {
   /** 📊 대시보드 데이터 조회 및 처리 */
   async getDashboardData(productId = 1007, signal = null, productInfo = null) {
     try {
-      const config = signal ? { signal } : {};
+      const config = createApiConfig(signal);
       const url = `/products/${productId}/dashboard`;
 
       const res = await api.get(url, config);
@@ -27,7 +29,7 @@ const dashboardService = {
       return { success: true, data: processedData };
     } catch (err) {
       // AbortError는 정상적인 취소이므로 에러로 처리하지 않음
-      if (err.name === "AbortError" || err.name === "CanceledError" || err.code === "ERR_CANCELED") {
+      if (isAbortError(err)) {
         throw err;
       }
 
@@ -78,7 +80,7 @@ const dashboardService = {
         return { success: false, message: msg, status: 500 };
       }
 
-      const msg = err.response?.data?.message || err.message || "대시보드 데이터를 불러오는데 실패했습니다.";
+      const msg = getErrorMessage(err, "대시보드 데이터를 불러오는데 실패했습니다.");
       return { success: false, message: msg, status: err.response?.status };
     }
   },
@@ -89,8 +91,10 @@ const dashboardService = {
       const res = await api.get(`/products/${productId}/reviews`);
       return { success: true, data: res.data };
     } catch (err) {
-      const msg = err.response?.data?.message || "제품 리뷰를 불러오는데 실패했습니다.";
-      return { success: false, message: msg };
+      return handleApiError(err, "제품 리뷰를 불러오는데 실패했습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "제품 리뷰를 불러오는데 실패했습니다."),
+      };
     }
   },
 
@@ -100,8 +104,10 @@ const dashboardService = {
       const res = await api.get(`/products/${productId}/insights`);
       return { success: true, data: res.data };
     } catch (err) {
-      const msg = err.response?.data?.message || "제품 인사이트를 불러오는데 실패했습니다.";
-      return { success: false, message: msg };
+      return handleApiError(err, "제품 인사이트를 불러오는데 실패했습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "제품 인사이트를 불러오는데 실패했습니다."),
+      };
     }
   },
 
@@ -114,32 +120,34 @@ const dashboardService = {
         ...(search && { search }),
         ...(categoryId && { category_id: categoryId }),
       };
-      const config = signal ? { params, signal } : { params };
+      const config = createApiConfigWithParams(signal, params);
       const res = await api.get("/products", config);
       return { success: true, data: res.data };
     } catch (err) {
-      // AbortError는 정상적인 취소이므로 에러로 처리하지 않음
-      if (err.name === 'AbortError' || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+      if (isAbortError(err)) {
         throw err;
       }
-      const msg = err.response?.data?.message || "제품 목록을 불러오는데 실패했습니다.";
-      return { success: false, message: msg };
+      return handleApiError(err, "제품 목록을 불러오는데 실패했습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "제품 목록을 불러오는데 실패했습니다."),
+      };
     }
   },
 
   /** 📦 제품 상세 조회 */
   async getProduct(productId, signal = null) {
     try {
-      const config = signal ? { signal } : {};
+      const config = createApiConfig(signal);
       const res = await api.get(`/products/${productId}`, config);
       return { success: true, data: res.data };
     } catch (err) {
-      // AbortError는 정상적인 취소이므로 에러로 처리하지 않음
-      if (err.name === "AbortError" || err.name === "CanceledError" || err.code === "ERR_CANCELED") {
+      if (isAbortError(err)) {
         throw err;
       }
-      const msg = err.response?.data?.message || "제품을 불러오는데 실패했습니다.";
-      return { success: false, message: msg };
+      return handleApiError(err, "제품을 불러오는데 실패했습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "제품을 불러오는데 실패했습니다."),
+      };
     }
   },
 
@@ -149,8 +157,10 @@ const dashboardService = {
       const res = await api.delete(`/products/${productId}`);
       return { success: true, data: res.data };
     } catch (err) {
-      const msg = err.response?.data?.message || "제품 삭제에 실패했습니다.";
-      return { success: false, message: msg };
+      return handleApiError(err, "제품 삭제에 실패했습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "제품 삭제에 실패했습니다."),
+      };
     }
   },
 
@@ -160,8 +170,10 @@ const dashboardService = {
       const res = await api.post("/products", productData);
       return { success: true, data: res.data };
     } catch (err) {
-      const msg = err.response?.data?.message || "제품 생성에 실패했습니다.";
-      return { success: false, message: msg };
+      return handleApiError(err, "제품 생성에 실패했습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "제품 생성에 실패했습니다."),
+      };
     }
   },
 
@@ -178,8 +190,10 @@ const dashboardService = {
         data: err.response?.data,
         message: err.message
       });
-      const msg = err.response?.data?.message || "제품 정보 수정에 실패했습니다.";
-      return { success: false, message: msg };
+      return handleApiError(err, "제품 정보 수정에 실패했습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "제품 정보 수정에 실패했습니다."),
+      };
     }
   },
 
@@ -189,8 +203,40 @@ const dashboardService = {
       const res = await api.post(`/products/${productId}/reviews/analysis`);
       return { success: true, data: res.data };
     } catch (err) {
-      const msg = err.response?.data?.message || "리뷰 분석 요청에 실패했습니다.";
-      return { success: false, message: msg };
+      return handleApiError(err, "리뷰 분석 요청에 실패했습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "리뷰 분석 요청에 실패했습니다."),
+      };
+    }
+  },
+
+  /** 📤 리뷰 파일 업로드 및 매핑 정보 전송 */
+  async uploadReviewFiles(productId, files) {
+    try {
+      const formData = new FormData();
+      
+      // 각 파일과 매핑 정보를 FormData에 추가
+      files.forEach((fileData) => {
+        formData.append(`files`, fileData.file);
+        formData.append(`mappings`, JSON.stringify({
+          reviewColumn: fileData.mapping.reviewColumn,
+          dateColumn: fileData.mapping.dateColumn,
+          ratingColumn: fileData.mapping.ratingColumn || null,
+        }));
+      });
+
+      const res = await api.post(`/products/${productId}/reviews/upload`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      return { success: true, data: res.data };
+    } catch (err) {
+      return handleApiError(err, "파일 업로드에 실패했습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "파일 업로드에 실패했습니다."),
+      };
     }
   },
 };

@@ -1,24 +1,53 @@
 import React, { useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
+import { getChartColors } from '../../utils/chartColors';
 import './DailyTrendChart.css';
+
+// hex 색상을 rgba로 변환하는 헬퍼 함수
+const hexToRgba = (hex, alpha = 1) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return hex; // 변환 실패 시 원본 반환
+  const r = parseInt(result[1], 16);
+  const g = parseInt(result[2], 16);
+  const b = parseInt(result[3], 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+// Vanishing 애니메이션 함수
+function animateOpacity(dataset, chart, start, end) {
+  const duration = 400;
+  const frameRate = 1000 / 60; 
+  const totalFrames = duration / frameRate;
+  let frame = 0;
+
+  const animate = () => {
+    frame++;
+    const progress = frame / totalFrames;
+
+    // easeOutQuart 곡선
+    const eased = 1 - Math.pow(1 - progress, 4);
+
+    dataset._opacity = start + (end - start) * eased;
+
+    chart.update('none');
+
+    if (frame < totalFrames) {
+      requestAnimationFrame(animate);
+    } else {
+      dataset._opacity = end;
+      chart.update('none');
+    }
+  };
+
+  animate();
+}
 
 const DailyTrendChart = ({ data, loading }) => {
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
   const containerRef = useRef(null);
   const actualDataLengthRef = useRef(0); // 실제 사용되는 데이터 길이 저장
-
-  // CSS 변수에서 색상 가져오기 (더 안전한 방법)
-  const getColor = (varName, fallback) => {
-    try {
-      // containerRef가 있으면 그것을 사용, 없으면 document.documentElement 사용
-      const element = containerRef.current || document.documentElement;
-      const value = getComputedStyle(element).getPropertyValue(varName).trim();
-      return value || fallback;
-    } catch (error) {
-      return fallback;
-    }
-  };
+  const originalLineColorRef = useRef(null); // 원본 선 색상 저장
 
   useEffect(() => {
     // 기존 차트 제거
@@ -53,10 +82,11 @@ const DailyTrendChart = ({ data, loading }) => {
     // containerRef가 준비될 때까지 대기
     const initChart = () => {
       // CSS 변수에서 색상 가져오기
-      const primaryColor = getColor('--chart-primary-color', "#5B8EFF");
-      const neutralColor = getColor('--chart-neutral-color', "#CBD5E1");
-      const newReviewColor = getColor('--chart-new-review-color', "#111827");
-      const fontColor = getColor('--chart-font-color', "#333333");
+      const colors = getChartColors(containerRef.current);
+      const primaryColor = colors.primary;
+      const neutralColor = colors.neutral;
+      const newReviewColor = colors.newReview;
+      const fontColor = colors.font;
 
       try {
         // 데이터 검증 및 준비
@@ -122,12 +152,31 @@ const DailyTrendChart = ({ data, loading }) => {
               pointRadius: 4, // 포인트 크기 증가
               pointHoverRadius: 6, // 호버 시 포인트 크기 증가
               pointBorderWidth: 2, // 포인트 테두리 두께
-              pointBorderColor: '#FFFFFF', // 포인트 테두리 색상 (흰색으로 더 눈에 띄게)
+              pointBorderColor: newReviewColor, // 포인트 테두리도 원본 색상 사용
               yAxisID: "y1",
               fill: false,
               tension: 0.3,
               order: 1, // 선은 위쪽 (작은 order 값) - order가 작을수록 위에 표시됨
               pointStyle: 'line', // 범례 아이콘을 선으로 표시
+              // 애니메이션용 원본 색상 저장
+              _originalColor: newReviewColor,
+              // 현재 선의 투명도 (0~1)
+              _opacity: 1,
+              // segment를 사용하여 렌더링 시점에 opacity 조절
+              segment: {
+                borderColor: (ctx) => {
+                  const ds = ctx.chart.data.datasets[2];
+                  const color = ds._originalColor || newReviewColor;
+                  
+                  return hexToRgba(color, ds._opacity || 1); // _opacity 사용
+                },
+                backgroundColor: (ctx) => {
+                  const ds = ctx.chart.data.datasets[2];
+                  const color = ds._originalColor || newReviewColor;
+                  
+                  return hexToRgba(color, ds._opacity || 1); // _opacity 사용
+                },
+              },
             },
           ],
         },
@@ -143,6 +192,49 @@ const DailyTrendChart = ({ data, loading }) => {
           plugins: {
             legend: {
               position: "top",
+              onClick: (e, legendItem, legend) => {
+                // 범례 클릭 시 애니메이션과 함께 업데이트 (페이드아웃 효과)
+                const index = legendItem.datasetIndex;
+                
+                // 선 그래프(인덱스 2)만 페이드아웃 효과 적용
+                if (index === 2) {
+                  const chart = legend.chart;
+                  const meta = chart.getDatasetMeta(index);
+                  const dataset = chart.data.datasets[index];
+                  
+                  if (meta && dataset) {
+                    // CSS 변수에서 원본 색상 가져오기
+                    const colors = getChartColors(containerRef.current);
+                    const originalHexColor = colors.newReview || newReviewColor;
+                    
+                    // 원본 색상 저장 (항상 hex 형식)
+                    dataset._originalColor = originalHexColor;
+                    
+                    // 현재 숨김 상태 확인
+                    const hidden = !meta.hidden;
+                    meta.hidden = hidden;
+                    
+                    // 애니메이션 위한 opacity 설정
+                    if (hidden) {
+                      // 사라질 때 → 1 → 0
+                      dataset._opacity = 1;
+                      animateOpacity(dataset, chart, 1, 0);
+                    } else {
+                      // 나타날 때 → 0 → 1
+                      dataset._opacity = 0;
+                      animateOpacity(dataset, chart, 0, 1);
+                    }
+                  }
+                } else {
+                  // 다른 데이터셋은 기본 동작 사용
+                  const chart = legend.chart;
+                  const meta = chart.getDatasetMeta(index);
+                  if (meta) {
+                    meta.hidden = !meta.hidden;
+                    chart.update('active');
+                  }
+                }
+              },
               labels: { 
                 color: fontColor,
                 generateLabels: (chart) => {
@@ -154,18 +246,17 @@ const DailyTrendChart = ({ data, loading }) => {
                     const datasetIndex = label.datasetIndex;
                     if (datasetIndex !== undefined) {
                       const dataset = chart.data.datasets[datasetIndex];
-                      // 선 차트(type: 'line')인 경우 범례 아이콘을 선으로 표시
+                      
+                      // 선 차트인 경우 legend 색상은 항상 _originalColor 사용
                       if (dataset && dataset.type === 'line') {
-                        // 선 차트의 범례 아이콘을 선으로 표시
-                        label.fillStyle = 'transparent'; // 배경 투명 (선만 표시)
-                        label.strokeStyle = dataset.borderColor || newReviewColor; // 선 색상
-                        label.lineWidth = dataset.borderWidth || 3; // 선 두께
-                        label.pointStyle = 'line'; // 선 스타일 사용
-                        label.usePointStyle = true; // 포인트 스타일 사용 활성화
-                        // 범례 아이콘을 선으로 그리기 위해 textAlign과 padding 조정
-                        label.textAlign = 'left';
+                        const originalColor = dataset._originalColor || dataset.borderColor;
+                        
+                        label.fillStyle = 'transparent';
+                        label.strokeStyle = originalColor;  // 항상 HEX 적용
+                        label.lineWidth = dataset.borderWidth || 3;
+                        label.pointStyle = 'line';
+                        label.usePointStyle = true;
                       } else {
-                        // 바 차트의 경우 기본 사각형 유지
                         label.usePointStyle = false;
                       }
                     }
@@ -185,6 +276,42 @@ const DailyTrendChart = ({ data, loading }) => {
             mode: 'index',
             intersect: false,
           },
+          // 애니메이션 설정 - 페이드아웃 효과 (위치 변경 없이 opacity만 조절)
+          animations: {
+            // 전체 애니메이션 비활성화 (위치 이동 방지)
+            x: false,
+            y: false,
+            // opacity 애니메이션만 사용
+            opacity: {
+              duration: 400,
+              easing: 'easeOutQuart',
+            },
+          },
+          animation: {
+            duration: 400, // 애니메이션 지속 시간 (ms)
+            easing: 'easeOutQuart', // 페이드아웃에 적합한 이징 함수
+            // 위치 애니메이션 비활성화
+            x: false,
+            y: false,
+            onStart: (animation) => {
+              // 애니메이션 시작 전 원본 색상 확실하게 저장
+              const chart = animation.chart;
+              const lineDataset = chart.data.datasets[2];
+              
+              if (lineDataset) {
+                // CSS 변수에서 항상 최신 원본 색상 가져오기
+                const colors = getChartColors(containerRef.current);
+                const originalHexColor = colors.newReview || newReviewColor;
+                
+                // _originalColor가 없거나 rgba로 변환된 경우 원본 hex로 저장
+                if (!lineDataset._originalColor || 
+                    (typeof lineDataset._originalColor === 'string' && lineDataset._originalColor.startsWith('rgba'))) {
+                  lineDataset._originalColor = originalHexColor;
+                }
+              }
+            },
+            // onProgress와 onComplete 제거 - segment.borderColor가 렌더링 시점에 처리
+          },
           elements: {
             line: {
               borderWidth: 3,
@@ -195,6 +322,19 @@ const DailyTrendChart = ({ data, loading }) => {
               radius: 4,
               hoverRadius: 6,
               borderWidth: 2,
+              // 포인트도 segment와 동일한 방식으로 처리
+              backgroundColor: (ctx) => {
+                const ds = ctx.chart.data.datasets[2];
+                const color = ds._originalColor || newReviewColor;
+                
+                return hexToRgba(color, ds._opacity || 1); // _opacity 사용
+              },
+              borderColor: (ctx) => {
+                const ds = ctx.chart.data.datasets[2];
+                const color = ds._originalColor || newReviewColor;
+                
+                return hexToRgba(color, ds._opacity || 1); // _opacity 사용
+              },
             },
           },
           scales: {

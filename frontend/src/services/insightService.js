@@ -1,4 +1,6 @@
 import api from "./api";
+import { handleApiError, isAbortError, getErrorMessage } from "../utils/errorHandler";
+import { createApiConfig, createApiConfigWithParams } from "../utils/apiHelpers";
 
 const insightService = {
   /** 📊 인사이트 목록 조회 */
@@ -8,32 +10,34 @@ const insightService = {
       if (productId) {
         params.product_id = productId;
       }
-      const config = signal ? { params, signal } : { params };
+      const config = createApiConfigWithParams(signal, params);
       const res = await api.get("/insights", config);
       return { success: true, data: res.data };
     } catch (err) {
-      // AbortError는 정상적인 취소이므로 에러로 처리하지 않음
-      if (err.name === 'AbortError' || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+      if (isAbortError(err)) {
         throw err;
       }
-      const msg = err.response?.data?.message || "인사이트 목록을 불러오는데 실패했습니다.";
-      return { success: false, message: msg };
+      return handleApiError(err, "인사이트 목록을 불러오는데 실패했습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "인사이트 목록을 불러오는데 실패했습니다."),
+      };
     }
   },
 
   /** 📄 인사이트 상세 조회 */
   async getInsight(insightId, signal = null) {
     try {
-      const config = signal ? { signal } : {};
+      const config = createApiConfig(signal);
       const res = await api.get(`/insights/${insightId}`, config);
       return { success: true, data: res.data };
     } catch (err) {
-      // AbortError는 정상적인 취소이므로 에러로 처리하지 않음
-      if (err.name === 'AbortError' || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+      if (isAbortError(err)) {
         throw err;
       }
-      const msg = err.response?.data?.message || "인사이트를 불러오는데 실패했습니다.";
-      return { success: false, message: msg };
+      return handleApiError(err, "인사이트를 불러오는데 실패했습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "인사이트를 불러오는데 실패했습니다."),
+      };
     }
   },
 
@@ -51,8 +55,10 @@ const insightService = {
       const res = await api.post("/insights/request", payload);
       return { success: true, data: res.data };
     } catch (err) {
-      const msg = err.response?.data?.message || "분석 요청에 실패했습니다.";
-      return { success: false, message: msg };
+      return handleApiError(err, "분석 요청에 실패했습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "분석 요청에 실패했습니다."),
+      };
     }
   },
 };

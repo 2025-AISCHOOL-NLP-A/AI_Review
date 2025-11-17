@@ -3,25 +3,26 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
 import Footer from "../../components/layout/Footer/Footer";
 import dashboardService from "../../services/dashboardService";
-import DashboardHeader from "../../components/render/DashboardHeader";
-import KPICards from "../../components/render/KPICards";
-import DashboardCharts from "../../components/render/DashboardCharts";
-import WordCloudSection from "../../components/render/WordCloudSection";
-import ReviewTable from "../../components/render/ReviewTable";
-import InsightsSection from "../../components/render/InsightsSection";
-import AIInsightReport from "../../components/render/AIInsightReport";
+import DashboardHeader from "../../components/dashboard/DashboardHeader";
+import KPICards from "../../components/dashboard/KPICards";
+import DashboardCharts from "../../components/dashboard/DashboardCharts";
+import WordCloudSection from "../../components/dashboard/WordCloudSection";
+import ReviewTable from "../../components/dashboard/ReviewTable";
+import InsightsSection from "../../components/dashboard/InsightsSection";
+import AIInsightReport from "../../components/dashboard/AIInsightReport";
 import { usePDFDownload } from "../../hooks/usePDFDownload";
+import { useSidebar } from "../../hooks/useSidebar";
+import { useDashboardData } from "../../hooks/useDashboardData";
 import {
   processDailyTrendData,
   processRadarData,
   processSplitBarData,
   processHeatmapData,
-} from "../../graphs";
+} from "../../utils/data";
 import {
   getTodayDate,
   applyDateFilter,
 } from "../../utils/dashboardDateFilter";
-import { findFirstReviewDate } from "../../services/dashboardResponseProcessor";
 import "../../styles/common.css";
 import "./dashboard.css";
 import "../../components/layout/sidebar/sidebar.css";
@@ -31,32 +32,9 @@ function Dashboard() {
   const [searchParams] = useSearchParams();
   const dashboardContentRef = useRef(null);
   const downloadBtnRef = useRef(null);
-  const abortControllerRef = useRef(null); // AbortController를 ref로 관리
-  const isFetchingRef = useRef(false); // 중복 요청 방지 플래그
 
-  // 사이드바 상태 확인 (localStorage에서 읽어오기)
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    const saved = localStorage.getItem("sidebarOpen");
-    return saved !== null ? saved === "true" : true;
-  });
-
-  // State for dashboard data
-  const [dashboardData, setDashboardData] = useState(null);
-  const [originalDashboardData, setOriginalDashboardData] = useState(null); // 원본 데이터 저장
-  const [productInfo, setProductInfo] = useState(null); // 제품 정보 (이름, 브랜드 등)
-  const [loading, setLoading] = useState(true);
-  
-  // Date filter state
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [appliedStartDate, setAppliedStartDate] = useState(""); // 적용된 시작 날짜
-  const [appliedEndDate, setAppliedEndDate] = useState(""); // 적용된 종료 날짜
-  
-  // Chart period state (daily, weekly, monthly)
-  const [chartPeriod, setChartPeriod] = useState("monthly"); // "monthly" only
-
-  // 리뷰 확장/축소 상태
-  const [expandedReviews, setExpandedReviews] = useState(() => new Set());
+  // 사이드바 상태 관리 (커스텀 훅 사용)
+  const sidebarOpen = useSidebar();
 
   // Get productId from URL query parameter or use default
   const productId = useMemo(() => {
@@ -64,226 +42,28 @@ function Dashboard() {
     return idFromUrl ? parseInt(idFromUrl, 10) : 1007; // 기본값 1007
   }, [searchParams]);
 
-  // 사이드바 상태 변경 감지 (커스텀 이벤트 리스너)
-  useEffect(() => {
-    const handleSidebarStateChange = (event) => {
-      if (event.detail && typeof event.detail.sidebarOpen === 'boolean') {
-        setSidebarOpen(event.detail.sidebarOpen);
-      } else {
-        // 이벤트에 detail이 없는 경우 localStorage에서 직접 확인
-        const saved = localStorage.getItem("sidebarOpen");
-        setSidebarOpen(saved !== null ? saved === "true" : true);
-      }
-    };
+  // 대시보드 데이터 페칭 (커스텀 훅 사용)
+  const {
+    dashboardData,
+    originalDashboardData,
+    productInfo,
+    loading,
+    startDate,
+    endDate,
+    appliedStartDate,
+    appliedEndDate,
+    setDashboardData,
+    setStartDate,
+    setEndDate,
+    setAppliedStartDate,
+    setAppliedEndDate,
+  } = useDashboardData(productId);
 
-    // storage 이벤트 리스너 등록 (다른 탭에서 변경된 경우)
-    const handleStorageChange = () => {
-      const saved = localStorage.getItem("sidebarOpen");
-      setSidebarOpen(saved !== null ? saved === "true" : true);
-    };
+  // Chart period state (daily, weekly, monthly)
+  const [chartPeriod, setChartPeriod] = useState("monthly"); // "monthly" only
 
-    // 초기 상태 확인
-    const saved = localStorage.getItem("sidebarOpen");
-    setSidebarOpen(saved !== null ? saved === "true" : true);
-
-    // 커스텀 이벤트 리스너 등록 (같은 탭에서 변경된 경우)
-    window.addEventListener("sidebarStateChanged", handleSidebarStateChange);
-    // storage 이벤트 리스너 등록 (다른 탭에서 변경된 경우)
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("sidebarStateChanged", handleSidebarStateChange);
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
-
-
-  // Fetch dashboard data
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchData = async () => {
-      // 이미 요청이 진행 중이면 중복 요청 방지
-      if (isFetchingRef.current) {
-        return;
-      }
-
-      // 이전 요청이 있으면 취소
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-
-      // 새로운 AbortController 생성
-      const abortController = new AbortController();
-      abortControllerRef.current = abortController;
-
-      // productId 유효성 검사
-      if (!productId || isNaN(productId)) {
-        if (isMounted && !abortController.signal.aborted) {
-          alert("유효하지 않은 제품 ID입니다.");
-          setLoading(false);
-        }
-        abortControllerRef.current = null;
-        isFetchingRef.current = false;
-        return;
-      }
-
-      isFetchingRef.current = true;
-      setLoading(true);
-
-      try {
-        // 제품 정보와 대시보드 데이터를 병렬로 요청 (AbortSignal 전달)
-        const [productResult, dashboardResult] = await Promise.all([
-          dashboardService.getProduct(productId, abortController.signal).catch(err => {
-            // AbortError는 무시하고 null 반환
-            if (err.name === 'AbortError' || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
-              return null;
-            }
-            throw err;
-          }),
-          dashboardService.getDashboardData(
-            productId, 
-            abortController.signal, 
-            null // 제품 정보는 나중에 설정
-          )
-        ]);
-
-        // 요청이 취소되었거나 컴포넌트가 언마운트된 경우 상태 업데이트 방지
-        if (!isMounted || abortController.signal.aborted) {
-          abortControllerRef.current = null;
-          isFetchingRef.current = false;
-          return;
-        }
-
-        // 제품 정보 추출 및 설정
-        const fetchedProductInfo = productResult?.success && productResult.data?.data 
-          ? productResult.data.data 
-          : null;
-
-        if (fetchedProductInfo) {
-          setProductInfo(fetchedProductInfo);
-        }
-
-        // 대시보드 데이터 처리
-        const result = dashboardResult;
-
-        // 요청이 취소되었거나 컴포넌트가 언마운트된 경우 상태 업데이트 방지
-        if (!isMounted || abortController.signal.aborted) {
-          abortControllerRef.current = null;
-          return;
-        }
-
-        if (!result || !result.success) {
-          const errorMsg = result?.message || "데이터를 불러오는데 실패했습니다.";
-          
-          // 에러 로깅 (디버깅용)
-          console.error("대시보드 데이터 조회 실패:", {
-            success: result?.success,
-            message: result?.message,
-            status: result?.status,
-            result: result,
-          });
-          
-          // 404 에러인 경우 워크플레이스로 이동 제안
-          if (result?.status === 404) {
-            if (window.confirm(`${errorMsg}\n\n워크플레이스로 이동하시겠습니까?`)) {
-              navigate("/wp");
-            }
-          } else {
-            alert(`오류: ${errorMsg}\n\n상태 코드: ${result?.status || 'N/A'}`);
-          }
-          
-          if (isMounted && !abortController.signal.aborted) {
-            setLoading(false);
-          }
-          abortControllerRef.current = null;
-          isFetchingRef.current = false;
-          return;
-        }
-
-        // API 응답이 이미 처리된 데이터 (processDashboardResponse를 통해 처리됨)
-        const combinedData = result.data;
-
-        if (!combinedData) {
-          console.error("❌ 처리된 데이터가 없습니다:", result);
-          if (isMounted && !abortController.signal.aborted) {
-            alert("대시보드 데이터를 불러오는데 실패했습니다.");
-            setLoading(false);
-          }
-          abortControllerRef.current = null;
-          isFetchingRef.current = false;
-          return;
-        }
-
-        if (isMounted && !abortController.signal.aborted) {
-          setOriginalDashboardData(combinedData); // 원본 데이터 저장
-          setDashboardData(combinedData);
-          
-          // 첫 번째 리뷰 날짜 찾기 (서비스 함수 사용)
-          const firstReviewDate = findFirstReviewDate({
-            dateSentimental: combinedData.dateSentimental || [],
-            dailyTrend: combinedData.dailyTrend || [],
-            reviews: combinedData.reviews || [],
-          });
-          
-          // 날짜 범위 자동 설정
-          if (firstReviewDate) {
-            const firstDateStr = `${firstReviewDate.getFullYear()}-${String(firstReviewDate.getMonth() + 1).padStart(2, '0')}-${String(firstReviewDate.getDate()).padStart(2, '0')}`;
-            const todayStr = getTodayDate();
-            setStartDate(firstDateStr);
-            setEndDate(todayStr);
-            // 자동 설정된 날짜도 적용된 날짜로 저장
-            setAppliedStartDate(firstDateStr);
-            setAppliedEndDate(todayStr);
-          }
-          
-          setLoading(false);
-        }
-        abortControllerRef.current = null;
-        isFetchingRef.current = false;
-      } catch (error) {
-        // AbortError는 정상적인 취소이므로 에러로 처리하지 않음
-        if (error.name === 'AbortError' || error.name === 'CanceledError' || error.code === 'ERR_CANCELED' || abortController.signal.aborted) {
-          abortControllerRef.current = null;
-          isFetchingRef.current = false;
-          return;
-        }
-        
-        // 에러 로깅 (디버깅용)
-        console.error("대시보드 데이터 로딩 오류:", {
-          error,
-          message: error.message,
-          response: error.response,
-          status: error.response?.status,
-          data: error.response?.data,
-        });
-        
-        if (isMounted && !abortController.signal.aborted) {
-          // 서버에서 반환한 메시지가 있으면 사용, 없으면 기본 메시지
-          const errorMessage = error.response?.data?.message 
-            || error.message 
-            || "대시보드 데이터를 불러오는데 실패했습니다.";
-          
-          alert(`오류: ${errorMessage}\n\n상태 코드: ${error.response?.status || 'N/A'}`);
-          setLoading(false);
-        }
-        abortControllerRef.current = null;
-        isFetchingRef.current = false;
-      }
-    };
-
-    fetchData();
-
-    // cleanup 함수: 컴포넌트 언마운트 시 또는 productId 변경 시 진행 중인 요청 취소
-    return () => {
-      isMounted = false;
-      isFetchingRef.current = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-        abortControllerRef.current = null;
-      }
-    };
-  }, [productId, navigate]);
+  // 리뷰 확장/축소 상태
+  const [expandedReviews, setExpandedReviews] = useState(() => new Set());
 
   // 날짜 필터링 핸들러 생성
   const handleStartDateChange = useCallback(

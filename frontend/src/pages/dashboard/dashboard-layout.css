@@ -1,0 +1,106 @@
+/* CSS 변수는 common.css로 이동 */
+
+/* ===================== 기본 레이아웃 ===================== */
+.dashboard-page {
+  font-family: "Inter", "Noto Sans KR", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
+    "Droid Sans", "Helvetica Neue", sans-serif !important;
+  background-color: var(--bg-color);
+  color: var(--font-color);
+  min-height: 100vh;
+  padding: 0;
+  padding-top: 0;
+  width: 100%;
+  display: flex;
+  position: relative;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  /* 확대 시에도 사이드바와 겹치지 않도록 최소 너비 설정 */
+  min-width: 320px;
+  /* 사이드바가 fixed이므로 flex 레이아웃에 영향을 주지 않음 */
+  align-items: flex-start;
+}
+
+.dashboard-content {
+  padding: 1.5rem;
+  background-color: var(--bg-color);
+  max-width: 1280px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  /* 가운데 정렬을 위한 스타일 */
+  margin-left: auto;
+  margin-right: auto;
+  /* 사이드바 상태에 관계없이 가운데 정렬 유지 */
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .dashboard-content {
+    padding: 1.5rem 2rem;
+    max-width: min(1280px, calc(100% - 2rem));
+  }
+}
+
+@media (max-width: 1023px) {
+  .dashboard-content {
+    padding: 1rem;
+    max-width: 100%;
+  }
+}
+
+/* 사이드바가 열렸을 때 콘텐츠 너비 조정 (사이드바 256px 고려) */
+.dashboard-page.sidebar-open .dashboard-content {
+  max-width: min(1280px, calc(100% - 256px - 2rem));
+}
+
+/* 사이드바가 닫혔을 때 콘텐츠 너비 조정 (사이드바 64px 고려) */
+.dashboard-page.sidebar-closed .dashboard-content {
+  max-width: min(1280px, calc(100% - 64px - 2rem));
+}
+
+@media (min-width: 1024px) {
+  .dashboard-page.sidebar-open .dashboard-content {
+    max-width: min(1280px, calc(100% - 256px - 2rem));
+  }
+  
+  .dashboard-page.sidebar-closed .dashboard-content {
+    max-width: min(1280px, calc(100% - 64px - 2rem));
+  }
+}
+
+/* ===================== Dashboard header override ===================== */
+/* main.css의 fixed header 스타일 오버라이드 */
+.dashboard-page header,
+.dashboard-content header {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  width: 100% !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  display: block !important;
+  justify-content: flex-start !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  z-index: auto !important;
+}
+
+.dashboard-page header button,
+.dashboard-content header button {
+  background: var(--main-color) !important;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s ease;
+  font-family: "Inter", "Noto Sans KR", sans-serif;
+  color: white !important;
+}

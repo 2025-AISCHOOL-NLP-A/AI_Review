@@ -1,8 +1,9 @@
 // src/pages/user/Memberupdate.jsx
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import authService from "../../services/authService";
 import { useUser } from "../../contexts/UserContext";
+import { useEmailTimerUpdate } from "../../hooks/useEmailTimerUpdate";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
 import Footer from "../../components/layout/Footer/Footer";
 import "./memberupdate.css";
@@ -12,7 +13,7 @@ import "../../styles/common.css";
 
 function Memberupdate() {
   const navigate = useNavigate();
-  const { user } = useUser();
+  const { user, logout } = useUser();
 
   // 프로필 기본값 불러오기
   const [loading, setLoading] = useState(false);
@@ -29,13 +30,13 @@ function Memberupdate() {
     email_code: "", // 인증번호
   });
 
-  const [isEmailSent, setIsEmailSent] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showNewPasswordConfirm, setShowNewPasswordConfirm] = useState(false);
-  const [timer, setTimer] = useState(0);
-  const timerRef = useRef(null);
+  
+  // 이메일 타이머 훅 사용 (localStorage 키를 다르게 사용)
+  const emailTimer = useEmailTimerUpdate(0);
 
   // Context에서 사용자 정보 가져오기 (API 호출 없음)
   useEffect(() => {
@@ -48,28 +49,6 @@ function Memberupdate() {
     }
   }, [user]);
 
-  // -----------------------------
-  // ✅ 타이머 복원 (페이지 로드 시)
-  // -----------------------------
-  useEffect(() => {
-    const savedTimerEndTime = localStorage.getItem(
-      "emailVerificationTimerEndUpdate"
-    );
-    if (savedTimerEndTime) {
-      const endTime = parseInt(savedTimerEndTime, 10);
-      const now = Date.now();
-      const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
-
-      if (remaining > 0) {
-        setTimer(remaining);
-        setIsEmailSent(true);
-      } else {
-        // 타이머가 이미 만료된 경우
-        localStorage.removeItem("emailVerificationTimerEndUpdate");
-      }
-    }
-  }, []);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((p) => ({ ...p, [name]: value }));
@@ -78,36 +57,6 @@ function Memberupdate() {
   // 새 비밀번호 유효성 (영문/숫자/특수문자 8~20)
   const pwPattern =
     /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z0-9!@#$%^&*]{8,20}$/;
-
-  // -----------------------------
-  // ✅ 타이머 효과
-  // -----------------------------
-  useEffect(() => {
-    if (timer > 0) {
-      // localStorage에 타이머 종료 시간 저장
-      const endTime = Date.now() + timer * 1000;
-      localStorage.setItem(
-        "emailVerificationTimerEndUpdate",
-        endTime.toString()
-      );
-
-      timerRef.current = setTimeout(() => {
-        setTimer(timer - 1);
-      }, 1000);
-    } else {
-      // 타이머가 0이 되면 localStorage에서 제거
-      localStorage.removeItem("emailVerificationTimerEndUpdate");
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    }
-
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, [timer]);
 
   // 인증코드 발송 (변경할 이메일 기준)
   const handleSendEmailCode = async () => {
@@ -121,15 +70,9 @@ function Memberupdate() {
       const res = await authService.sendVerification(newEmail);
       if (res.success) {
         alert("인증 메일이 발송되었습니다. 이메일을 확인해주세요.");
-        setIsEmailSent(true);
+        emailTimer.setIsEmailSent(true);
         setIsEmailVerified(false);
-        setTimer(60); // 1분 타이머 시작
-        // 타이머 종료 시간을 localStorage에 저장
-        const endTime = Date.now() + 60 * 1000;
-        localStorage.setItem(
-          "emailVerificationTimerEndUpdate",
-          endTime.toString()
-        );
+        emailTimer.startTimer(60); // 1분 타이머 시작
       } else {
         alert(res.message || "인증 메일 발송에 실패했습니다.");
       }
@@ -160,8 +103,7 @@ function Memberupdate() {
         alert("이메일 인증이 완료되었습니다.");
         setIsEmailVerified(true);
         // 인증 완료 시 타이머 초기화
-        setTimer(0);
-        localStorage.removeItem("emailVerificationTimerEndUpdate");
+        emailTimer.resetTimer();
       } else {
         alert(result.message || "인증번호가 일치하지 않습니다.");
         setIsEmailVerified(false);
@@ -215,7 +157,7 @@ function Memberupdate() {
         alert("변경할 이메일이 기존 이메일과 같습니다.");
         return;
       }
-      if (!isEmailSent) {
+      if (!emailTimer.isEmailSent) {
         alert("변경 이메일 인증을 먼저 진행해주세요.");
         return;
       }
@@ -554,15 +496,14 @@ function Memberupdate() {
                       type="button"
                       className="verify-button"
                       onClick={handleSendEmailCode}
-                      disabled={timer > 0}
+                      disabled={emailTimer.isActive}
                     >
                       인증하기
                     </button>
                   </div>
-                  {timer > 0 && (
+                  {emailTimer.isActive && (
                     <div className="email-timer">
-                      남은 시간: {Math.floor(timer / 60)}:
-                      {String(timer % 60).padStart(2, "0")}
+                      남은 시간: {emailTimer.formatTimer()}
                     </div>
                   )}
                 </div>
@@ -583,19 +524,19 @@ function Memberupdate() {
                         name="email_code"
                         className="form-input"
                         placeholder={
-                          isEmailSent
+                          emailTimer.isEmailSent
                             ? "이메일 인증번호 입력"
                             : "인증하기 버튼을 먼저 눌러주세요"
                         }
                         value={formData.email_code}
                         onChange={handleChange}
-                        disabled={!isEmailSent}
+                        disabled={!emailTimer.isEmailSent}
                         autoComplete="one-time-code"
                         style={{
-                          backgroundColor: !isEmailSent
+                          backgroundColor: !emailTimer.isEmailSent
                             ? "#f3f4f6"
                             : "transparent",
-                          cursor: !isEmailSent ? "not-allowed" : "text",
+                          cursor: !emailTimer.isEmailSent ? "not-allowed" : "text",
                         }}
                       />
                     </div>
@@ -603,15 +544,15 @@ function Memberupdate() {
                       type="button"
                       className="check-button"
                       onClick={handleVerifyEmailCode}
-                      disabled={!isEmailSent || isEmailVerified}
+                      disabled={!emailTimer.isEmailSent || isEmailVerified}
                       style={{
                         backgroundColor: isEmailVerified
                           ? "#10B981"
-                          : !isEmailSent
+                          : !emailTimer.isEmailSent
                           ? "#9ca3af"
                           : "#3b82f6",
                         cursor:
-                          !isEmailSent || isEmailVerified
+                          !emailTimer.isEmailSent || isEmailVerified
                             ? "not-allowed"
                             : "pointer",
                       }}

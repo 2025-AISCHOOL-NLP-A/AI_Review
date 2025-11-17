@@ -1,4 +1,25 @@
-/* Workplace Page Styles */
+/* ========================================
+   Workplace Page Styles (최적화)
+   ======================================== */
+
+/* ===== CSS 변수 ===== */
+:root {
+  --workplace-primary: #5B8EFF;
+  --workplace-primary-hover: #4A7AE8;
+  --workplace-border: #E5E7EB;
+  --workplace-bg-gray: #F3F4F6;
+  --workplace-bg-light: #F9FAFB;
+  --workplace-text: #333333;
+  --workplace-text-gray: #6B7280;
+  --workplace-danger: #EF4444;
+  --workplace-danger-hover: #DC2626;
+  --workplace-danger-bg: #FEE2E2;
+  --workplace-transition: 0.2s;
+  --workplace-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== 기본 컨테이너 ===== */
+/* dashboard-content 내부에 위치하므로 사이드바 반응형을 상속받음 */
 .workplace-container {
   background: white;
   padding: 2rem;
@@ -12,7 +33,13 @@
   position: relative;
 }
 
-/* Header Section */
+/* dashboard-content의 사이드바 반응형 스타일 상속 */
+.dashboard-content .workplace-container {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* ===== 헤더 ===== */
 .workplace-header {
   margin-bottom: 1.5rem;
   width: 100%;
@@ -23,10 +50,11 @@
 .workplace-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #333333;
+  color: var(--workplace-text);
   margin: 0;
 }
 
+/* ===== 필터 섹션 ===== */
 .workplace-filters {
   display: flex;
   justify-content: space-between;
@@ -45,43 +73,18 @@
   flex-wrap: wrap;
 }
 
-@media (max-width: 1200px) {
-  .workplace-filters {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .workplace-filters > * {
-    width: 100%;
-  }
-  
-  .filters-left {
-    width: 100%;
-    flex-direction: column;
-  }
-  
-  .date-filter-container {
-    width: 100%;
-    justify-content: space-between;
-  }
-  
-  .date-input {
-    flex: 1;
-  }
-}
-
 .filter-dropdown {
   position: relative;
 }
 
 .product-filter {
   padding: 0.5rem 2.5rem 0.5rem 1rem;
-  border: 1px solid #E5E7EB;
+  border: 1px solid var(--workplace-border);
   border-radius: 8px;
   background: white;
   font-size: 0.875rem;
   font-family: "Pretendard", "Noto Sans KR", sans-serif;
-  color: #333333;
+  color: var(--workplace-text);
   cursor: pointer;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23333333'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
@@ -91,11 +94,12 @@
   height: 2.5rem;
   box-sizing: border-box;
   line-height: 1.5;
+  transition: border-color var(--workplace-transition), box-shadow var(--workplace-transition);
 }
 
 .product-filter:focus {
   outline: none;
-  border-color: #5B8EFF;
+  border-color: var(--workplace-primary);
   box-shadow: 0 0 0 3px rgba(91, 142, 255, 0.1);
 }
 
@@ -110,27 +114,28 @@
   left: 0.75rem;
   width: 1.25rem;
   height: 1.25rem;
-  color: #6B7280;
+  color: var(--workplace-text-gray);
   pointer-events: none;
 }
 
 .search-input {
   padding: 0.5rem 1rem 0.5rem 2.5rem;
-  border: 1px solid #E5E7EB;
+  border: 1px solid var(--workplace-border);
   border-radius: 8px;
   font-size: 0.875rem;
   font-family: "Pretendard", "Noto Sans KR", sans-serif;
-  color: #333333;
+  color: var(--workplace-text);
   width: 280px;
   min-width: 200px;
   height: 2.5rem;
   box-sizing: border-box;
   line-height: 1.5;
+  transition: border-color var(--workplace-transition), box-shadow var(--workplace-transition);
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #5B8EFF;
+  border-color: var(--workplace-primary);
   box-shadow: 0 0 0 3px rgba(91, 142, 255, 0.1);
 }
 
@@ -138,7 +143,7 @@
   color: #9CA3AF;
 }
 
-/* Date Filter Section */
+/* ===== 날짜 필터 ===== */
 .date-filter-container {
   display: flex;
   align-items: center;
@@ -147,14 +152,14 @@
 
 .date-input {
   padding: 0.5rem 1rem;
-  border: 1px solid #E5E7EB;
+  border: 1px solid var(--workplace-border);
   border-radius: 8px;
   background: white;
   font-size: 0.875rem;
   font-family: "Pretendard", "Noto Sans KR", sans-serif;
-  color: #333333;
+  color: var(--workplace-text);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--workplace-transition);
   height: 2.5rem;
   box-sizing: border-box;
   line-height: 1.5;
@@ -162,13 +167,14 @@
 
 .date-input:focus {
   outline: none;
-  border-color: #5B8EFF;
+  border-color: var(--workplace-primary);
   box-shadow: 0 0 0 3px rgba(91, 142, 255, 0.1);
 }
 
 .date-input::-webkit-calendar-picker-indicator {
   cursor: pointer;
   opacity: 0.6;
+  transition: opacity var(--workplace-transition);
 }
 
 .date-input::-webkit-calendar-picker-indicator:hover {
@@ -176,7 +182,7 @@
 }
 
 .date-separator {
-  color: #6B7280;
+  color: var(--workplace-text-gray);
   font-size: 0.875rem;
   font-weight: 500;
   user-select: none;
@@ -190,14 +196,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6B7280;
-  transition: color 0.2s;
+  color: var(--workplace-text-gray);
+  transition: all var(--workplace-transition);
   border-radius: 4px;
 }
 
 .date-clear-btn:hover {
-  color: #EF4444;
-  background: #FEE2E2;
+  color: var(--workplace-danger);
+  background: var(--workplace-danger-bg);
 }
 
 .clear-icon {
@@ -205,7 +211,7 @@
   height: 1rem;
 }
 
-/* Table Section */
+/* ===== 테이블 섹션 ===== */
 .workplace-table-container {
   margin-bottom: 2rem;
   overflow-x: auto;
@@ -225,10 +231,11 @@
   background: white;
   table-layout: fixed;
   box-sizing: border-box;
+  position: relative;
 }
 
 .workplace-table thead {
-  background: #F3F4F6;
+  background: var(--workplace-bg-gray);
 }
 
 .workplace-table th {
@@ -236,19 +243,12 @@
   text-align: left;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #333333;
-  border-bottom: 1px solid #E5E7EB;
+  color: var(--workplace-text);
+  border-bottom: 1px solid var(--workplace-border);
   vertical-align: middle;
 }
 
-.workplace-table th.checkbox-column {
-  width: 3rem;
-  min-width: 3rem;
-  max-width: 3rem;
-  text-align: center;
-  padding: 0.75rem 0.5rem;
-}
-
+.workplace-table th.checkbox-column,
 .workplace-table th.action-column {
   width: 3rem;
   min-width: 3rem;
@@ -257,7 +257,6 @@
   padding: 0.75rem 0.5rem;
 }
 
-/* 정렬 가능한 헤더의 고정 너비 설정 */
 .workplace-table thead tr th:nth-child(2) {
   width: 12rem;
   min-width: 12rem;
@@ -279,12 +278,12 @@
 }
 
 .workplace-table th.sortable-header {
-  transition: background-color 0.2s;
+  transition: background-color var(--workplace-transition);
   position: relative;
 }
 
 .workplace-table th.sortable-header:hover {
-  background-color: #E5E7EB;
+  background-color: var(--workplace-border);
 }
 
 .workplace-table th.sortable-header > div {
@@ -292,32 +291,21 @@
   min-width: 0;
 }
 
-.workplace-table th.sortable-header > div > span:first-child {
-  flex-shrink: 0;
-}
-
+.workplace-table th.sortable-header > div > span:first-child,
 .workplace-table th.sortable-header > div > span:last-child {
   flex-shrink: 0;
 }
 
 .workplace-table td {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #E5E7EB;
+  border-bottom: 1px solid var(--workplace-border);
   font-size: 0.875rem;
-  color: #333333;
+  color: var(--workplace-text);
   vertical-align: middle;
   line-height: 1.5;
 }
 
-.workplace-table td.checkbox-column {
-  width: 3rem;
-  min-width: 3rem;
-  max-width: 3rem;
-  text-align: center;
-  padding: 0.75rem 0.5rem;
-  vertical-align: middle;
-}
-
+.workplace-table td.checkbox-column,
 .workplace-table td.action-column {
   width: 3rem;
   min-width: 3rem;
@@ -332,7 +320,7 @@
 }
 
 .workplace-table tbody tr:hover {
-  background: #F9FAFB;
+  background: var(--workplace-bg-light);
 }
 
 .workplace-table tbody tr:last-child td {
@@ -343,7 +331,7 @@
   width: 1rem;
   height: 1rem;
   cursor: pointer;
-  accent-color: #5B8EFF;
+  accent-color: var(--workplace-primary);
 }
 
 .product-cell {
@@ -351,36 +339,7 @@
   vertical-align: middle;
 }
 
-.product-image {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  object-fit: cover;
-  background: #F3F4F6;
-}
-
-.action-menu-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #6B7280;
-  transition: color 0.2s;
-}
-
-.action-menu-btn:hover {
-  color: #333333;
-}
-
-.action-icon {
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
-/* Meatballs Menu Styles */
+/* ===== 액션 메뉴 ===== */
 .meatballs-menu {
   position: relative;
   display: flex;
@@ -396,25 +355,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6B7280;
-  transition: color 0.2s;
+  color: var(--workplace-text-gray);
+  transition: all var(--workplace-transition);
   border-radius: 4px;
 }
 
 .meatballs-btn:hover {
-  color: #333333;
-  background: #F3F4F6;
+  color: var(--workplace-text);
+  background: var(--workplace-bg-gray);
 }
 
 .dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 4px;
+  position: fixed;
   background: #fff;
-  border: 1px solid #E5E7EB;
+  border: 1px solid var(--workplace-border);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--workplace-shadow);
   display: flex;
   flex-direction: column;
   min-width: 140px;
@@ -434,21 +390,21 @@
   text-align: left;
   cursor: pointer;
   transition: background-color 0.15s ease;
-  color: #333333;
+  color: var(--workplace-text);
   width: 100%;
 }
 
 .dropdown-item:hover {
-  background: #F5F5F5;
+  background: var(--workplace-bg-light);
 }
 
 .dropdown-item.delete-item {
-  color: #EF4444;
+  color: var(--workplace-danger);
 }
 
 .dropdown-item.delete-item:hover {
-  background: #FEE2E2;
-  color: #DC2626;
+  background: var(--workplace-danger-bg);
+  color: var(--workplace-danger-hover);
 }
 
 .dropdown-item svg {
@@ -456,22 +412,17 @@
 }
 
 @keyframes fadeIn {
-  from { 
-    opacity: 0; 
-    transform: translateY(-4px); 
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
   }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* 테이블이 드롭다운을 잘리지 않도록 */
-.workplace-table {
-  position: relative;
-}
-
-/* Footer Section */
+/* ===== 푸터 섹션 ===== */
 .workplace-footer {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -501,17 +452,17 @@
 
 .pagination-btn {
   padding: 0.5rem 1rem;
-  border: 1px solid #E5E7EB;
+  border: 1px solid var(--workplace-border);
   border-radius: 8px;
   background: white;
-  color: #333333;
+  color: var(--workplace-text);
   font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--workplace-transition);
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background: #F9FAFB;
+  background: var(--workplace-bg-light);
   border-color: #D1D5DB;
 }
 
@@ -528,27 +479,27 @@
 .page-number {
   width: 2rem;
   height: 2rem;
-  border: 1px solid #E5E7EB;
+  border: 1px solid var(--workplace-border);
   border-radius: 8px;
   background: white;
-  color: #333333;
+  color: var(--workplace-text);
   font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--workplace-transition);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .page-number:hover {
-  background: #F9FAFB;
+  background: var(--workplace-bg-light);
   border-color: #D1D5DB;
 }
 
 .page-number.active {
-  background: #5B8EFF;
+  background: var(--workplace-primary);
   color: white;
-  border-color: #5B8EFF;
+  border-color: var(--workplace-primary);
 }
 
 .action-buttons {
@@ -556,47 +507,53 @@
   gap: 0.75rem;
 }
 
-.download-btn {
+.download-btn,
+.delete-btn,
+.add-btn {
   padding: 0.625rem 1.5rem;
-  border: 1px solid #E5E7EB;
   border-radius: 8px;
-  background: white;
-  color: #333333;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.download-btn:hover {
-  background: #F9FAFB;
-  border-color: #D1D5DB;
-}
-
-.delete-btn {
-  padding: 0.625rem 1.5rem;
-  border: 1px solid #EF4444;
-  border-radius: 8px;
-  background: white;
-  color: #EF4444;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s;
+  transition: all var(--workplace-transition);
+}
+
+.download-btn {
+  border: 1px solid var(--workplace-border);
+  background: white;
+  color: var(--workplace-text);
+}
+
+.download-btn:hover:not(:disabled) {
+  background: var(--workplace-bg-light);
+  border-color: #D1D5DB;
+}
+
+.download-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--workplace-border);
+  color: #9CA3AF;
+}
+
+.delete-btn {
+  border: 1px solid var(--workplace-danger);
+  background: white;
+  color: var(--workplace-danger);
 }
 
 .delete-btn:hover:not(:disabled) {
-  background: #FEE2E2;
-  border-color: #DC2626;
+  background: var(--workplace-danger-bg);
+  border-color: var(--workplace-danger-hover);
 }
 
 .delete-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  border-color: #E5E7EB;
+  border-color: var(--workplace-border);
   color: #9CA3AF;
 }
 
@@ -606,22 +563,13 @@
 }
 
 .add-btn {
-  padding: 0.625rem 1.5rem;
   border: none;
-  border-radius: 8px;
-  background: #5B8EFF;
+  background: var(--workplace-primary);
   color: white;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
 }
 
 .add-btn:hover {
-  background: #4A7AE8;
+  background: var(--workplace-primary-hover);
 }
 
 .plus-icon {
@@ -629,38 +577,62 @@
   height: 1rem;
 }
 
-/* 반응형 디자인 - 작은 화면에서 테이블이 사이드바를 침범하지 않도록 */
+/* ===== 반응형 디자인 ===== */
+@media (max-width: 1200px) {
+  .workplace-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .workplace-filters > * {
+    width: 100%;
+  }
+
+  .filters-left {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .date-filter-container {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .date-input {
+    flex: 1;
+  }
+}
+
 @media (max-width: 1024px) {
   .workplace-container {
     padding: 1rem;
   }
-  
+
   .workplace-table-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
-  
+
   .workplace-table {
     min-width: 600px;
   }
-  
+
   .workplace-filters {
     width: 100%;
   }
-  
+
   .workplace-footer {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .workplace-footer .pagination {
     grid-column: 1;
     justify-self: center;
   }
-  
+
   .workplace-footer .action-buttons {
     grid-column: 1;
     justify-self: center;
   }
 }
-

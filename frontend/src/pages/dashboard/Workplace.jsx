@@ -3,9 +3,18 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
 import Footer from "../../components/layout/Footer/Footer";
 import dashboardService from "../../services/dashboardService";
-import ProductModal from "../../components/ProductModal";
-import ProductInfoForm from "../../components/ProductInfoForm";
-import ProductUploadForm from "../../components/ProductUploadForm";
+import ProductModal from "../../components/product/ProductModal";
+import ProductInfoForm from "../../components/product/ProductInfoForm";
+import ProductUploadForm from "../../components/product/ProductUploadForm";
+import AddReviewForm from "../../components/product/AddReviewForm";
+import ProductFilterBar from "../../components/workplace/ProductFilterBar";
+import ProductListTable from "../../components/workplace/ProductListTable";
+import ProductPagination from "../../components/workplace/ProductPagination";
+import { useProductFilter } from "../../hooks/useProductFilter";
+import { useProductSort } from "../../hooks/useProductSort";
+import { getTodayDate } from "../../utils/dateUtils";
+import { useSidebar } from "../../hooks/useSidebar";
+import { CATEGORY_NAMES } from "../../constants";
 import "../../styles/common.css";
 import "../../styles/modal.css";
 import "./dashboard.css";
@@ -15,38 +24,48 @@ import "./workplace.css";
 function Workplace() {
   const navigate = useNavigate();
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [allProducts, setAllProducts] = useState([]); // 전체 제품 데이터 (백엔드에서 받은 원본)
-  const [workplaceData, setWorkplaceData] = useState([]); // 화면에 표시할 제품 데이터 (필터링/페이지네이션 적용)
   const [loading, setLoading] = useState(true);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [modalStep, setModalStep] = useState(null); // 'info' | 'upload' | 'edit' | null
+  const [modalStep, setModalStep] = useState(null); // 'info' | 'upload' | 'edit' | 'addReview' | null
   const [productFormData, setProductFormData] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null); // 수정/추가 리뷰용 선택된 제품
-  const [sortField, setSortField] = useState(null); // 'registered_date' | 'product_name' | 'brand' | 'category_id' | null
-  const [sortDirection, setSortDirection] = useState('asc'); // 'asc' | 'desc'
   const [openMenuIndex, setOpenMenuIndex] = useState(null); // 열린 메뉴의 인덱스
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 }); // 드롭다운 위치
   const menuRefs = useRef({}); // 각 메뉴의 ref를 저장
-  
-  // 사이드바 상태를 localStorage에서 읽어오기
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    const saved = localStorage.getItem("sidebarOpen");
-    return saved !== null ? saved === "true" : true;
-  });
+  const dropdownRef = useRef(null); // 드롭다운 메뉴 ref
 
   const productsPerPage = 10;
 
-  // 오늘 날짜를 YYYY-MM-DD 형식으로 가져오기
-  const getTodayDate = () => {
-    const today = new Date();
-    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  };
+  // 정렬 훅 사용
+  const { sortField, sortDirection, handleSort } = useProductSort();
+
+  // 필터링 및 페이지네이션 훅 사용
+  const {
+    workplaceData,
+    currentPage,
+    totalPages,
+    totalCount,
+    categories,
+    handlePageChange,
+    setCurrentPage,
+  } = useProductFilter(
+    allProducts,
+    searchQuery,
+    selectedCategoryFilter,
+    startDate,
+    endDate,
+    sortField,
+    sortDirection,
+    productsPerPage
+  );
+  
+  // 사이드바 상태 관리 (커스텀 훅 사용)
+  const sidebarOpen = useSidebar();
 
   // 날짜 변경 핸들러 (시작일)
   const handleStartDateChange = (e) => {
@@ -70,36 +89,68 @@ function Workplace() {
     setEndDate(newEndDate);
   };
 
-  // 사이드바 상태 변경 감지 (CustomEvent 사용)
-  useEffect(() => {
-    const handleSidebarToggle = (e) => {
-      setSidebarOpen(e.detail.isOpen);
-    };
 
-    // CustomEvent 리스너 등록
-    window.addEventListener("sidebar-toggle", handleSidebarToggle);
-    
-    // localStorage 변경 감지 (다른 탭에서 변경된 경우)
-    const handleStorageChange = (e) => {
-      if (e.key === "sidebarOpen") {
-        setSidebarOpen(e.newValue === "true");
+  // 드롭다운 위치 계산
+  useEffect(() => {
+    const updateDropdownPosition = () => {
+      if (openMenuIndex !== null) {
+        const menuElement = menuRefs.current[openMenuIndex];
+        if (menuElement) {
+          const rect = menuElement.getBoundingClientRect();
+          const dropdownHeight = 120; // 대략적인 드롭다운 높이
+          const dropdownWidth = 140; // 드롭다운 너비
+          
+          // 화면 하단에 가까우면 위로, 아니면 아래로
+          const spaceBelow = window.innerHeight - rect.bottom;
+          const spaceAbove = rect.top;
+          
+          let top, right;
+          
+          if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+            // 위로 표시
+            top = Math.max(4, rect.top - dropdownHeight - 4);
+          } else {
+            // 아래로 표시
+            top = Math.min(rect.bottom + 4, window.innerHeight - dropdownHeight - 4);
+          }
+          
+          // 오른쪽 정렬, 화면 밖으로 나가지 않도록
+          right = Math.max(4, window.innerWidth - rect.right);
+          // 왼쪽으로 넘어가지 않도록
+          if (rect.right - dropdownWidth < 0) {
+            right = window.innerWidth - rect.left;
+          }
+          
+          setDropdownPosition({ top, right });
+        }
       }
     };
-    window.addEventListener("storage", handleStorageChange);
 
-    return () => {
-      window.removeEventListener("sidebar-toggle", handleSidebarToggle);
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
+    if (openMenuIndex !== null) {
+      updateDropdownPosition();
+      
+      // 스크롤 및 리사이즈 시 위치 업데이트
+      window.addEventListener('scroll', updateDropdownPosition, true);
+      window.addEventListener('resize', updateDropdownPosition);
+      
+      return () => {
+        window.removeEventListener('scroll', updateDropdownPosition, true);
+        window.removeEventListener('resize', updateDropdownPosition);
+      };
+    }
+  }, [openMenuIndex, workplaceData]);
 
   // 외부 클릭 시 메뉴 닫기
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (openMenuIndex !== null) {
         const menuElement = menuRefs.current[openMenuIndex];
-        if (menuElement && !menuElement.contains(e.target)) {
-          setOpenMenuIndex(null);
+        const dropdownElement = dropdownRef.current;
+        if (menuElement && dropdownElement) {
+          // 메뉴 버튼이나 드롭다운 내부가 아니면 닫기
+          if (!menuElement.contains(e.target) && !dropdownElement.contains(e.target)) {
+            setOpenMenuIndex(null);
+          }
         }
       }
     };
@@ -203,146 +254,15 @@ function Workplace() {
     };
   }, [refreshTrigger]); // refreshTrigger만 의존성으로 설정
 
-  // 카테고리 목록 추출 (중복 제거) - category_id 기반
-  const categories = React.useMemo(() => {
-    const categorySet = new Set();
-    allProducts.forEach((product) => {
-      if (product.category_id) {
-        categorySet.add(product.category_id);
-      }
-    });
-    return Array.from(categorySet).sort((a, b) => a - b);
-  }, [allProducts]);
-
-  // 검색어나 필터 변경 시 페이지를 1로 리셋
-  useEffect(() => {
+  // 정렬 변경 시 페이지 초기화
+  const handleSortWithPageReset = (field) => {
+    handleSort(field);
     setCurrentPage(1);
-  }, [searchQuery, selectedCategoryFilter, startDate, endDate]);
-
-  // 정렬 핸들러
-  const handleSort = (field) => {
-    if (sortField === field) {
-      // 같은 필드를 클릭하면 정렬 방향 토글
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      // 다른 필드를 클릭하면 해당 필드로 정렬 (기본 오름차순)
-      setSortField(field);
-      setSortDirection('asc');
-    }
-    setCurrentPage(1); // 정렬 변경 시 첫 페이지로
   };
 
-  // 클라이언트 사이드 필터링 및 페이지네이션
-  useEffect(() => {
-    let filtered = [...allProducts];
-
-    // 검색 필터 적용
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter(
-        (item) => {
-          const productName = item.product_name ? item.product_name.toLowerCase() : '';
-          const brand = item.brand && item.brand.trim() ? item.brand.toLowerCase() : '';
-          return productName.includes(query) || brand.includes(query);
-        }
-      );
-    }
-
-    // 카테고리 필터 적용
-    if (selectedCategoryFilter) {
-      filtered = filtered.filter(
-        (item) => item.category_id === Number(selectedCategoryFilter)
-      );
-    }
-
-    // 등록일 날짜 범위 필터 적용
-    if (startDate || endDate) {
-      filtered = filtered.filter((item) => {
-        const itemDate = item.registered_date 
-          ? new Date(item.registered_date) 
-          : (item.updated_at ? new Date(item.updated_at) : (item.created_at ? new Date(item.created_at) : null));
-        
-        if (!itemDate || isNaN(itemDate.getTime())) return false;
-        
-        // 날짜만 비교 (시간 제외) - YYYY-MM-DD 형식으로 변환
-        const itemDateStr = `${itemDate.getFullYear()}-${String(itemDate.getMonth() + 1).padStart(2, '0')}-${String(itemDate.getDate()).padStart(2, '0')}`;
-        
-        if (startDate && endDate) {
-          return itemDateStr >= startDate && itemDateStr <= endDate;
-        } else if (startDate) {
-          return itemDateStr >= startDate;
-        } else if (endDate) {
-          return itemDateStr <= endDate;
-        }
-        
-        return true;
-      });
-    }
-
-    // 정렬 적용
-    if (sortField) {
-      filtered.sort((a, b) => {
-        let aValue = a[sortField];
-        let bValue = b[sortField];
-
-        // 숫자 필드인 경우 먼저 처리
-        if (sortField === 'category_id') {
-          aValue = (aValue !== null && aValue !== undefined) ? Number(aValue) : 0;
-          bValue = (bValue !== null && bValue !== undefined) ? Number(bValue) : 0;
-        }
-        // 날짜 필드인 경우 Date 객체로 변환
-        else if (sortField === 'registered_date') {
-          aValue = aValue ? new Date(aValue) : new Date(0);
-          bValue = bValue ? new Date(bValue) : new Date(0);
-        }
-        // 문자열 필드인 경우
-        else {
-          // null이나 undefined 처리
-          if (aValue === null || aValue === undefined) aValue = '';
-          if (bValue === null || bValue === undefined) bValue = '';
-          
-          // 문자열 비교 (대소문자 구분 없음)
-          if (typeof aValue === 'string' && typeof bValue === 'string') {
-            aValue = aValue.toLowerCase();
-            bValue = bValue.toLowerCase();
-          }
-        }
-
-        const result = aValue < bValue ? (sortDirection === 'asc' ? -1 : 1) : (aValue > bValue ? (sortDirection === 'asc' ? 1 : -1) : 0);
-        return result;
-      });
-    }
-
-    // 전체 개수 설정
-    const total = filtered.length;
-    setTotalCount(total);
-    setTotalPages(Math.ceil(total / productsPerPage));
-
-    // 페이지네이션 적용
-    const startIndex = (currentPage - 1) * productsPerPage;
-    const endIndex = startIndex + productsPerPage;
-    const paginatedData = filtered.slice(startIndex, endIndex);
-
-    setWorkplaceData(paginatedData);
-  }, [allProducts, currentPage, searchQuery, selectedCategoryFilter, startDate, endDate, productsPerPage, sortField, sortDirection]);
-
-  // totalPages가 변경되면 currentPage가 유효한 범위 내에 있는지 확인
-  useEffect(() => {
-    if (totalPages > 0 && currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    } else if (totalPages === 0 && currentPage > 1) {
-      setCurrentPage(1);
-    }
-  }, [totalPages, currentPage]);
-
-  // 카테고리 ID를 이름으로 변환
+  // 카테고리 ID를 이름으로 변환 (상수 사용)
   const getCategoryName = (categoryId) => {
-    const categoryMap = {
-      101: '전자기기',
-      102: '화장품',
-      103: '게임'
-    };
-    return categoryMap[categoryId] || (categoryId ? `카테고리 ${categoryId}` : '-');
+    return CATEGORY_NAMES[categoryId] || (categoryId ? `카테고리 ${categoryId}` : '-');
   };
 
   // 날짜 포맷팅 (registered_date 우선 사용, 없으면 updated_at 사용)
@@ -388,11 +308,9 @@ function Workplace() {
   };
 
   // 페이지 변경
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-      setSelectedProducts([]); // 페이지 변경 시 선택 초기화
-    }
+  const handlePageChangeWithReset = (page) => {
+    handlePageChange(page);
+    setSelectedProducts([]); // 페이지 변경 시 선택 초기화
   };
 
   // 검색 처리
@@ -443,11 +361,18 @@ function Workplace() {
     setOpenMenuIndex(null); // 메뉴 닫기
   };
 
-  // Add Review 버튼 클릭 - Upload 모달 열기
+  // Add Review 버튼 클릭 - Add Review 모달 열기
   const handleAddReview = (item) => {
     setSelectedItem(item);
-    setModalStep("upload");
+    setModalStep("addReview");
     setOpenMenuIndex(null); // 메뉴 닫기
+  };
+
+  // Add Review 완료 후 콜백
+  const handleAddReviewSuccess = () => {
+    setModalStep(null);
+    setSelectedItem(null);
+    setRefreshTrigger(prev => prev + 1); // 목록 새로고침
   };
 
   // Delete 버튼 클릭 - 제품 삭제
@@ -573,361 +498,86 @@ function Workplace() {
           </div>
 
           {/* Filters Section */}
-          <div className="workplace-filters">
-            <div className="filters-left">
-              <div className="filter-dropdown">
-                <select
-                  id="workplace_category_filter"
-                  name="category_filter"
-                  className="product-filter"
-                  value={selectedCategoryFilter}
-                  onChange={(e) => {
-                    setSelectedCategoryFilter(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <option value="">전체 카테고리</option>
-                  {categories.map((categoryId) => (
-                    <option key={categoryId} value={categoryId}>
-                      {getCategoryName(categoryId)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="search-container">
+          <ProductFilterBar
+            searchQuery={searchQuery}
+            onSearchChange={(e) => setSearchQuery(e.target.value)}
+            onSearchKeyDown={handleSearch}
+            selectedCategoryFilter={selectedCategoryFilter}
+            onCategoryFilterChange={(value) => {
+              setSelectedCategoryFilter(value);
+              setCurrentPage(1);
+            }}
+            categories={categories}
+            getCategoryName={getCategoryName}
+            startDate={startDate}
+            endDate={endDate}
+            onStartDateChange={handleStartDateChange}
+            onEndDateChange={handleEndDateChange}
+            onClearDateFilter={() => {
+              setStartDate("");
+              setEndDate("");
+            }}
+            getTodayDate={getTodayDate}
+          />
+
+          {/* Table Section */}
+          <ProductListTable
+            workplaceData={workplaceData}
+            loading={loading}
+            selectedProducts={selectedProducts}
+            onSelectAll={handleSelectAll}
+            onSelectItem={handleSelectItem}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSortWithPageReset}
+            formatDate={formatDate}
+            getCategoryName={getCategoryName}
+            openMenuIndex={openMenuIndex}
+            onMenuToggle={setOpenMenuIndex}
+            dropdownPosition={dropdownPosition}
+            menuRefs={menuRefs}
+            onEdit={handleEdit}
+            onAddReview={handleAddReview}
+            onDelete={handleDelete}
+          />
+
+          {/* Footer Section */}
+          <div className="workplace-footer">
+            <ProductPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChangeWithReset}
+            />
+            <div className="action-buttons">
+              <button 
+                className="download-btn" 
+                onClick={handleDownload}
+                disabled={selectedProducts.length === 0 || loading}
+                title={selectedProducts.length === 0 ? "다운로드할 제품을 선택해주세요" : `선택한 ${selectedProducts.length}개 제품 다운로드`}
+              >
+                Download
+              </button>
+              <button 
+                className="delete-btn" 
+                onClick={handleDeleteSelected}
+                disabled={selectedProducts.length === 0 || loading}
+                title={selectedProducts.length === 0 ? "삭제할 제품을 선택해주세요" : `선택한 ${selectedProducts.length}개 제품 삭제`}
+              >
                 <svg
-                  className="search-icon"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  className="delete-icon"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                   />
                 </svg>
-                <input
-                  type="text"
-                  id="workplace_search"
-                  name="workplace_search"
-                  className="search-input"
-                  placeholder="제품명 또는 브랜드로 검색"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleSearch}
-                />
-              </div>
-            </div>
-            <div className="date-filter-container">
-              <input
-                type="date"
-                id="workplace_start_date"
-                name="start_date"
-                className="date-input"
-                placeholder="시작일"
-                value={startDate}
-                onChange={handleStartDateChange}
-                max={endDate || getTodayDate()}
-              />
-              <span className="date-separator">~</span>
-              <input
-                type="date"
-                id="workplace_end_date"
-                name="end_date"
-                className="date-input"
-                placeholder="종료일"
-                value={endDate}
-                onChange={handleEndDateChange}
-                min={startDate || undefined}
-                max={getTodayDate()}
-              />
-              {(startDate || endDate) && (
-                <button
-                  className="date-clear-btn"
-                  onClick={() => {
-                    setStartDate("");
-                    setEndDate("");
-                  }}
-                  title="날짜 필터 초기화"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    className="clear-icon"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Table Section */}
-          <div className="workplace-table-container">
-            <table className="workplace-table">
-              <thead>
-                <tr>
-                  <th className="checkbox-column">
-                    <input
-                      type="checkbox"
-                      id="workplace_select_all"
-                      name="select_all"
-                      checked={
-                        workplaceData.length > 0 &&
-                        selectedProducts.length === workplaceData.length
-                      }
-                      onChange={handleSelectAll}
-                      disabled={loading || workplaceData.length === 0}
-                    />
-                  </th>
-                  <th 
-                    className="sortable-header"
-                    onClick={() => handleSort('registered_date')}
-                    style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center' }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                      <span style={{ flex: 1, textAlign: 'center' }}>등록일</span>
-                      <span style={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        gap: '2px',
-                        fontSize: '0.7rem',
-                        alignItems: 'center',
-                        color: sortField === 'registered_date' ? '#5B8EFF' : '#9CA3AF',
-                        marginLeft: 'auto'
-                      }}>
-                        <span style={{ 
-                          opacity: sortField === 'registered_date' && sortDirection === 'asc' ? 1 : 0.3 
-                        }}>▲</span>
-                        <span style={{ 
-                          opacity: sortField === 'registered_date' && sortDirection === 'desc' ? 1 : 0.3 
-                        }}>▼</span>
-                      </span>
-                    </div>
-                  </th>
-                  <th style={{ textAlign: 'center' }}>제품명</th>
-                  <th style={{ textAlign: 'center' }}>브랜드</th>
-                  <th style={{ textAlign: 'center' }}>카테고리</th>
-                  <th className="action-column"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan="6" style={{ textAlign: "center", padding: "2rem" }}>
-                      로딩 중...
-                    </td>
-                  </tr>
-                ) : workplaceData.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" style={{ textAlign: "center", padding: "2rem" }}>
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-                        <p style={{ margin: 0, fontSize: "1rem", color: "#6b7280" }}>
-                          등록된 제품이 없습니다.
-                        </p>
-                        <p style={{ margin: 0, fontSize: "0.875rem", color: "#9ca3af" }}>
-                          제품을 추가하여 분석을 시작하세요.
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  workplaceData.map((item, index) => {
-                    return (
-                    <tr 
-                      key={item.product_id}
-                      onClick={() => {
-                        navigate(`/dashboard?productId=${item.product_id}`);
-                      }}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <td className="checkbox-column" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          id={`workplace_product_${item.product_id}`}
-                          name={`product_${item.product_id}`}
-                          checked={selectedProducts.includes(item.product_id)}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            handleSelectItem(item.product_id);
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </td>
-                      <td style={{ textAlign: 'center' }}>{formatDate(item)}</td>
-                      <td className="product-cell" style={{ textAlign: 'center' }}>
-                        {item.product_name || "-"}
-                      </td>
-                      <td style={{ textAlign: 'center' }}>{item.brand && item.brand.trim() !== "" ? item.brand : "-"}</td>
-                      <td style={{ textAlign: 'center' }}>{getCategoryName(item.category_id)}</td>
-                      <td className="action-column" onClick={(e) => e.stopPropagation()}>
-                        <div 
-                          className="meatballs-menu"
-                          ref={(el) => {
-                            if (el) {
-                              menuRefs.current[index] = el;
-                            } else {
-                              delete menuRefs.current[index];
-                            }
-                          }}
-                        >
-                          <button
-                            className="meatballs-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpenMenuIndex(openMenuIndex === index ? null : index);
-                            }}
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="18"
-                              height="18"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <circle cx="12" cy="12" r="1"></circle>
-                              <circle cx="12" cy="5" r="1"></circle>
-                              <circle cx="12" cy="19" r="1"></circle>
-                            </svg>
-                          </button>
-
-                          {openMenuIndex === index && (
-                            <div className="dropdown-menu">
-                              <button
-                                onClick={() => handleEdit(item)}
-                                className="dropdown-item"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleAddReview(item)}
-                                className="dropdown-item"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                  <line x1="12" y1="8" x2="12" y2="16"></line>
-                                  <line x1="8" y1="12" x2="16" y2="12"></line>
-                                </svg>
-                                Add Review
-                              </button>
-                              <button
-                                onClick={() => handleDelete(item.product_id)}
-                                className="dropdown-item delete-item"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <polyline points="3 6 5 6 21 6"></polyline>
-                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                </svg>
-                                Delete
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Footer Section */}
-          <div className="workplace-footer">
-            <div className="pagination">
-              <button
-                className="pagination-btn"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1 || totalPages === 0}
-              >
-                Previous
-              </button>
-              <div className="page-numbers">
-                {totalPages > 0 && Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                  let page;
-                  if (totalPages <= 5) {
-                    page = i + 1;
-                  } else if (currentPage <= 3) {
-                    page = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    page = totalPages - 4 + i;
-                  } else {
-                    page = currentPage - 2 + i;
-                  }
-                  // 페이지 번호가 유효한 범위 내에 있는지 확인
-                  if (page < 1 || page > totalPages) {
-                    return null;
-                  }
-                  return (
-                    <button
-                      key={page}
-                      className={`page-number ${currentPage === page ? "active" : ""}`}
-                      onClick={() => handlePageChange(page)}
-                    >
-                      {page}
-                    </button>
-                  );
-                })}
-              </div>
-              <button
-                className="pagination-btn"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages || totalPages === 0}
-              >
-                Next
-              </button>
-            </div>
-            <div className="action-buttons">
-              <button className="download-btn" onClick={handleDownload}>
-                Download
+                Delete
               </button>
               <button className="add-btn" onClick={handleAdd}>
                 <svg
@@ -984,6 +634,17 @@ function Workplace() {
             initialData={selectedItem}
             onSave={handleSaveEdit}
             onClose={handleCloseModal}
+          />
+        </ProductModal>
+      )}
+
+      {/* Add Review Modal */}
+      {modalStep === "addReview" && selectedItem && (
+        <ProductModal onClose={handleCloseModal}>
+          <AddReviewForm
+            onClose={handleCloseModal}
+            productId={selectedItem.product_id}
+            onSuccess={handleAddReviewSuccess}
           />
         </ProductModal>
       )}

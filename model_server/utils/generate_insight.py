@@ -194,11 +194,17 @@ def generate_insight_with_llm(prompt: str) -> dict:
 def save_insight_to_db(product_id: int, user_id: int, insight_data: dict) -> int:
     """
     인사이트 데이터를 DB에 저장
+    - 기존 인사이트가 있으면 업데이트
+    - 없으면 새로 생성
     Returns: insight_id
     """
     conn = get_connection()
     try:
         cursor = conn.cursor()
+        
+        # user_id가 None이면 기본값 사용 (시스템 자동 생성)
+        if user_id is None:
+            user_id = 10001  # 시스템 자동 생성용 기본 user_id
         
         # 데이터 추출
         summary = insight_data.get("summary", {})
@@ -208,37 +214,77 @@ def save_insight_to_db(product_id: int, user_id: int, insight_data: dict) -> int
         improvement_suggestion = summary.get("recommendation", "")
         content_json = json.dumps(insight_data.get("report", {}), ensure_ascii=False)
         
-        # INSERT 쿼리
+        # 기존 인사이트 확인 (같은 product_id의 최신 인사이트)
         cursor.execute(
             """
-            INSERT INTO tb_productInsight (
-                product_id,
-                user_id,
-                pos_top_keywords,
-                neg_top_keywords,
-                insight_summary,
-                improvement_suggestion,
-                content,
-                created_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            SELECT insight_id 
+            FROM tb_productInsight 
+            WHERE product_id = %s 
+            ORDER BY created_at DESC 
+            LIMIT 1
             """,
-            (
-                product_id,
-                user_id,
-                pos_keywords,
-                neg_keywords,
-                insight_summary,
-                improvement_suggestion,
-                content_json,
-                datetime.now()
-            )
+            (product_id,)
         )
+        existing_insight = cursor.fetchone()
         
-        # insight_id 가져오기
-        insight_id = cursor.lastrowid
+        if existing_insight:
+            # 기존 인사이트 업데이트
+            insight_id = existing_insight["insight_id"]
+            cursor.execute(
+                """
+                UPDATE tb_productInsight 
+                SET 
+                    user_id = %s,
+                    pos_top_keywords = %s,
+                    neg_top_keywords = %s,
+                    insight_summary = %s,
+                    improvement_suggestion = %s,
+                    content = %s,
+                    created_at = %s
+                WHERE insight_id = %s
+                """,
+                (
+                    user_id,
+                    pos_keywords,
+                    neg_keywords,
+                    insight_summary,
+                    improvement_suggestion,
+                    content_json,
+                    datetime.now(),
+                    insight_id
+                )
+            )
+            print(f"✅ tb_productInsight 업데이트 완료 (insight_id={insight_id})")
+        else:
+            # 새 인사이트 생성
+            cursor.execute(
+                """
+                INSERT INTO tb_productInsight (
+                    product_id,
+                    user_id,
+                    pos_top_keywords,
+                    neg_top_keywords,
+                    insight_summary,
+                    improvement_suggestion,
+                    content,
+                    created_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    product_id,
+                    user_id,
+                    pos_keywords,
+                    neg_keywords,
+                    insight_summary,
+                    improvement_suggestion,
+                    content_json,
+                    datetime.now()
+                )
+            )
+            insight_id = cursor.lastrowid
+            print(f"✅ tb_productInsight에 새로 생성 완료 (insight_id={insight_id})")
         
-        print(f"✅ tb_productInsight에 저장 완료 (insight_id={insight_id})")
-        
+        conn.commit()
         return insight_id
         
     finally:
@@ -299,7 +345,7 @@ if __name__ == "__main__":
     from utils.db_connect import init_db_pool, close_db_pool
     
     # 테스트용
-    product_id = 1013
+    product_id = 1014
     user_id = 10001
     
     try:

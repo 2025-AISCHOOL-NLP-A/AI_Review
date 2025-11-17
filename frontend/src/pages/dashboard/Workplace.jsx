@@ -38,6 +38,7 @@ function Workplace() {
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 }); // 드롭다운 위치
   const menuRefs = useRef({}); // 각 메뉴의 ref를 저장
   const dropdownRef = useRef(null); // 드롭다운 메뉴 ref
+  const [isUploading, setIsUploading] = useState(false); // 업로드 중 상태
 
   const productsPerPage = 10;
 
@@ -342,6 +343,7 @@ function Workplace() {
     setModalStep(null);
     setProductFormData(null);
     setSelectedItem(null);
+    setIsUploading(false); // 업로드 상태 초기화
   };
 
   // 제품 추가 성공 시 호출되는 콜백
@@ -617,11 +619,12 @@ function Workplace() {
 
       {/* Step 2: Upload Files Modal */}
       {modalStep === "upload" && (
-        <ProductModal onClose={handleCloseModal}>
+        <ProductModal onClose={handleCloseModal} disabled={isUploading}>
           <ProductUploadForm
             onClose={handleCloseModal}
             formData={productFormData}
             onSuccess={handleProductAdded}
+            onSubmittingChange={setIsUploading}
           />
         </ProductModal>
       )}
@@ -640,11 +643,12 @@ function Workplace() {
 
       {/* Add Review Modal */}
       {modalStep === "addReview" && selectedItem && (
-        <ProductModal onClose={handleCloseModal}>
+        <ProductModal onClose={handleCloseModal} disabled={isUploading}>
           <AddReviewForm
             onClose={handleCloseModal}
             productId={selectedItem.product_id}
             onSuccess={handleAddReviewSuccess}
+            onSubmittingChange={setIsUploading}
           />
         </ProductModal>
       )}

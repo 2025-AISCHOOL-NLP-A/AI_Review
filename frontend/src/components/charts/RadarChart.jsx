@@ -28,7 +28,7 @@ const RadarChart = ({ data, loading }) => {
 
   // Color constants
   const primaryColor = "#5B8EFF"; // 긍정 비율 (파란색)
-  const negativeColor = "#EF4444"; // 부정 비율 (빨간색) - 가시성 개선
+  const negativeColor = "#D8B4FE"; // 부정 비율 (매우 연한 보라색) - 파란색과 조화롭고 부드러운 느낌
   const fontColor = "#333333";
 
   useEffect(() => {
@@ -79,15 +79,15 @@ const RadarChart = ({ data, loading }) => {
                   {
                     label: "부정 비율",
                     data: data.negative,
-                    backgroundColor: "rgba(239, 68, 68, 0.3)", // 빨간색 배경 (더 진하게)
-                    borderColor: negativeColor, // 빨간색 테두리
-                    pointBackgroundColor: negativeColor, // 빨간색 포인트
+                    backgroundColor: "rgba(216, 180, 254, 0.3)", // 매우 연한 보라색 배경 (투명도 조정)
+                    borderColor: negativeColor, // 매우 연한 보라색 테두리
+                    pointBackgroundColor: negativeColor, // 매우 연한 보라색 포인트
                     pointBorderColor: "#fff",
                     pointHoverBackgroundColor: "#fff",
                     pointHoverBorderColor: negativeColor,
-                    borderWidth: 3, // 테두리 두께 증가 (가시성 개선)
-                    pointRadius: 5, // 포인트 크기 증가
-                    pointHoverRadius: 7, // 호버 시 포인트 크기 증가
+                    borderWidth: 2.5, // 테두리 두께 (가시성 개선)
+                    pointRadius: 5, // 포인트 크기
+                    pointHoverRadius: 7, // 호버 시 포인트 크기
                   },
                 ],
               },

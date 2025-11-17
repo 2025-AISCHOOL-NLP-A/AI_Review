@@ -2,9 +2,16 @@ import React, { useState } from "react";
 import FileUploadForm from "../common/FileUploadForm";
 import dashboardService from "../../services/dashboardService";
 
-export default function ProductUploadForm({ onClose, formData, onSuccess }) {
+export default function ProductUploadForm({ onClose, formData, onSuccess, onSubmittingChange }) {
   const [mappedFiles, setMappedFiles] = useState([]); // [{ file, mapping }]
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // isSubmitting 상태 변경 시 부모에게 알림
+  React.useEffect(() => {
+    if (onSubmittingChange) {
+      onSubmittingChange(isSubmitting);
+    }
+  }, [isSubmitting, onSubmittingChange]);
 
   // FileUploadForm에서 파일이 준비되었을 때 호출
   const handleFilesReady = (files) => {

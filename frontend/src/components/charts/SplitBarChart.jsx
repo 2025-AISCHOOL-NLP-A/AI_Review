@@ -26,7 +26,7 @@ const SplitBarChart = ({ data, loading }) => {
 
   // Color constants
   const primaryColor = "#5B8EFF";
-  const neutralColor = "#CBD5E1";
+  const negativeColor = "#D8B4FE"; // 부정 비율 (매우 연한 보라색) - 모든 차트와 일관성 유지
   const fontColor = "#333333";
 
   useEffect(() => {
@@ -68,7 +68,7 @@ const SplitBarChart = ({ data, loading }) => {
                   {
                     label: "부정 비율 (왼쪽)",
                     data: negData,
-                    backgroundColor: neutralColor,
+                    backgroundColor: negativeColor,
                     barPercentage: 0.7,
                   },
                   {

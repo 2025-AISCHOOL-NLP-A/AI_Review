@@ -1,7 +1,7 @@
 /* Color constants */
 :root {
   --radar-primary-color: #5B8EFF;
-  --radar-negative-color: #EF4444;
+  --radar-negative-color: #D8B4FE; /* 매우 연한 보라색 - 파란색과 조화롭고 부드러운 느낌 */
   --radar-font-color: #333333;
   --radar-grid-color: #E5E7EB;
   --radar-backdrop-color: rgba(255, 255, 255, 0.9);

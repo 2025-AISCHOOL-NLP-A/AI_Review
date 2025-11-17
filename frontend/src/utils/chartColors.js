@@ -28,7 +28,7 @@ export const getColorFromCSSVar = (element, varName, fallback) => {
 export const getChartColors = (element = null) => {
   return {
     primary: getColorFromCSSVar(element, '--chart-primary-color', "#5B8EFF"),
-    neutral: getColorFromCSSVar(element, '--chart-neutral-color', "#CBD5E1"),
+    neutral: getColorFromCSSVar(element, '--chart-neutral-color', "#D8B4FE"), // 부정 비율 (매우 연한 보라색)
     newReview: getColorFromCSSVar(element, '--chart-new-review-color', "#111827"),
     font: getColorFromCSSVar(element, '--chart-font-color', "#333333"),
   };

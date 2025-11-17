@@ -5,10 +5,11 @@ import { getElementScrollSize } from "../hooks/useViewport";
 
 /**
  * 대시보드 PDF 다운로드용 커스텀 훅
- * - 어떤 컴퓨터/모니터든 항상 같은 규칙으로 동작
- * - 가로는 "최대 900px" 안으로만 줄여서 가로 스크롤 안 생기게
- * - 세로는 내용 비율대로 길게 → 세로 스크롤로만 전체 내용을 보게
- * - 사이드바는 포함, footer만 PDF에서 제외
+ * - DOM 레이아웃을 전혀 변경하지 않음 (transform, width 조작 없음)
+ * - 첫 번째 다운로드부터 항상 같은 규칙으로 동작
+ * - 가로는 "화면 너비 - 여유" 범위 안에서만 사용 (가로 스크롤 방지)
+ * - 세로는 그 비율에 맞춰서 계산 → 페이지 안에서 공백 최소화
+ * - 사이드바 포함, footer만 PDF에서 제외
  */
 export const usePDFDownload = ({
   contentRef,
@@ -23,16 +24,15 @@ export const usePDFDownload = ({
       return;
     }
 
-    // 1) 다운로드 버튼 숨기기 (버튼은 PDF에 안 나오게)
+    // 1) 다운로드 버튼 잠시 숨기기
     const downloadButton = downloadButtonRef?.current;
     if (downloadButton) {
       downloadButton.style.display = "none";
     }
 
-    // 2) footer는 PDF에서만 잠깐 숨기고, 끝나면 다시 되돌림
+    // 2) footer는 PDF에서만 숨기기
     const footerElement = document.getElementById("dashboard-footer");
     const prevFooterDisplay = footerElement ? footerElement.style.display : "";
-
     if (footerElement) {
       footerElement.style.display = "none";
     }
@@ -41,19 +41,34 @@ export const usePDFDownload = ({
     const { width: scrollWidth, height: scrollHeight } =
       getElementScrollSize(element);
 
-    const contentWidth = scrollWidth || element.clientWidth || 1024;
-    const contentHeight = scrollHeight || element.clientHeight || 768;
+    const contentWidth = scrollWidth || element.clientWidth || 1280;
+    const contentHeight = scrollHeight || element.clientHeight || 720;
 
-    // ===========================
-    // 4) PDF 가로폭 고정 규칙
-    // ===========================
-    // - 모니터/브라우저 크기와 상관없이, 항상 900px 안으로만 줄임
-    // - 너무 넓어서 "가로 스크롤" 생기는 걸 최대한 방지
-    // - 콘텐츠 너비가 1640px보다 작으면 그대로 사용 (키우지는 않음)
-    const MAX_PDF_WIDTH = 1640;
+    // 4) 현재 브라우저 화면 너비 기준으로 PDF 가로폭 결정
+    const viewportWidth =
+      (typeof window !== "undefined" && window.innerWidth) ||
+      document.documentElement.clientWidth ||
+      contentWidth;
 
-    const pageWidth = Math.min(contentWidth, MAX_PDF_WIDTH);
+    // 화면 좌우 여유 (너무 꽉 차면 보기 답답하니까 약간만 뺌)
+    const SIDE_PADDING = 40;
+
+    // PDF 가로폭 상/하한 (너무 좁지도, 너무 넓지도 않게)
+    const MAX_PDF_WIDTH = 1600;
+    const MIN_PDF_WIDTH = 900;
+
+    // 👉 실제 PDF 페이지 너비
+    //    - 화면 너비 - 여유 값 안에서
+    //    - MIN_PDF_WIDTH ~ MAX_PDF_WIDTH 사이로 고정
+    const pageWidth = Math.min(
+      MAX_PDF_WIDTH,
+      Math.max(MIN_PDF_WIDTH, viewportWidth - SIDE_PADDING)
+    );
+
+    // 콘텐츠를 pageWidth에 맞추기 위한 축소 비율
     const scaleToFitWidth = pageWidth / contentWidth;
+
+    // 세로는 같은 비율로 줄이기
     const pageHeight = contentHeight * scaleToFitWidth;
 
     // 세로 읽기용 고정
@@ -70,8 +85,7 @@ export const usePDFDownload = ({
       filename: `${productName}_리뷰_분석_리포트.pdf`,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: {
-        // 대시보드 전체를 "원래 크기" 기준으로 캡처
-        // (축소/확대는 jsPDF 쪽에서만 처리 → 잘림 방지)
+        // ❗ DOM 자체 크기는 건드리지 않고, 원본 그대로 캡처
         scale: 2,
         useCORS: true,
         scrollX: 0,
@@ -83,14 +97,13 @@ export const usePDFDownload = ({
       },
       jsPDF: {
         unit: "px",
-        // PDF 페이지 크기
-        // - 가로: 최대 900px
-        // - 세로: 원본 비율대로 줄인 높이
+        // ❗ 우리가 계산한 pageWidth/pageHeight에 딱 맞게 페이지 크기 설정
+        //    → PDF 내부에서 공백 거의 없이 꽉 채워짐
         format: [pageWidth, pageHeight],
         orientation,
       },
       pagebreak: {
-        mode: "none", // 한 장짜리 긴 페이지 (세로로만 스크롤)
+        mode: "none", // 한 장짜리 긴 페이지 (세로 스크롤만)
       },
     };
 
@@ -99,7 +112,7 @@ export const usePDFDownload = ({
       .from(element)
       .save()
       .then(() => {
-        // 6) 버튼 / footer 원복
+        // 6) 버튼 / footer 복구
         if (downloadButton) {
           downloadButton.style.display = "flex";
         }

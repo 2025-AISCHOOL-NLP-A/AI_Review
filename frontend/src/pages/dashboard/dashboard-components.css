@@ -44,7 +44,10 @@
   margin-bottom: 3rem;
 }
 
-.dashboard-content .grid[class*="grid-cols-1"]:not(.kpi-cards-container):not(#main-chart-section) {
+.dashboard-content
+  .grid[class*="grid-cols-1"]:not(.kpi-cards-container):not(
+    #main-chart-section
+  ) {
   margin-top: 0;
   margin-bottom: 3rem;
 }
@@ -64,9 +67,9 @@
 
 /* Chart container responsive */
 .dashboard-content .relative.h-96 {
-  height: 24rem;
-  min-height: 300px;
-  max-height: 500px;
+  height: 21rem;
+  min-height: 260px;
+  max-height: 420px;
   position: relative;
   width: 100%;
 }
@@ -221,7 +224,7 @@
 .dashboard-content #ai-insight-report-section .prose hr {
   margin-top: 1.5rem !important;
   margin-bottom: 1.5rem !important;
-  border-color: #E5E7EB !important;
+  border-color: #e5e7eb !important;
 }
 
 .dashboard-content #ai-insight-report-section .prose strong {
@@ -269,25 +272,26 @@
 }
 
 .review-tooltip-content {
-  background-color: #1F2937;
-  color: #FFFFFF;
+  background-color: #1f2937;
+  color: #ffffff;
   padding: 10px 12px;
   border-radius: 6px;
   font-size: 0.875rem;
   line-height: 1.5;
   white-space: pre-wrap;
   word-wrap: break-word;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
   position: relative;
 }
 
 .review-tooltip-content::before {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 100%;
   left: 20px;
   border: 6px solid transparent;
-  border-bottom-color: #1F2937;
+  border-bottom-color: #1f2937;
 }
 
 /* 테이블 셀에서 툴팁이 바깥으로 나갈 수 있도록 */
@@ -307,4 +311,3 @@
 .dashboard-content #wordcloud-review-section .card table tbody tr {
   position: relative;
 }
-

@@ -52,7 +52,7 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
         return;
       }
 
-      // 파일이 있으면 업로드
+      // 파일이 있으면 업로드 (실패해도 제품은 생성되었으므로 계속 진행)
       if (mappedFiles.length > 0) {
         if (!allFilesMapped) {
           alert("모든 파일의 컬럼 매핑을 완료해주세요.");
@@ -64,18 +64,16 @@ export default function ProductUploadForm({ onClose, formData, onSuccess }) {
         const uploadResult = await dashboardService.uploadReviewFiles(productId, mappedFiles);
 
         if (!uploadResult.success) {
-          alert(uploadResult.message || "파일 업로드에 실패했습니다.");
-          setIsSubmitting(false);
-          return;
+          alert(`제품은 생성되었지만 파일 업로드에 실패했습니다: ${uploadResult.message || "파일 업로드에 실패했습니다."}`);
+          // 파일 업로드 실패해도 제품은 생성되었으므로 워크플레이스로 돌아감
         }
       }
 
       alert("제품이 성공적으로 생성되었습니다.");
       
-      // onSuccess 콜백이 있으면 onSuccess에서 모달을 닫도록 하고,
-      // 없으면 여기서 모달을 닫음
+      // 제품 생성 성공 시 항상 onSuccess 호출하여 워크플레이스로 돌아가기
       if (onSuccess) {
-        onSuccess(result.data?.product);
+        onSuccess(result.data?.product || { product_id: productId });
       } else {
         onClose();
       }

@@ -39,7 +39,7 @@ services:
       - EMAIL_USER=${EMAIL_USER}
       - EMAIL_PASS=${EMAIL_PASS}
       - PYTHON_API_URL=http://model-server:8000
-      - PYTHON_ABSA_URL=http://model-server:8000/
+      - PYTHON_ABSA_URL=http://model-server:8000
     volumes:
       # 코드만 마운트 (node_modules는 이미지에 설치됨)
       - ./backend:/app
@@ -70,9 +70,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
       # 코드만 마운트 (패키지는 이미지에 설치됨)
-      - ./model_server:/app
-      # node_modules처럼 컨테이너의 패키지 폴더 보호
-      - /app/.venv
+      - ./model_server:/app/model_server
     working_dir: /app
     networks:
       - app-network

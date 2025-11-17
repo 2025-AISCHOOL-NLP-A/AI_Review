@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => {
     ].filter(Boolean),
     server: {
       port: 5173,
-      open: true,
+      open: false,
       // HMR을 WebSocket만 사용하도록 설정 (eval 사용 최소화)
       hmr: {
         protocol: 'ws',

@@ -6,10 +6,12 @@ from collections import Counter
 from wordcloud import WordCloud
 from dotenv import load_dotenv
 
-# 경로 설정 (독립 실행 시)
+# 경로 설정 (항상 필요)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+model_server_dir = os.path.dirname(current_dir)
+
+# 독립 실행 시에만 sys.path 추가
 if __name__ == "__main__":
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    model_server_dir = os.path.dirname(current_dir)
     if model_server_dir not in sys.path:
         sys.path.insert(0, model_server_dir)
 
@@ -100,8 +102,12 @@ def generate_wordcloud_from_db(product_id: int, domain="steam"):
     save_path = os.path.join(static_dir, f"product_{product_id}_wc.png")
     public_path = f"/static/wordclouds/product_{product_id}_wc.png"
 
+    # 폰트 경로 설정 (utils/font 폴더의 폰트 사용)
+    font_dir = os.path.join(current_dir, "font")
+    font_path = os.path.join(font_dir, "NanumGothic.ttf")
+    
     wc = WordCloud(
-        font_path="malgun.ttf",
+        font_path=font_path,
         width=1000,
         height=700,
         background_color="white",

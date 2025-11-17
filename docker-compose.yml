@@ -38,7 +38,7 @@ services:
       - EMAIL_USER=${EMAIL_USER}
       - EMAIL_PASS=${EMAIL_PASS}
       - PYTHON_API_URL=http://model-server:8000
-      - PYTHON_ABSA_URL=http://model-server:8000/
+      - PYTHON_ABSA_URL=http://model-server:8000
     depends_on:
       - model-server
     networks:

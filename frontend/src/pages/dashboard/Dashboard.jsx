@@ -3,20 +3,20 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
 import Footer from "../../components/layout/Footer/Footer";
 import dashboardService from "../../services/dashboardService";
-import DashboardHeader from "../../components/render/DashboardHeader";
-import KPICards from "../../components/render/KPICards";
-import DashboardCharts from "../../components/render/DashboardCharts";
-import WordCloudSection from "../../components/render/WordCloudSection";
-import ReviewTable from "../../components/render/ReviewTable";
-import InsightsSection from "../../components/render/InsightsSection";
-import AIInsightReport from "../../components/render/AIInsightReport";
+import DashboardHeader from "../../components/dashboard/DashboardHeader";
+import KPICards from "../../components/dashboard/KPICards";
+import DashboardCharts from "../../components/dashboard/DashboardCharts";
+import WordCloudSection from "../../components/dashboard/WordCloudSection";
+import ReviewTable from "../../components/dashboard/ReviewTable";
+import InsightsSection from "../../components/dashboard/InsightsSection";
+import AIInsightReport from "../../components/dashboard/AIInsightReport";
 import { usePDFDownload } from "../../hooks/usePDFDownload";
 import {
   processDailyTrendData,
   processRadarData,
   processSplitBarData,
   processHeatmapData,
-} from "../../graphs";
+} from "../../utils/data";
 import {
   getTodayDate,
   applyDateFilter,

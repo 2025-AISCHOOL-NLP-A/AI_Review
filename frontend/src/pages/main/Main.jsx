@@ -230,7 +230,7 @@ function Main() {
                 }
               }}
             >
-              <source src="/videos/test.mp4" type="video/mp4" />
+              <source src="/videos/test_video.mp4" type="video/mp4" />
               브라우저가 비디오 태그를 지원하지 않습니다.
             </video>
             {!isPlaying && (

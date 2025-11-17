@@ -1,18 +1,29 @@
 /* ========================================
-   회원가입 페이지 스타일
+   회원가입 페이지 스타일 (최적화)
    ======================================== */
 
+/* ===== CSS 변수 ===== */
+.join-page {
+  --primary-blue: #3b82f6;
+  --primary-blue-hover: #2563eb;
+  --border-gray: #e5e7eb;
+  --bg-gray: #f9fafb;
+  --text-gray: #6b7280;
+  --text-dark: #111;
+  --focus-shadow: rgba(200, 227, 255, 0.2);
+  --transition: 0.2s ease;
+}
+
+/* ===== 페이지 레이아웃 ===== */
 .join-page {
   display: flex;
   min-height: 100vh;
-  height: auto;
-  overflow: auto;
   width: 100%;
   margin: 0;
   padding: 0;
+  position: relative;
 }
 
-/* 왼쪽 섹션 */
 .join-page .left-section {
   width: 50%;
   background: url("/images/login_left_section_draw.png") no-repeat left center;
@@ -23,26 +34,36 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
   overflow: hidden;
-  min-height: 100vh;
-  height: auto;
+  z-index: 0;
 }
 
-/* 오른쪽 섹션 */
 .join-page .right-section {
   width: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: linear-gradient(225deg, #c8e3ff 0%, #f0f4ff 100%);
+  background: var(--gradient-blue, linear-gradient(225deg, #c8e3ff 0%, #f0f4ff 100%));
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 20px 40px 0 40px;
+  padding: 20px 40px 0;
   min-height: 100vh;
-  height: auto;
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
+  position: relative;
+  margin-left: 50%;
+  z-index: 1;
+}
+
+.join-page .right-section > footer {
+  flex-shrink: 0;
+  margin-top: auto;
+  width: calc(100% + 80px);
+  margin: auto -40px 0;
 }
 
 .join-page .join-container {
@@ -58,75 +79,70 @@
   box-sizing: border-box;
   margin-bottom: 20px;
 }
-/* ====== 실제 카드/푸터는 위로 띄우기 ====== */
+
 .join-card,
 .form-footer,
 .logo {
   position: relative;
-  z-index: 1; /* ::before(0) 위 */
+  z-index: 1;
 }
 
-/* 로고 스타일은 common.css에 정의됨 */
 .join-page .logo {
   margin-bottom: 10px;
   flex-shrink: 0;
 }
 
-.join-page .right-section > footer {
-  flex-shrink: 0;
-  margin-top: auto;
-  width: calc(100% + 80px);
-  margin-left: -40px;
-  margin-right: -40px;
-  margin-bottom: 0;
+.join-page .form-footer {
+  margin: 8px 0 10px;
+  width: 100%;
+  position: relative;
+  z-index: 2;
 }
 
-/* 회원가입 카드 위로 */
+.join-page .form-footer a {
+  font-weight: 500;
+}
+
+/* ===== 회원가입 카드 ===== */
 .join-card {
-  position: relative;
-  z-index: 1;
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(8px);
   border-radius: 20px;
   padding: 30px;
   width: 100%;
-  margin-top: 0;
-  margin-bottom: 0;
 }
 
-/* 폼 그룹 */
-.form-group {
+/* ===== 폼 그룹 ===== */
+.join-page .form-group {
   margin-bottom: 20px;
   width: 100%;
   box-sizing: border-box;
 }
 
-/* 이메일 입력이 있는 form-group만 flex column */
-.form-group:has(.email-input-group) {
+.join-page .form-group:has(.email-input-group) {
   display: flex;
   flex-direction: column;
   align-items: stretch;
 }
 
-/* 아이콘과 입력 필드 함께 */
+/* ===== 입력 필드 ===== */
 .input-with-icon {
   display: flex;
   align-items: center;
   gap: 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-gray);
   border-radius: 8px;
-  background: #f9fafb;
+  background: var(--bg-gray);
   padding: 0;
-  transition: box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  transition: box-shadow var(--transition), background var(--transition), border-color var(--transition);
 }
 
 .input-with-icon:focus-within {
   background: white;
   border-color: #c8e3ff;
-  box-shadow: 0 0 0 3px rgba(200, 227, 255, 0.2);
+  box-shadow: 0 0 0 3px var(--focus-shadow);
 }
 
-/* form-icon과 form-input 기본 스타일은 common.css에 정의됨 */
 .join-page .input-with-icon .form-icon {
   margin-left: 12px;
   flex-shrink: 0;
@@ -145,18 +161,24 @@
   background: transparent;
 }
 
-/* 이메일 입력 필드 내부 input 스타일 조정 */
-.join-page .email-input-wrapper .input-with-icon {
+.email-input-wrapper {
+  flex: 4;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.email-input-wrapper .input-with-icon {
+  width: 100%;
+  min-width: 0;
+}
+
+.email-input-wrapper .form-input {
   flex: 1;
   min-width: 0;
 }
 
-.join-page .email-input-wrapper .form-input {
-  flex: 1;
-  min-width: 0;
-}
-
-/* 비밀번호 입력 래퍼 */
+/* ===== 비밀번호 입력 ===== */
 .password-input-wrapper {
   flex: 1;
   position: relative;
@@ -180,12 +202,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
-  transition: color 0.2s ease;
+  color: var(--text-gray);
+  transition: color var(--transition);
 }
 
 .password-toggle-btn:hover {
-  color: #111;
+  color: var(--text-dark);
 }
 
 .password-toggle-btn svg {
@@ -193,7 +215,14 @@
   height: 20px;
 }
 
-/* 입력 필드 + 버튼 */
+.password-hint {
+  font-size: 0.85rem;
+  color: var(--text-gray);
+  margin: -10px 0 20px;
+  padding-left: 48px;
+}
+
+/* ===== 입력 + 버튼 ===== */
 .input-with-button {
   display: flex;
   gap: 8px;
@@ -204,9 +233,11 @@
   flex: 1;
 }
 
-.check-button {
+/* ===== 버튼 스타일 ===== */
+.check-button,
+.verify-button {
   padding: 12px 20px;
-  background: #3b82f6;
+  background: var(--primary-blue);
   color: white;
   border: none;
   border-radius: 8px;
@@ -214,24 +245,27 @@
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.2s ease;
+  transition: background var(--transition);
   font-family: "Pretendard", "Noto Sans KR", sans-serif;
 }
 
-.check-button:hover {
-  background: #2563eb;
+.check-button:hover,
+.verify-button:hover:not(:disabled) {
+  background: var(--primary-blue-hover);
 }
 
-/* 비밀번호 힌트 */
-.password-hint {
-  font-size: 0.85rem;
-  color: #6b7280;
-  margin-top: -10px;
-  margin-bottom: 20px;
-  padding-left: 48px;
+.verify-button {
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
-/* 이메일 입력 그룹 */
+.verify-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* ===== 이메일 입력 그룹 ===== */
 .email-input-group {
   display: flex;
   gap: 8px;
@@ -241,21 +275,9 @@
   box-sizing: border-box;
 }
 
-.email-input-wrapper {
-  flex: 4;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-}
-
-.email-input-wrapper .input-with-icon {
-  width: 100%;
-  min-width: 0;
-}
-
 .email-at {
   font-size: 1rem;
-  color: #111;
+  color: var(--text-dark);
   padding: 0 4px;
   flex-shrink: 0;
   display: flex;
@@ -267,58 +289,28 @@
   flex: 0.8;
   min-width: 100px;
   max-width: 140px;
-  padding: 12px 12px;
-  border: 1px solid #e5e7eb;
+  padding: 12px;
+  border: 1px solid var(--border-gray);
   border-radius: 8px;
-  background: #f9fafb;
+  background: var(--bg-gray);
   font-size: 0.95rem;
   font-family: "Pretendard", "Noto Sans KR", sans-serif;
   outline: none;
   cursor: pointer;
-  transition: box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  transition: box-shadow var(--transition), background var(--transition), border-color var(--transition);
   box-sizing: border-box;
 }
 
 .form-select:focus {
   background: white;
   border-color: #c8e3ff;
-  box-shadow: 0 0 0 3px rgba(200, 227, 255, 0.2);
+  box-shadow: 0 0 0 3px var(--focus-shadow);
 }
 
-.verify-button {
-  padding: 12px 20px;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.2s ease;
-  font-family: "Pretendard", "Noto Sans KR", sans-serif;
-  flex-shrink: 0;
-  box-sizing: border-box;
-}
-
-.verify-button:hover:not(:disabled) {
-  background: #2563eb;
-}
-
-.verify-button:disabled {
-  background: #9ca3af;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-/* 이메일 타이머 */
 .email-timer {
-  margin-top: 4px;
-  margin-bottom: 0;
-  margin-left: 0;
-  padding-left: 0;
+  margin: 4px 0 0;
   font-size: 0.9rem;
-  color: #6b7280;
+  color: var(--text-gray);
   font-weight: 500;
   display: block;
   width: 100%;
@@ -327,10 +319,9 @@
   order: 2;
 }
 
-/* 동의 섹션 */
+/* ===== 약관 동의 섹션 ===== */
 .agreement-section {
-  margin-top: 32px;
-  margin-bottom: 24px;
+  margin: 32px 0 24px;
 }
 
 .agreement-item {
@@ -338,7 +329,7 @@
 }
 
 .agreement-item:first-child {
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-gray);
   padding-bottom: 20px;
   margin-bottom: 24px;
 }
@@ -353,14 +344,14 @@
   height: 18px;
   margin-right: 12px;
   cursor: pointer;
-  accent-color: #3b82f6;
+  accent-color: var(--primary-blue);
   flex-shrink: 0;
 }
 
 .checkbox-label {
   font-size: 1rem;
   font-weight: 500;
-  color: #111;
+  color: var(--text-dark);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -368,9 +359,8 @@
 
 .agreement-desc {
   font-size: 0.85rem;
-  color: #6b7280;
-  margin-top: 4px;
-  margin-left: 30px;
+  color: var(--text-gray);
+  margin: 4px 0 0 30px;
 }
 
 .terms-textarea {
@@ -380,9 +370,9 @@
   max-height: 400px;
   margin-top: 12px;
   padding: 16px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-gray);
   border-radius: 8px;
-  background: #f9fafb;
+  background: var(--bg-gray);
   font-size: 0.85rem;
   font-family: "Pretendard", "Noto Sans KR", sans-serif;
   overflow-y: auto;
@@ -397,11 +387,11 @@
   font-size: 0.9rem;
 }
 
-/* 회원가입 버튼 */
+/* ===== 회원가입 버튼 ===== */
 .join-button {
   width: 100%;
   padding: 16px;
-  background: #3b82f6;
+  background: var(--primary-blue);
   color: white;
   border: none;
   border-radius: 12px;
@@ -409,12 +399,12 @@
   font-weight: 600;
   cursor: pointer;
   margin-top: 8px;
-  transition: background 0.2s ease, transform 0.1s ease;
+  transition: background var(--transition), transform 0.1s ease;
   font-family: "Pretendard", "Noto Sans KR", sans-serif;
 }
 
 .join-button:hover:not(:disabled) {
-  background: #2563eb;
+  background: var(--primary-blue-hover);
   transform: translateY(-1px);
 }
 
@@ -425,18 +415,4 @@
 .join-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-/* 하단 링크 */
-/* form-footer 기본 스타일은 common.css에 정의됨 */
-.join-page .form-footer {
-  margin-top: 8px;
-  margin-bottom: 10px;
-  width: 100%;
-  position: relative;
-  z-index: 2;
-}
-
-.join-page .form-footer a {
-  font-weight: 500;
 }

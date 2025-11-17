@@ -14,7 +14,7 @@ import Memberupdate from "./pages/user/Memberupdate";
 import Memberdrop from "./pages/user/Memberdrop";
 import PricingSystem from "./pages/dashboard/PricingSystem";
 import Workplace from "./pages/dashboard/Workplace";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/common/ProtectedRoute";
 import { UserProvider } from "./contexts/UserContext";
 import "./App.css";
 import "./styles/common.css";

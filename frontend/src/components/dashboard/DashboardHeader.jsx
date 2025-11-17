@@ -27,7 +27,7 @@ const DashboardHeader = ({
       <div className="mt-4 p-4 border-b border-gray-200 flex flex-col md:flex-row md:items-center justify-between bg-white rounded-xl shadow-sm">
         <div className="mb-3 md:mb-0">
           <span className="text-xs font-semibold uppercase text-gray-500 mr-2">
-            분석 대상
+            제품 명
           </span>
           <span className="text-2xl font-bold text-gray-900">
             {loading

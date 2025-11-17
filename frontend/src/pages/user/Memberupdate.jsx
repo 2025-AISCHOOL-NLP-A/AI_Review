@@ -6,6 +6,7 @@ import { useUser } from "../../contexts/UserContext";
 import { useEmailTimerUpdate } from "../../hooks/useEmailTimerUpdate";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
 import Footer from "../../components/layout/Footer/Footer";
+import { sanitizeInput, sanitizeEmail, sanitizeNumber } from "../../utils/inputSanitizer";
 import "./memberupdate.css";
 import "../dashboard/dashboard.css";
 import "../../components/layout/sidebar/sidebar.css";
@@ -51,7 +52,21 @@ function Memberupdate() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((p) => ({ ...p, [name]: value }));
+    let sanitizedValue = value;
+
+    // 입력 필드별 sanitization
+    if (name === "new_email_prefix") {
+      // 이메일 접두사: 이메일 형식에 맞게 정리
+      sanitizedValue = sanitizeInput(value, { type: 'text', maxLength: 64 });
+      // 이메일 특수문자만 허용
+      sanitizedValue = sanitizedValue.replace(/[^a-zA-Z0-9._-]/g, '');
+    } else if (name === "email_code") {
+      // 인증번호: 숫자만 허용
+      sanitizedValue = sanitizeNumber(value);
+    }
+    // 비밀번호는 sanitization하지 않음 (특수문자 포함 가능)
+
+    setFormData((p) => ({ ...p, [name]: sanitizedValue }));
   };
 
   // 새 비밀번호 유효성 (영문/숫자/특수문자 8~20)
@@ -60,14 +75,27 @@ function Memberupdate() {
 
   // 인증코드 발송 (변경할 이메일 기준)
   const handleSendEmailCode = async () => {
-    const { new_email_prefix, email_domain } = formData;
-    if (!new_email_prefix.trim()) {
+    // 이메일 접두사 sanitization
+    const sanitizedPrefix = sanitizeInput(formData.new_email_prefix, { type: 'text', maxLength: 64 })
+      .replace(/[^a-zA-Z0-9._-]/g, '');
+    
+    if (!sanitizedPrefix.trim()) {
       alert("변경할 이메일을 입력해주세요.");
       return;
     }
-    const newEmail = `${new_email_prefix}@${email_domain}`;
+
+    // sanitized 값으로 업데이트
+    setFormData(prev => ({ ...prev, new_email_prefix: sanitizedPrefix }));
+
+    const newEmail = `${sanitizedPrefix}@${formData.email_domain}`;
+    // 이메일 전체 검증
+    const validatedEmail = sanitizeEmail(newEmail);
+    if (!validatedEmail) {
+      alert("올바른 이메일 형식을 입력해주세요.");
+      return;
+    }
     try {
-      const res = await authService.sendVerification(newEmail);
+      const res = await authService.sendVerification(validatedEmail);
       if (res.success) {
         alert("인증 메일이 발송되었습니다. 이메일을 확인해주세요.");
         emailTimer.setIsEmailSent(true);
@@ -83,10 +111,16 @@ function Memberupdate() {
 
   // 이메일 인증번호 확인
   const handleVerifyEmailCode = async () => {
-    if (!formData.email_code.trim()) {
+    // 인증번호: 숫자만 허용
+    const sanitizedCode = sanitizeNumber(formData.email_code);
+    
+    if (!sanitizedCode.trim()) {
       alert("인증번호를 입력해주세요.");
       return;
     }
+
+    // sanitized 값으로 업데이트
+    setFormData(prev => ({ ...prev, email_code: sanitizedCode }));
 
     if (!formData.new_email_prefix.trim()) {
       alert("이메일을 입력해주세요.");
@@ -94,10 +128,16 @@ function Memberupdate() {
     }
 
     const newEmail = `${formData.new_email_prefix}@${formData.email_domain}`;
+    const validatedEmail = sanitizeEmail(newEmail);
+    if (!validatedEmail) {
+      alert("올바른 이메일 형식을 입력해주세요.");
+      return;
+    }
+
     try {
       const result = await authService.verifyCode(
-        newEmail,
-        formData.email_code
+        validatedEmail,
+        sanitizedCode
       );
       if (result.success) {
         alert("이메일 인증이 완료되었습니다.");
@@ -152,11 +192,23 @@ function Memberupdate() {
     // 이메일 변경 요청 시 검증
     let newEmail = null;
     if (new_email_prefix.trim()) {
-      newEmail = `${new_email_prefix}@${email_domain}`;
-      if (newEmail === current_email) {
+      // 이메일 접두사 sanitization
+      const sanitizedPrefix = sanitizeInput(new_email_prefix, { type: 'text', maxLength: 64 })
+        .replace(/[^a-zA-Z0-9._-]/g, '');
+      newEmail = `${sanitizedPrefix}@${email_domain}`;
+      
+      // 이메일 전체 검증
+      const validatedEmail = sanitizeEmail(newEmail);
+      if (!validatedEmail) {
+        alert("올바른 이메일 형식을 입력해주세요.");
+        return;
+      }
+      
+      if (validatedEmail === current_email) {
         alert("변경할 이메일이 기존 이메일과 같습니다.");
         return;
       }
+      newEmail = validatedEmail; // 검증된 이메일 사용
       if (!emailTimer.isEmailSent) {
         alert("변경 이메일 인증을 먼저 진행해주세요.");
         return;

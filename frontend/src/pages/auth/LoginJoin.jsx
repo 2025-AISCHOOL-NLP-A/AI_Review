@@ -6,6 +6,7 @@ import UserIdInput from "../../components/auth/UserIdInput";
 import PasswordInput from "../../components/auth/PasswordInput";
 import EmailVerification from "../../components/auth/EmailVerification";
 import AgreementSection from "../../components/auth/AgreementSection";
+import { sanitizeInput, sanitizeEmail, sanitizeNumber } from "../../utils/inputSanitizer";
 import "./login_join.css";
 import "../../styles/common.css";
 
@@ -37,12 +38,29 @@ function LoginJoin() {
   const [errorMsg, setErrorMsg] = useState("");
 
   // -----------------------------
-  // ✅ Input 변경 핸들러
+  // ✅ Input 변경 핸들러 (Sanitization 적용)
   // -----------------------------
   const handleChange = (e) => {
+    const { name, value } = e.target;
+    let sanitizedValue = value;
+
+    // 입력 타입에 따라 적절한 sanitization 적용
+    if (name === "user_id") {
+      // 아이디: 특수문자 제거, 최대 50자
+      sanitizedValue = sanitizeInput(value, { type: 'text', maxLength: 50 });
+    } else if (name === "email_prefix") {
+      // 이메일 접두사: 이메일 형식에 맞게 정리
+      sanitizedValue = sanitizeInput(value, { type: 'text', maxLength: 64 });
+      // 이메일 특수문자만 허용
+      sanitizedValue = sanitizedValue.replace(/[^a-zA-Z0-9._-]/g, '');
+    } else if (name === "email_code") {
+      // 인증번호: 숫자만 허용
+      sanitizedValue = sanitizeNumber(value);
+    }
+
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: sanitizedValue,
     });
     setErrorMsg("");
   };
@@ -72,12 +90,18 @@ function LoginJoin() {
   // ✅ 아이디 중복 확인
   // -----------------------------
   const handleCheckDuplicate = async () => {
-    if (!formData.user_id.trim()) {
+    // 아이디 sanitization
+    const sanitizedUserId = sanitizeInput(formData.user_id, { type: 'text', maxLength: 50 });
+    
+    if (!sanitizedUserId.trim()) {
       alert("아이디를 입력해주세요.");
       return;
     }
 
-    const result = await authService.checkDuplicate(formData.user_id);
+    // sanitized 값으로 업데이트
+    setFormData(prev => ({ ...prev, user_id: sanitizedUserId }));
+
+    const result = await authService.checkDuplicate(sanitizedUserId);
     if (result.success) {
       if (!result.exists) {
         alert("사용 가능한 아이디입니다.");
@@ -95,17 +119,30 @@ function LoginJoin() {
   // ✅ 이메일 인증 코드 발송
   // -----------------------------
   const handleSendEmailCode = async () => {
-    if (!formData.email_prefix.trim()) {
+    // 이메일 접두사 sanitization
+    const sanitizedPrefix = sanitizeInput(formData.email_prefix, { type: 'text', maxLength: 64 })
+      .replace(/[^a-zA-Z0-9._-]/g, '');
+    
+    if (!sanitizedPrefix.trim()) {
       alert("이메일을 입력해주세요.");
       return { success: false };
     }
 
-    const email = `${formData.email_prefix}@${formData.email_domain}`;
+    // sanitized 값으로 업데이트
+    setFormData(prev => ({ ...prev, email_prefix: sanitizedPrefix }));
+
+    const email = `${sanitizedPrefix}@${formData.email_domain}`;
+    // 이메일 전체 검증
+    const validatedEmail = sanitizeEmail(email);
+    if (!validatedEmail) {
+      alert("올바른 이메일 형식을 입력해주세요.");
+      return { success: false };
+    }
     setLoading(true);
     setErrorMsg("");
 
     try {
-      const result = await authService.sendVerification(email);
+      const result = await authService.sendVerification(validatedEmail);
 
       if (result.success) {
         alert("인증 메일이 발송되었습니다. 이메일을 확인해주세요.");
@@ -133,10 +170,16 @@ function LoginJoin() {
   // ✅ 이메일 인증번호 확인
   // -----------------------------
   const handleVerifyEmailCode = async () => {
-    if (!formData.email_code.trim()) {
+    // 인증번호: 숫자만 허용
+    const sanitizedCode = sanitizeNumber(formData.email_code);
+    
+    if (!sanitizedCode.trim()) {
       alert("인증번호를 입력해주세요.");
       return { success: false };
     }
+
+    // sanitized 값으로 업데이트
+    setFormData(prev => ({ ...prev, email_code: sanitizedCode }));
 
     if (!formData.email_prefix.trim()) {
       alert("이메일을 입력해주세요.");
@@ -144,7 +187,13 @@ function LoginJoin() {
     }
 
     const email = `${formData.email_prefix}@${formData.email_domain}`;
-    const result = await authService.verifyCode(email, formData.email_code);
+    const validatedEmail = sanitizeEmail(email);
+    if (!validatedEmail) {
+      alert("올바른 이메일 형식을 입력해주세요.");
+      return { success: false };
+    }
+
+    const result = await authService.verifyCode(validatedEmail, sanitizedCode);
 
     if (result.success) {
       alert("이메일 인증이 완료되었습니다.");
@@ -197,8 +246,21 @@ function LoginJoin() {
     }
 
     setLoading(true);
-    const email = `${email_prefix}@${email_domain}`;
-    const result = await authService.join(user_id, password, email);
+    
+    // 최종 제출 전 모든 입력값 sanitization
+    const sanitizedUserId = sanitizeInput(user_id, { type: 'text', maxLength: 50 });
+    const sanitizedEmailPrefix = sanitizeInput(email_prefix, { type: 'text', maxLength: 64 })
+      .replace(/[^a-zA-Z0-9._-]/g, '');
+    const email = `${sanitizedEmailPrefix}@${email_domain}`;
+    const validatedEmail = sanitizeEmail(email);
+    
+    if (!validatedEmail) {
+      alert("올바른 이메일 형식을 입력해주세요.");
+      setLoading(false);
+      return;
+    }
+
+    const result = await authService.join(sanitizedUserId, password, validatedEmail);
     setLoading(false);
 
     if (result.success) {

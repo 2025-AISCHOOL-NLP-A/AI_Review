@@ -23,6 +23,23 @@ export const isAbortError = (error) => {
  * @returns {string} 에러 메시지
  */
 export const getErrorMessage = (error, defaultMessage = "오류가 발생했습니다.") => {
+  const isProduction = import.meta.env.PROD;
+
+  // 프로덕션 환경에서는 상세한 에러 정보를 숨김
+  if (isProduction) {
+    // HTTP 상태 코드에 따른 일반적인 메시지만 반환
+    if (error?.response?.status) {
+      const status = error.response.status;
+      if (status >= 400 && status < 500) {
+        return "요청을 처리할 수 없습니다. 입력 정보를 확인해주세요.";
+      } else if (status >= 500) {
+        return "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+      }
+    }
+    return defaultMessage;
+  }
+
+  // 개발 환경에서는 상세 정보 반환
   if (error?.response?.data?.message) {
     return error.response.data.message;
   }

@@ -15,6 +15,7 @@ import { useProductSort } from "../../hooks/useProductSort";
 import { getTodayDate } from "../../utils/dateUtils";
 import { useSidebar } from "../../hooks/useSidebar";
 import { CATEGORY_NAMES } from "../../constants";
+import { sanitizeInput } from "../../utils/inputSanitizer";
 import "../../styles/common.css";
 import "../../styles/modal.css";
 import "./dashboard.css";
@@ -502,7 +503,11 @@ function Workplace() {
           {/* Filters Section */}
           <ProductFilterBar
             searchQuery={searchQuery}
-            onSearchChange={(e) => setSearchQuery(e.target.value)}
+            onSearchChange={(e) => {
+              // 검색 쿼리 sanitization
+              const sanitizedValue = sanitizeInput(e.target.value, { type: 'text', maxLength: 100 });
+              setSearchQuery(sanitizedValue);
+            }}
             onSearchKeyDown={handleSearch}
             selectedCategoryFilter={selectedCategoryFilter}
             onCategoryFilterChange={(value) => {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { sanitizeInput } from "../../utils/inputSanitizer";
 
 export default function ProductInfoForm({ onNext, onClose, initialData, onSave, isEditMode = false }) {
   const [form, setForm] = useState({
@@ -20,7 +21,20 @@ export default function ProductInfoForm({ onNext, onClose, initialData, onSave, 
   }, [isEditMode, initialData]);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let sanitizedValue = value;
+
+    // 입력 필드별 sanitization
+    if (name === "productName") {
+      // 제품명: HTML 제거, 최대 200자
+      sanitizedValue = sanitizeInput(value, { type: 'text', maxLength: 200 });
+    } else if (name === "brand") {
+      // 브랜드: HTML 제거, 최대 100자
+      sanitizedValue = sanitizeInput(value, { type: 'text', maxLength: 100 });
+    }
+    // category는 select이므로 sanitization 불필요
+
+    setForm({ ...form, [name]: sanitizedValue });
   };
 
   // Category와 Product Name은 필수 필드
@@ -33,8 +47,16 @@ export default function ProductInfoForm({ onNext, onClose, initialData, onSave, 
     }
 
     setIsSubmitting(true);
+    
+    // 제출 전 최종 sanitization
+    const sanitizedForm = {
+      ...form,
+      productName: sanitizeInput(form.productName, { type: 'text', maxLength: 200 }),
+      brand: form.brand ? sanitizeInput(form.brand, { type: 'text', maxLength: 100 }) : "",
+    };
+    
     // onNext 호출 (모달이 닫히면 컴포넌트가 언마운트되므로 상태 리셋 불필요)
-    onNext(form);
+    onNext(sanitizedForm);
     // 모달이 닫히면 컴포넌트가 언마운트되므로 명시적인 리셋은 필요 없음
     // 만약 모달이 닫히지 않는 경우를 대비해 약간의 지연 후 리셋
     setTimeout(() => {
@@ -49,9 +71,17 @@ export default function ProductInfoForm({ onNext, onClose, initialData, onSave, 
     }
 
     setIsSubmitting(true);
+    
+    // 제출 전 최종 sanitization
+    const sanitizedForm = {
+      ...form,
+      productName: sanitizeInput(form.productName, { type: 'text', maxLength: 200 }),
+      brand: form.brand ? sanitizeInput(form.brand, { type: 'text', maxLength: 100 }) : "",
+    };
+    
     // onSave 호출 (수정 모드)
     if (onSave) {
-      onSave(form);
+      onSave(sanitizedForm);
     }
     setTimeout(() => {
       setIsSubmitting(false);

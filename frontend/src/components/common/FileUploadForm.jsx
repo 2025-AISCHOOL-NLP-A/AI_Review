@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import PreviewModal from "./PreviewModal";
 import FileList from "./FileList";
 import { parseFile } from "../../utils/fileParser";
+import { validateFile } from "../../utils/fileValidation";
 import "../../styles/modal.css";
 import "./FileUploadForm.css";
 
@@ -29,11 +30,26 @@ export default function FileUploadForm({ onFilesReady, disabled = false }) {
     // 첫 번째 파일만 Preview에 표시
     const file = fileArray[0];
 
+    // 파일 검증 (보안 체크)
+    const validation = validateFile(file, mappedFiles.length);
+    if (!validation.valid) {
+      alert(validation.error || "파일 검증에 실패했습니다.");
+      // 파일 입력 초기화
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
+    }
+
     try {
       const data = await parseFile(file);
 
       if (!data || !data.headers || data.headers.length === 0) {
         alert("파일을 읽을 수 없거나 데이터가 없습니다.");
+        // 파일 입력 초기화
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
         return;
       }
 
@@ -42,6 +58,10 @@ export default function FileUploadForm({ onFilesReady, disabled = false }) {
     } catch (error) {
       console.error("파일 파싱 오류:", error);
       alert(error.message || "파일을 읽는 중 오류가 발생했습니다.");
+      // 파일 입력 초기화
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
@@ -140,7 +160,7 @@ export default function FileUploadForm({ onFilesReady, disabled = false }) {
         onClick={handleBrowseClick}
       >
         <p className="upload-text">Drop file or browse</p>
-        <p className="upload-format-text">Format: Excel (.xlsx, .xls), CSV (.csv) only</p>
+        <p className="upload-format-text">Format: Excel (.xlsx, .xls), CSV (.csv) only (최대 500MB, 최대 5개)</p>
         <button 
           className="browse-btn" 
           onClick={(e) => { 

@@ -83,7 +83,9 @@ export default defineConfig(({ mode }) => {
       // 프로덕션에서만 minify
       minifyIdentifiers: isProduction,
       minifySyntax: isProduction,
-      minifyWhitespace: isProduction
+      minifyWhitespace: isProduction,
+      // 프로덕션에서 콘솔 로그 제거
+      drop: isProduction ? ['console', 'debugger'] : [],
     },
     // 의존성 최적화 설정
     optimizeDeps: {

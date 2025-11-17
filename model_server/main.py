@@ -12,11 +12,6 @@ if _parent_dir not in sys.path:
 if _model_server_dir not in sys.path:
     sys.path.insert(0, _model_server_dir)
 
-print("📂 Current working dir:", os.getcwd())
-print("📦 sys.path[0]:", sys.path[0])
-print("📦 model_server dir:", _model_server_dir)
-print("📦 utils 경로 확인:", os.path.join(_model_server_dir, "utils"))
-print("📦 utils 존재 여부:", os.path.exists(os.path.join(_model_server_dir, "utils")))
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -43,11 +38,11 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# ✅ 정적 파일 서빙 (절대 경로 사용)
+# 정적 파일 서빙
 static_dir = os.path.join(_model_server_dir, "static")
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-# ✅ API 라우트 등록
+# API 라우트 등록
 app.include_router(v1_router)
 
 @app.get("/")

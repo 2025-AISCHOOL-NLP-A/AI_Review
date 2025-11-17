@@ -11,14 +11,10 @@ FastAPI 기반의 AI 리뷰 분석 API 서버입니다.
 
 ## 📋 API 엔드포인트
 
-### 분석 API (/api/analysis)
-- `POST /api/analysis/products/{product_id}/reviews` - 제품 리뷰 분석
-- `GET /api/analysis/products/{product_id}/reviews/status` - 분석 상태 확인
-
-### 인사이트 API (/api/insights)
-- `POST /api/insights/generate` - 인사이트 생성
-- `POST /api/insights/compare` - 제품 비교 분석
-- `GET /api/insights/trends/{category_id}` - 카테고리 트렌드
+### 분석 API (/v1)
+- `POST /v1/analyze-batch` - 배치 리뷰 분석
+- `POST /v1/products/{product_id}/reviews/analysis` - 제품 리뷰 전체 분석 파이프라인
+- `GET /v1/health` - 헬스체크
 
 ## 🛠 설치 및 실행
 
@@ -52,12 +48,18 @@ model_server/
 ├── .env                      # 환경 변수
 ├── app/
 │   ├── __init__.py
-│   ├── routes/               # API 라우터
-│   │   ├── analysis_router.py
-│   │   └── insight_router.py
-│   └── services/             # 비즈니스 로직
-│       ├── analysis_service.py
-│       └── insight_service.py
+│   ├── api/
+│   │   └── v1/
+│   │       └── routes.py     # API 라우터
+│   ├── domains/              # 도메인별 파이프라인
+│   │   ├── steam/
+│   │   ├── cosmetics/
+│   │   └── electronics/
+│   └── models/               # 모델 레지스트리
+├── utils/                     # 유틸리티 함수
+│   ├── db_connect.py
+│   ├── generate_insight.py
+│   └── generate_wordcloud_from_db.py
 └── README.md
 ```
 
@@ -73,16 +75,22 @@ model_server/
 Node.js 백엔드에서 다음과 같이 호출:
 
 ```javascript
-const response = await fetch('http://localhost:8000/api/analysis/products/1/reviews', {
+// 제품 리뷰 전체 분석 파이프라인
+const response = await fetch('http://localhost:8000/v1/products/1/reviews/analysis', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  }
+});
+
+// 배치 리뷰 분석
+const batchResponse = await fetch('http://localhost:8000/v1/analyze-batch?domain=steam', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
   },
   body: JSON.stringify({
-    product_id: 1,
-    reviews: [
-      {review_id: 1, review_text: "좋은 제품입니다", rating: 4.5}
-    ]
+    texts: ["좋은 제품입니다", "별로네요"]
   })
 });
 ```

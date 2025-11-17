@@ -14,46 +14,44 @@ load_dotenv()
 
 router = APIRouter(prefix="/v1")
 
-# ✅ 요청 데이터 구조
+# 요청 데이터 구조
 class AnalyzeBatchRequest(BaseModel):
     texts: List[str]
     aspect_th: float = 0.35
     margin: float = 0.03
 
-# ✅ 도메인별 파이프라인 매핑
+# 도메인별 파이프라인 매핑
 DOMAIN_PIPELINES = {
     "steam": steam,
     "cosmetics": cosmetics,
     "electronics": electronics,
 }
 
-# ✅ 카테고리 ID → 도메인 매핑
+# 카테고리 ID → 도메인 매핑
 CATEGORY_TO_DOMAIN = {
     103: "steam",      # 게임
     102: "cosmetics",  # 화장품
     101: "electronics", # 전자기기
 }
 
-# ✅ 헬스체크
+# 헬스체크
 @router.get("/health")
 def health():
     return {"status": "ok", "domain": "steam"}
 
-# ✅ 리뷰 분석 엔드포인트
+# 리뷰 분석 엔드포인트
 @router.post("/analyze-batch")
 def analyze_batch(req: AnalyzeBatchRequest, domain: str = "steam"):
     try:
-        print("🧠 [DEBUG] 요청 들어옴:", len(req.texts), "개 텍스트")
         pipeline = DOMAIN_PIPELINES.get(domain, steam)
         results = [pipeline.analyze_review(t) for t in req.texts]
         return {"items": results, "count": len(results)}
     except Exception as e:
         import traceback
-        print("❌ [ERROR] FastAPI 내부 오류 발생:")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-# ✅ 제품 리뷰 전체 분석 파이프라인 엔드포인트
+# 제품 리뷰 전체 분석 파이프라인 엔드포인트
 @router.post("/products/{product_id}/reviews/analysis")
 def analyze_product_reviews(product_id: int, domain: Optional[str] = None):
     """

@@ -285,9 +285,14 @@ export const deleteProduct = async (req, res) => {
       return res.status(400).json({ message: "유효한 제품 ID가 필요합니다." });
     }
 
-    // 제품 존재 확인
+    // 제품 존재 확인 및 소유권 확인
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "인증된 사용자 정보가 없습니다." });
+    }
+
     const [[existingProduct]] = await db.query(
-      "SELECT product_id FROM tb_product WHERE product_id = ?",
+      "SELECT product_id, user_id FROM tb_product WHERE product_id = ?",
       [productIdNum]
     );
 
@@ -295,18 +300,52 @@ export const deleteProduct = async (req, res) => {
       return res.status(404).json({ message: "제품을 찾을 수 없습니다." });
     }
 
-    // 제품 삭제
-    const [result] = await db.query("DELETE FROM tb_product WHERE product_id = ?", [productIdNum]);
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "제품을 찾을 수 없습니다." });
+    // 소유권 확인
+    if (existingProduct.user_id !== userId) {
+      return res.status(403).json({ message: "이 제품을 삭제할 권한이 없습니다." });
     }
 
-    res.json({
-      message: "제품이 성공적으로 삭제되었습니다.",
-      productId: productIdNum
-    });
+    // 트랜잭션 시작하여 관련 데이터 삭제
+    const connection = await db.getConnection();
+    await connection.beginTransaction();
 
+    try {
+      // 1. tb_productDashboard 삭제 (insight_id 참조하므로 먼저 삭제)
+      await connection.query("DELETE FROM tb_productDashboard WHERE product_id = ?", [productIdNum]);
+
+      // 2. tb_productInsight 삭제 (product_id CASCADE이지만 명시적으로 삭제)
+      await connection.query("DELETE FROM tb_productInsight WHERE product_id = ?", [productIdNum]);
+
+      // 3. tb_review 삭제 (product_id CASCADE이지만 명시적으로 삭제)
+      // tb_reviewAnalysis는 tb_review의 CASCADE로 자동 삭제됨
+      await connection.query("DELETE FROM tb_review WHERE product_id = ?", [productIdNum]);
+
+      // 4. tb_productKeyword 삭제 (product_id CASCADE이지만 명시적으로 삭제)
+      await connection.query("DELETE FROM tb_productKeyword WHERE product_id = ?", [productIdNum]);
+
+      // 5. 마지막으로 tb_product 삭제
+      const [result] = await connection.query("DELETE FROM tb_product WHERE product_id = ?", [productIdNum]);
+
+      if (result.affectedRows === 0) {
+        await connection.rollback();
+        return res.status(404).json({ message: "제품을 찾을 수 없습니다." });
+      }
+
+      await connection.commit();
+      connection.release();
+
+      res.json({
+        message: "제품이 성공적으로 삭제되었습니다.",
+        productId: productIdNum
+      });
+
+    } catch (err) {
+      if (connection) {
+        await connection.rollback();
+        connection.release();
+      }
+      throw err;
+    }
   } catch (err) {
     console.error("❌ 제품 삭제 오류:", err);
     console.error("❌ 에러 상세:", {
@@ -315,7 +354,18 @@ export const deleteProduct = async (req, res) => {
       code: err.code,
       sqlMessage: err.sqlMessage
     });
-    res.status(500).json({ message: "제품 삭제 중 서버 오류가 발생했습니다." });
+    
+    // 외래 키 제약 조건 오류인 경우
+    if (err.code === 'ER_ROW_IS_REFERENCED_2' || err.errno === 1451) {
+      return res.status(409).json({ 
+        message: "제품 삭제 중 관련 데이터 처리 오류가 발생했습니다. 잠시 후 다시 시도해주세요." 
+      });
+    }
+    
+    res.status(500).json({ 
+      message: "제품 삭제 중 서버 오류가 발생했습니다.",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
 

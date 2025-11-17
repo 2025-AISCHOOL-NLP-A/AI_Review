@@ -11,9 +11,16 @@ import "../../styles/modal.css";
  * @param {number} props.productId - 제품 ID
  * @param {Function} props.onSuccess - 성공 시 콜백 () => void
  */
-export default function AddReviewForm({ onClose, productId, onSuccess }) {
+export default function AddReviewForm({ onClose, productId, onSuccess, onSubmittingChange }) {
   const [mappedFiles, setMappedFiles] = useState([]); // [{ file, mapping }]
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // isSubmitting 상태 변경 시 부모에게 알림
+  React.useEffect(() => {
+    if (onSubmittingChange) {
+      onSubmittingChange(isSubmitting);
+    }
+  }, [isSubmitting, onSubmittingChange]);
 
   // FileUploadForm에서 파일이 준비되었을 때 호출
   const handleFilesReady = (files) => {

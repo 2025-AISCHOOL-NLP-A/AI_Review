@@ -1,7 +1,7 @@
 /* Color constants */
 :root {
   --splitbar-primary-color: #5B8EFF;
-  --splitbar-neutral-color: #CBD5E1;
+  --splitbar-negative-color: #D8B4FE; /* 부정 비율 (매우 연한 보라색) - 모든 차트와 일관성 유지 */
   --splitbar-font-color: #333333;
   --splitbar-grid-color: #E5E7EB;
 }

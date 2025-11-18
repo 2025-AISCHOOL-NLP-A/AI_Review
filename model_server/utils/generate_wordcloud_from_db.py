@@ -90,15 +90,73 @@ def generate_wordcloud_from_db(product_id: int, domain="steam"):
         conn.close()
         return None
 
-    # 2️⃣ 텍스트 정제
-    text_all = " ".join(reviews)
-    text_all = re.sub(r"[^ㄱ-ㅎ가-힣a-zA-Z0-9\s]", " ", text_all)
+    print(f"📊 총 리뷰 수: {len(reviews)}개")
+    
+    # 성능 최적화: 리뷰가 많을 경우 샘플링 (최대 2000개로 줄임 - 메모리 부족 방지)
+    MAX_REVIEWS = 2000
+    if len(reviews) > MAX_REVIEWS:
+        import random
+        # 최근 리뷰 우선 샘플링
+        reviews_sample = reviews[-MAX_REVIEWS:] if len(reviews) > MAX_REVIEWS * 2 else random.sample(reviews, MAX_REVIEWS)
+        print(f"⚡ 성능 최적화: {len(reviews)}개 중 {len(reviews_sample)}개 샘플링하여 처리")
+        reviews = reviews_sample
 
-    # 3️⃣ 형태소 분석
+    # 2️⃣ 텍스트 정제 및 배치 처리
+    print("📝 텍스트 정제 및 형태소 분석 중... (시간이 걸릴 수 있습니다)")
     okt = Okt()
-    tokens = [
-        t for t, pos in okt.pos(text_all) if pos in ["Noun", "Adjective"] and len(t) > 1
-    ]
+    
+    # 메모리 효율성을 위해 리뷰를 작은 배치로 나누어 처리
+    REVIEW_BATCH_SIZE = 100  # 한 번에 처리할 리뷰 수
+    MAX_TEXT_LENGTH = 30000  # 한 번에 처리할 최대 텍스트 길이 (문자)
+    
+    all_tokens = []
+    num_batches = (len(reviews) + REVIEW_BATCH_SIZE - 1) // REVIEW_BATCH_SIZE
+    
+    for i in range(0, len(reviews), REVIEW_BATCH_SIZE):
+        batch_reviews = reviews[i:i + REVIEW_BATCH_SIZE]
+        batch_text = " ".join(batch_reviews)
+        batch_text = re.sub(r"[^ㄱ-ㅎ가-힣a-zA-Z0-9\s]", " ", batch_text)
+        
+        # 텍스트가 너무 길면 더 작게 나누기
+        if len(batch_text) > MAX_TEXT_LENGTH:
+            # 텍스트를 여러 부분으로 나누기
+            text_parts = []
+            current_part = ""
+            for char in batch_text:
+                current_part += char
+                if len(current_part) >= MAX_TEXT_LENGTH:
+                    text_parts.append(current_part)
+                    current_part = ""
+            if current_part:
+                text_parts.append(current_part)
+            
+            for part_idx, text_part in enumerate(text_parts):
+                try:
+                    part_tokens = [
+                        t for t, pos in okt.pos(text_part) 
+                        if pos in ["Noun", "Adjective"] and len(t) > 1
+                    ]
+                    all_tokens.extend(part_tokens)
+                except Exception as e:
+                    print(f"⚠️ 배치 {i//REVIEW_BATCH_SIZE + 1}의 부분 {part_idx + 1} 처리 중 오류 (건너뜀): {e}")
+                    continue
+        else:
+            try:
+                batch_tokens = [
+                    t for t, pos in okt.pos(batch_text) 
+                    if pos in ["Noun", "Adjective"] and len(t) > 1
+                ]
+                all_tokens.extend(batch_tokens)
+            except Exception as e:
+                print(f"⚠️ 배치 {i//REVIEW_BATCH_SIZE + 1} 처리 중 오류 (건너뜀): {e}")
+                continue
+        
+        # 진행 상황 출력
+        batch_num = i // REVIEW_BATCH_SIZE + 1
+        print(f"   진행: {batch_num}/{num_batches} 배치 완료 ({len(all_tokens)}개 토큰 수집)")
+    
+    tokens = all_tokens
+    print(f"✅ 형태소 분석 완료: {len(tokens)}개 토큰 추출")
 
     # 4️⃣ 불용어 제거
     stopwords = load_stopwords(domain, debug=True)

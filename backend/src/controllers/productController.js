@@ -121,7 +121,8 @@ export const dashboard = async (req, res) => {
     if (dashboardData.wordcloud_path) {
       try {
         // model_server/static 경로 구성
-        const staticPath = path.join(__dirname, "../../../model_server/static");
+        // const staticPath = path.join(__dirname, "../../../model_server/static");
+        const staticPath = path.join("/app/model_server/static");
         const imagePath = path.join(staticPath, dashboardData.wordcloud_path.replace("/static/", ""));
         
         // 파일 존재 여부 확인

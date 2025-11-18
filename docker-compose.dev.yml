@@ -45,6 +45,8 @@ services:
       - ./backend:/app
       # 컨테이너의 node_modules 보호
       - /app/node_modules
+      # Model Server의 static 폴더 공유 (워드클라우드 이미지 접근용)
+      - ./model_server/static:/app/model_server/static
     depends_on:
       - model-server
     networks:

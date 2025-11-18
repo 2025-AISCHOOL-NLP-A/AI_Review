@@ -54,9 +54,10 @@ DBUtils==3.1.0
 # ==========================
 # 🔑 LLM (LangChain / OpenAI)
 # ==========================
-langchain-openai==0.2.3
+langchain-openai==1.0.3
 # langchain-core 버전 명시 제거 (langchain-openai가 자동 해결)
-openai==1.55.1
+openai==2.8.1
+httpx==0.24.1
 # ==========================
 # ⚙️ Optional (For better caching / deployment)
 # ==========================

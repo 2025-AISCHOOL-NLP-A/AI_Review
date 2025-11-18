@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import authService from "../../services/authService";
 import { useUser } from "../../contexts/UserContext";
 import Footer from "../../components/layout/Footer/Footer";
+import { sanitizeInput } from "../../utils/inputSanitizer";
 import "./login.css";
 import "../../styles/common.css";
 
@@ -58,9 +59,17 @@ function Login() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    let sanitizedValue = value;
+
+    // 로그인 ID sanitization
+    if (name === "login_id") {
+      sanitizedValue = sanitizeInput(value, { type: 'text', maxLength: 50 });
+    }
+    // 비밀번호는 sanitization하지 않음 (특수문자 포함 가능)
+
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: sanitizedValue,
     }));
   };
 
@@ -85,8 +94,11 @@ function Login() {
     }
 
     try {
+      // 제출 전 최종 sanitization
+      const sanitizedLoginId = sanitizeInput(formData.login_id, { type: 'text', maxLength: 50 });
+      
       const result = await authService.login(
-        formData.login_id,
+        sanitizedLoginId,
         formData.password
       );
 

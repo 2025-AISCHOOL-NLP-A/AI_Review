@@ -13,9 +13,36 @@ export default function ProductUploadForm({ onClose, formData, onSuccess, onSubm
     }
   }, [isSubmitting, onSubmittingChange]);
 
+  // 업로드 중일 때 브라우저 닫기/새로고침 방지
+  React.useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isSubmitting) {
+        e.preventDefault();
+        e.returnValue = "파일 업로드가 진행 중입니다. 페이지를 떠나시겠습니까?";
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isSubmitting]);
+
   // FileUploadForm에서 파일이 준비되었을 때 호출
   const handleFilesReady = (files) => {
     setMappedFiles(files);
+  };
+
+  // 창 닫기 처리 (업로드 중일 때 경고 표시)
+  const handleClose = () => {
+    if (isSubmitting) {
+      const confirmClose = window.confirm("파일 업로드가 진행 중입니다. 정말 닫으시겠습니까?");
+      if (!confirmClose) {
+        return;
+      }
+    }
+    onClose();
   };
 
   // 모든 파일이 매핑되었는지 확인
@@ -105,8 +132,7 @@ export default function ProductUploadForm({ onClose, formData, onSuccess, onSubm
       <div className="button-row">
         <button 
           className="cancel" 
-          onClick={onClose}
-          disabled={isSubmitting}
+          onClick={handleClose}
         >
           Cancel
         </button>

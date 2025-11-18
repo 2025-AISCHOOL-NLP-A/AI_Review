@@ -2,7 +2,7 @@ import db from "../models/db.js";
 import { getProductDashboardData as getProductDashboard } from "./dashboardController.js";
 import { analyzeReviews } from "./reviewController.js"; // ✅ 실제 리뷰 분석 함수 import
 import { analyzeProductReviews } from "../services/absaService.js"; // Python 서버 직접 호출
-import dotenv from "dotenv";
+// dotenv는 app.js에서 이미 로드됨
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -10,8 +10,6 @@ import multer from "multer";
 import XLSX from "xlsx";
 import csv from "csv-parser";
 import { Readable } from "stream";
-
-dotenv.config();
 
 // ES 모듈에서 __dirname 사용을 위한 설정
 const __filename = fileURLToPath(import.meta.url);

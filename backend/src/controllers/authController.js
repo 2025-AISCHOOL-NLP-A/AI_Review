@@ -2,9 +2,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import db from "../models/db.js";
 import nodemailer from "nodemailer";
-import dotenv from "dotenv";
-
-dotenv.config(); // ✅ 올바른 호출 (configDotenv → dotenv)
+// dotenv는 app.js에서 이미 로드됨
 
 
 // ==============================

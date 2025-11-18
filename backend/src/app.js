@@ -1,13 +1,28 @@
+// dotenv를 가장 먼저 로드 (다른 모듈보다 먼저)
+import dotenv from "dotenv";
+dotenv.config();
+
+// dotenv 메시지 필터링 (다른 import 전에 설정)
+const originalLog = console.log;
+console.log = (...args) => {
+  const message = args[0];
+  // dotenv 메시지 필터링
+  if (typeof message === 'string' && message.includes('[dotenv@')) {
+    return; // dotenv 메시지 무시
+  }
+  originalLog(...args);
+};
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import { verifyAuth } from "./middlewares/authMiddleware.js"
 import reviewRoutes from "./routes/reviewRoutes.js";
 import insightRoutes from "./routes/insightRoutes.js";
 
-dotenv.config();
+// console.log 복원 (다른 로그는 정상 출력)
+console.log = originalLog;
 const app = express();
 
 // 보안 헤더 설정 (HTTP 헤더로만 작동)

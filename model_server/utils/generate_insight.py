@@ -144,9 +144,10 @@ def generate_insight_with_llm(prompt: str) -> dict:
         
         # LLM 초기화
         llm = ChatOpenAI(
-            model="gpt-4o-mini",
+            # model="gpt-4o-mini",
+            model="gpt-5-mini",
             temperature=0,
-            max_tokens=10000
+            max_tokens=20000
         )
         
         # 메시지 구성

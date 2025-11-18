@@ -1,15 +1,13 @@
 // usePDFDownload.js
 import { useCallback } from "react";
 import html2pdf from "html2pdf.js";
-import { getElementScrollSize } from "../hooks/useViewport";
 
 /**
  * 대시보드 PDF 다운로드용 커스텀 훅
- * - DOM 레이아웃을 전혀 변경하지 않음 (transform, width 조작 없음)
- * - 첫 번째 다운로드부터 항상 같은 규칙으로 동작
- * - 가로는 "화면 너비 - 여유" 범위 안에서만 사용 (가로 스크롤 방지)
- * - 세로는 그 비율에 맞춰서 계산 → 페이지 안에서 공백 최소화
- * - 사이드바 포함, footer만 PDF에서 제외
+ * - 모니터 해상도와 무관하게 동일한 규칙으로 동작
+ * - 가로: 대시보드 실제 폭(clientWidth) 그대로 사용 (가운데 정렬 유지)
+ * - 세로: scrollHeight 전체 사용 → 그래프 / 텍스트 하단 잘림 방지
+ * - 너무 긴 경우, 비율 유지하여 1페이지 안으로 자동 축소 (불필요한 2페이지 방지)
  */
 export const usePDFDownload = ({
   contentRef,
@@ -37,44 +35,28 @@ export const usePDFDownload = ({
       footerElement.style.display = "none";
     }
 
-    // 3) 실제 대시보드 전체 크기(스크롤 기준) 측정
-    const { width: scrollWidth, height: scrollHeight } =
-      getElementScrollSize(element);
+    // 3) 실제 대시보드 크기 측정
+    //    - 가로: 화면에 보이는 폭(clientWidth) 기준
+    //    - 세로: 전체 내용 높이(scrollHeight) 기준
+    const baseWidth = element.clientWidth || element.offsetWidth || 1280;
+    const baseHeight = element.scrollHeight || element.clientHeight || 720;
 
-    const contentWidth = scrollWidth || element.clientWidth || 1280;
-    const contentHeight = scrollHeight || element.clientHeight || 720;
+    // 기본적으로는 “보이는 크기 그대로” 페이지 크기로 사용
+    let pageWidth = baseWidth;
+    let pageHeight = baseHeight;
 
-    // 4) 현재 브라우저 화면 너비 기준으로 PDF 가로폭 결정
-    const viewportWidth =
-      (typeof window !== "undefined" && window.innerWidth) ||
-      document.documentElement.clientWidth ||
-      contentWidth;
+    // 📌 PDF 한 페이지가 가질 수 있는 최대 높이(라이브러리 한계 고려)
+    const MAX_PAGE_HEIGHT = 14000; // px 기준
 
-    // 화면 좌우 여유 (너무 꽉 차면 보기 답답하니까 약간만 뺌)
-    const SIDE_PADDING = 40;
+    // 너무 길면(예: 특정 상품에서 텍스트가 많을 때)
+    // → 비율 유지하면서 전체를 축소해서 1페이지에 넣는다.
+    if (pageHeight > MAX_PAGE_HEIGHT) {
+      const ratio = MAX_PAGE_HEIGHT / pageHeight;
+      pageWidth = pageWidth * ratio;
+      pageHeight = MAX_PAGE_HEIGHT;
+    }
 
-    // PDF 가로폭 상/하한 (너무 좁지도, 너무 넓지도 않게)
-    const MAX_PDF_WIDTH = 1600;
-    const MIN_PDF_WIDTH = 900;
-
-    // 👉 실제 PDF 페이지 너비
-    //    - 화면 너비 - 여유 값 안에서
-    //    - MIN_PDF_WIDTH ~ MAX_PDF_WIDTH 사이로 고정
-    const pageWidth = Math.min(
-      MAX_PDF_WIDTH,
-      Math.max(MIN_PDF_WIDTH, viewportWidth - SIDE_PADDING)
-    );
-
-    // 콘텐츠를 pageWidth에 맞추기 위한 축소 비율
-    const scaleToFitWidth = pageWidth / contentWidth;
-
-    // 세로는 같은 비율로 줄이기
-    const pageHeight = contentHeight * scaleToFitWidth;
-
-    // 세로 읽기용 고정
-    const orientation = "portrait";
-
-    // 5) 파일명
+    // 4) 파일명
     const productName =
       productInfo?.product_name ||
       dashboardData?.product?.product_name ||
@@ -85,25 +67,25 @@ export const usePDFDownload = ({
       filename: `${productName}_리뷰_분석_리포트.pdf`,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: {
-        // ❗ DOM 자체 크기는 건드리지 않고, 원본 그대로 캡처
+        // DOM 레이아웃은 그대로 두고, 현재 전체 스크롤 영역을 캡처
         scale: 2,
         useCORS: true,
         scrollX: 0,
-        scrollY: 0,
-        width: contentWidth,
-        height: contentHeight,
-        windowWidth: contentWidth,
-        windowHeight: contentHeight,
+        scrollY: -window.scrollY, // 화면 어디까지 내려가 있었든 상관없이 전체 캡처
+        width: baseWidth,
+        height: baseHeight,
+        windowWidth: baseWidth,
+        windowHeight: baseHeight,
       },
       jsPDF: {
         unit: "px",
-        // ❗ 우리가 계산한 pageWidth/pageHeight에 딱 맞게 페이지 크기 설정
-        //    → PDF 내부에서 공백 거의 없이 꽉 채워짐
+        // 페이지 크기 = 우리가 계산한 pageWidth / pageHeight
+        //  → 가로 여백 없이, 세로는 잘리지 않게 한 장에 전부 들어감
         format: [pageWidth, pageHeight],
-        orientation,
+        orientation: "portrait",
       },
       pagebreak: {
-        mode: "none", // 한 장짜리 긴 페이지 (세로 스크롤만)
+        mode: "none", // 여러 페이지로 나누지 말고 한 장으로
       },
     };
 
@@ -112,7 +94,7 @@ export const usePDFDownload = ({
       .from(element)
       .save()
       .then(() => {
-        // 6) 버튼 / footer 복구
+        // 5) 버튼 / footer 복구
         if (downloadButton) {
           downloadButton.style.display = "flex";
         }

@@ -12,20 +12,53 @@ export default function ProductActionMenu({
   onClose,
 }) {
   const menuRef = useRef(null);
+  const mouseDownRef = useRef(null);
 
   // 외부 클릭 시 메뉴 닫기
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleClickOutside = (e) => {
+    const handleMouseDown = (e) => {
+      // 메뉴 내부가 아닌 경우 mousedown 위치 저장
       if (menuRef.current && !menuRef.current.contains(e.target)) {
-        onClose();
+        mouseDownRef.current = { target: e.target, time: Date.now() };
+      } else {
+        mouseDownRef.current = null;
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    const handleMouseUp = (e) => {
+      // 텍스트 선택이 완료되었는지 확인
+      const selection = window.getSelection();
+      const hasSelection = selection && selection.toString().length > 0;
+      
+      // 텍스트가 선택된 경우 메뉴를 닫지 않음
+      if (hasSelection) {
+        mouseDownRef.current = null;
+        return;
+      }
+
+      // 메뉴 외부에서 mousedown이 시작되고 mouseup이 발생한 경우에만 메뉴 닫기
+      if (
+        mouseDownRef.current &&
+        menuRef.current &&
+        !menuRef.current.contains(e.target)
+      ) {
+        // 클릭 시간이 짧은 경우에만 메뉴 닫기 (드래그와 구분)
+        const clickDuration = Date.now() - mouseDownRef.current.time;
+        if (clickDuration < 300) {
+          onClose();
+        }
+      }
+
+      mouseDownRef.current = null;
+    };
+
+    document.addEventListener("mousedown", handleMouseDown);
+    document.addEventListener("mouseup", handleMouseUp);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isOpen, onClose]);
 

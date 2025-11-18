@@ -4,7 +4,6 @@ import time
 from typing import List, Dict, Any
 
 import torch
-from loguru import logger
 from transformers import pipeline as hf_pipeline
 
 # =========================================================
@@ -30,7 +29,7 @@ def get_absa_pipeline():
     if _pipeline_cache is None:
         try:
             _pipeline_device = 0 if torch.cuda.is_available() else -1
-            logger.info(f"화장품 ABSA model 로드 중: {cfg['absa_model']} (device={_pipeline_device})")
+            print(f"화장품 ABSA model 로드 중: {cfg['absa_model']} (device={_pipeline_device})")
             _pipeline_cache = hf_pipeline(
                 task="text-classification",
                 model=cfg['absa_model'],
@@ -39,7 +38,7 @@ def get_absa_pipeline():
                 device=_pipeline_device,
             )
         except Exception as e:
-            logger.exception("Cosmetics ABSA 파이프라인 로딩 실패")
+            print("Cosmetics ABSA 파이프라인 로딩 실패")
             raise RuntimeError(f"Failed to load cosmetics ABSA model '{cfg['absa_model']}': {e}")
     return _pipeline_cache
 
@@ -162,7 +161,7 @@ def analyze_reviews(texts: List[str], debug: bool = False, batch_size: int = 16,
         )
         preds_all.extend(preds_chunk)
     elapsed = (time.monotonic() - start) * 1000
-    logger.info(f"[Cosmetics] 배치 추론 완료: reviews={len(texts)}, inputs={len(expanded_inputs)}, {elapsed:.1f}ms")
+    print(f"[Cosmetics] 배치 추론 완료: reviews={len(texts)}, inputs={len(expanded_inputs)}, {elapsed:.1f}ms")
 
     # 결과 재구성: 텍스트별 aspect 결과 맵
     per_text_aspect: List[Dict[str, Dict[str, float]]] = [dict() for _ in texts]
@@ -201,7 +200,7 @@ def analyze_reviews(texts: List[str], debug: bool = False, batch_size: int = 16,
         outputs.append({"text": text, "aspects": detected_aspects, "results": results})
 
     if debug:
-        logger.debug(f"[Cosmetics] 배치 결과 개수: {len(outputs)}")
+        print(f"[Cosmetics] 배치 결과 개수: {len(outputs)}")
 
     return outputs
 

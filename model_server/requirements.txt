@@ -18,9 +18,9 @@ scikit-learn==1.3.2
 # 🤖 AI / NLP / ML
 # ==========================
 torch==2.1.2
-transformers==4.36.2
-huggingface-hub==0.20.3
-sentencepiece==0.1.99
+transformers==4.44.2
+huggingface-hub==0.25.2
+sentencepiece==0.2.0
 
 # ==========================
 # 📊 Data / Visualization
@@ -55,9 +55,8 @@ DBUtils==3.1.0
 # 🔑 LLM (LangChain / OpenAI)
 # ==========================
 langchain-openai==0.2.3
-langchain-core==0.2.43
+# langchain-core 버전 명시 제거 (langchain-openai가 자동 해결)
 openai==1.55.1
-
 # ==========================
 # ⚙️ Optional (For better caching / deployment)
 # ==========================

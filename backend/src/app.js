@@ -21,7 +21,7 @@ app.use((req, res, next) => {
 
 // CORS 설정
 app.use(cors({
-  origin: "http://localhost:5174", // React dev server 주소
+  origin: "http://localhost:5173", // React dev server 주소
   credentials: true,
 }));
 

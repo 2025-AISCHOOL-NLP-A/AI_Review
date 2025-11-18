@@ -1,7 +1,16 @@
 import mysql from "mysql2/promise";
 import dotenv from "dotenv";
 
-dotenv.config();
+// dotenv 로드 (이미 로드되었어도 안전하게 처리)
+if (!process.env.DB_HOST) {
+  dotenv.config();
+}
+
+// 환경 변수 확인
+if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_PASSWORD || !process.env.DB_NAME) {
+  console.error("❌ DB 환경 변수가 설정되지 않았습니다!");
+  console.error("필요한 변수: DB_HOST, DB_USER, DB_PASSWORD, DB_NAME");
+}
 
 const db = mysql.createPool({
   host: process.env.DB_HOST,

@@ -31,7 +31,7 @@ def get_model_server_dir():
 # ======================================
 # 🔹 불용어 로드 함수 (절대경로 + 로그 포함)
 # ======================================
-def load_stopwords(domain="steam"):
+def load_stopwords(domain="steam", debug=False):
     stopwords = set()
 
     # 🔹 현재 파일(app/utils/generate_wordcloud_from_db.py) 기준 경로
@@ -40,8 +40,10 @@ def load_stopwords(domain="steam"):
     base_path = os.path.join(stopword_dir, "base.txt")
     domain_path = os.path.join(stopword_dir, f"{domain}.txt")
 
+    loaded_count = 0
     for path in [base_path, domain_path]:
         if os.path.exists(path):
+            file_count = 0
             with open(path, "r", encoding="utf-8-sig") as f:
                 for line in f:
                     # 공백, 탭, 개행 문자 모두 제거하고 정제
@@ -49,7 +51,17 @@ def load_stopwords(domain="steam"):
                     # 빈 문자열이 아니고 의미있는 단어만 추가
                     if word and len(word) > 0:
                         stopwords.add(word)
-
+                        file_count += 1
+            loaded_count += file_count
+            if debug:
+                print(f"📝 불용어 파일 로드: {os.path.basename(path)} - {file_count}개 단어")
+        else:
+            if debug:
+                print(f"⚠️ 불용어 파일 없음: {os.path.basename(path)}")
+    
+    if debug:
+        print(f"✅ 총 불용어 로드: {len(stopwords)}개 (domain={domain})")
+    
     return stopwords
 
 
@@ -59,6 +71,14 @@ def load_stopwords(domain="steam"):
 def generate_wordcloud_from_db(product_id: int, domain="steam"):
     conn = get_connection()
     cursor = conn.cursor()
+
+    # 0️⃣ 제품 정보 조회 (제품명, 브랜드를 불용어에 추가하기 위해)
+    cursor.execute(
+        "SELECT product_name, brand FROM tb_product WHERE product_id = %s", (product_id,)
+    )
+    product_info = cursor.fetchone()
+    product_name = product_info["product_name"] if product_info else None
+    brand = product_info["brand"] if product_info else None
 
     # 1️⃣ 리뷰 불러오기
     cursor.execute(
@@ -81,9 +101,72 @@ def generate_wordcloud_from_db(product_id: int, domain="steam"):
     ]
 
     # 4️⃣ 불용어 제거
-    stopwords = load_stopwords(domain)
-    # 토큰도 공백 제거 후 비교
-    tokens = [t.strip() for t in tokens if t.strip() and t.strip() not in stopwords]
+    stopwords = load_stopwords(domain, debug=True)
+    
+    # 제품명과 브랜드를 불용어에 추가
+    if product_name:
+        # 제품명을 공백으로 분리하여 각 단어도 추가
+        product_words = product_name.split()
+        for word in product_words:
+            word_clean = word.strip()
+            if word_clean and len(word_clean) > 1:
+                stopwords.add(word_clean)
+        # 전체 제품명도 추가
+        product_name_clean = product_name.strip()
+        if product_name_clean:
+            stopwords.add(product_name_clean)
+        print(f"📝 제품명 불용어 추가: {product_name} (단어: {product_words})")
+    
+    if brand:
+        brand_clean = brand.strip()
+        if brand_clean and len(brand_clean) > 1:
+            stopwords.add(brand_clean)
+            print(f"📝 브랜드 불용어 추가: {brand}")
+    
+    # 토큰 정규화 및 불용어 제거
+    tokens_before = len(tokens)
+    filtered_tokens = []
+    removed_words = []
+    
+    for token in tokens:
+        # 토큰 정규화: 공백 제거
+        normalized_token = token.strip()
+        if not normalized_token:
+            continue
+            
+        # 불용어 체크: 정확히 일치하거나, 제품명/브랜드에 포함되는 경우 제거
+        should_remove = False
+        remove_reason = None
+        
+        # 1. 정확히 일치하는 불용어 체크
+        if normalized_token in stopwords:
+            should_remove = True
+            remove_reason = "불용어 일치"
+        # 2. 제품명에 포함되는 경우 (부분 매칭)
+        elif product_name and normalized_token in product_name:
+            should_remove = True
+            remove_reason = "제품명 포함"
+        # 3. 브랜드에 포함되는 경우 (부분 매칭)
+        elif brand and normalized_token in brand:
+            should_remove = True
+            remove_reason = "브랜드 포함"
+        
+        if should_remove:
+            removed_words.append(normalized_token)
+        else:
+            filtered_tokens.append(normalized_token)
+    
+    tokens = filtered_tokens
+    tokens_after = len(tokens)
+    
+    # 디버깅 정보 출력
+    print(f"🔍 불용어 제거 통계:")
+    print(f"   - 제거 전 토큰 수: {tokens_before}")
+    print(f"   - 제거 후 토큰 수: {tokens_after}")
+    print(f"   - 제거된 토큰 수: {tokens_before - tokens_after}")
+    if removed_words:
+        removed_counter = Counter(removed_words)
+        print(f"   - 제거된 상위 10개 단어: {dict(removed_counter.most_common(10))}")
 
     # 5️⃣ 빈도 계산
     freq = dict(Counter(tokens).most_common(200))

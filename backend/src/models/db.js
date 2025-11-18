@@ -15,8 +15,8 @@ const db = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   // 타임아웃 설정
-  acquireTimeout: 60000, // 60초
-  timeout: 60000, // 60초
+  acquireTimeout: 60000, // Pool에서 연결을 가져올 때 타임아웃 (60초)
+  connectTimeout: 60000, // Connection 생성 시 타임아웃 (60초)
   // 재연결 설정
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,

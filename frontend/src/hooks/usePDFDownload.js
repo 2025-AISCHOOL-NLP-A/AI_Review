@@ -5,9 +5,11 @@ import { getElementScrollSize } from "../hooks/useViewport";
 
 /**
  * 대시보드 PDF 다운로드용 커스텀 훅
- * - DOM 스타일(폭/패딩) 절대 안 건드림
- * - 대시보드 실제 너비를 기준으로 PDF 비율만 조정
- * - PDF 가로폭이 화면 너비를 넘지 않게 고정 → 가로 스크롤 방지
+ * - DOM 레이아웃을 전혀 변경하지 않음 (transform, width 조작 없음)
+ * - 첫 번째 다운로드부터 항상 같은 규칙으로 동작
+ * - 가로는 "화면 너비 - 여유" 범위 안에서만 사용 (가로 스크롤 방지)
+ * - 세로는 그 비율에 맞춰서 계산 → 페이지 안에서 공백 최소화
+ * - 사이드바 포함, footer만 PDF에서 제외
  */
 export const usePDFDownload = ({
   contentRef,
@@ -42,24 +44,35 @@ export const usePDFDownload = ({
     const contentWidth = scrollWidth || element.clientWidth || 1280;
     const contentHeight = scrollHeight || element.clientHeight || 720;
 
-    // 4) 현재 브라우저 화면 너비
+    // 4) 현재 브라우저 화면 너비 기준으로 PDF 가로폭 결정
     const viewportWidth =
       (typeof window !== "undefined" && window.innerWidth) ||
       document.documentElement.clientWidth ||
       contentWidth;
 
-    // 화면 좌우 여유 (조금만 뺌)
+    // 화면 좌우 여유 (너무 꽉 차면 보기 답답하니까 약간만 뺌)
     const SIDE_PADDING = 40;
 
-    // PDF 가로폭은
-    //  - "내용 폭"을 넘지 않고
-    //  - "화면 폭 - 여유"도 넘지 않게 제한
-    const maxAllowedWidth = Math.max(600, viewportWidth - SIDE_PADDING);
-    const pageWidth = Math.min(contentWidth, maxAllowedWidth);
+    // PDF 가로폭 상/하한 (너무 좁지도, 너무 넓지도 않게)
+    const MAX_PDF_WIDTH = 1600;
+    const MIN_PDF_WIDTH = 900;
 
-    // 내용 → PDF 페이지로 줄여 넣기 위한 비율
+    // 👉 실제 PDF 페이지 너비
+    //    - 화면 너비 - 여유 값 안에서
+    //    - MIN_PDF_WIDTH ~ MAX_PDF_WIDTH 사이로 고정
+    const pageWidth = Math.min(
+      MAX_PDF_WIDTH,
+      Math.max(MIN_PDF_WIDTH, viewportWidth - SIDE_PADDING)
+    );
+
+    // 콘텐츠를 pageWidth에 맞추기 위한 축소 비율
     const scaleToFitWidth = pageWidth / contentWidth;
+
+    // 세로는 같은 비율로 줄이기
     const pageHeight = contentHeight * scaleToFitWidth;
+
+    // 세로 읽기용 고정
+    const orientation = "portrait";
 
     // 5) 파일명
     const productName =
@@ -72,7 +85,7 @@ export const usePDFDownload = ({
       filename: `${productName}_리뷰_분석_리포트.pdf`,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: {
-        // DOM은 원본 그대로, 캔버스만 고해상도로
+        // ❗ DOM 자체 크기는 건드리지 않고, 원본 그대로 캡처
         scale: 2,
         useCORS: true,
         scrollX: 0,
@@ -84,13 +97,13 @@ export const usePDFDownload = ({
       },
       jsPDF: {
         unit: "px",
-        // 페이지 크기 = 우리가 계산한 pageWidth / pageHeight
-        // → 가로는 화면 안에 들어오고, 세로는 비율 유지
+        // ❗ 우리가 계산한 pageWidth/pageHeight에 딱 맞게 페이지 크기 설정
+        //    → PDF 내부에서 공백 거의 없이 꽉 채워짐
         format: [pageWidth, pageHeight],
-        orientation: "portrait",
+        orientation,
       },
       pagebreak: {
-        mode: "none", // 한 장짜리 긴 페이지
+        mode: "none", // 한 장짜리 긴 페이지 (세로 스크롤만)
       },
     };
 
@@ -110,7 +123,6 @@ export const usePDFDownload = ({
       .catch((err) => {
         console.error("PDF 생성 중 오류:", err);
         alert("PDF 생성 중 오류가 발생했습니다. 다시 시도해 주세요.");
-
         if (downloadButton) {
           downloadButton.style.display = "flex";
         }

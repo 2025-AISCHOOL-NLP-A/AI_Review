@@ -186,13 +186,22 @@ def generate_wordcloud_from_db(product_id: int, domain="steam"):
     filtered_tokens = []
     removed_words = []
     
+    # 불용어 확인용 디버깅
+    print(f"🔍 불용어 세트 크기: {len(stopwords)}개")
+    test_words = ["새끼", "병신", "씨발"]
+    for test_word in test_words:
+        if test_word in stopwords:
+            print(f"   ✅ '{test_word}' 불용어에 포함됨")
+        else:
+            print(f"   ❌ '{test_word}' 불용어에 없음!")
+    
     for token in tokens:
         # 토큰 정규화: 공백 제거
         normalized_token = token.strip()
         if not normalized_token:
             continue
             
-        # 불용어 체크: 정확히 일치하거나, 제품명/브랜드에 포함되는 경우 제거
+        # 불용어 체크: 정확히 일치하거나, 불용어가 토큰에 포함되거나, 토큰이 불용어에 포함되는 경우 제거
         should_remove = False
         remove_reason = None
         
@@ -200,11 +209,16 @@ def generate_wordcloud_from_db(product_id: int, domain="steam"):
         if normalized_token in stopwords:
             should_remove = True
             remove_reason = "불용어 일치"
-        # 2. 제품명에 포함되는 경우 (부분 매칭)
+        # 2. 불용어가 토큰에 포함되는 경우 (예: "개새끼" -> "새끼" 포함)
+        elif any(sw in normalized_token for sw in stopwords if len(sw) > 1):
+            should_remove = True
+            remove_reason = "불용어 포함"
+        # 3. 토큰이 불용어에 포함되는 경우 (예: "새" -> "새끼"에 포함, 하지만 이건 제외)
+        # 4. 제품명에 포함되는 경우 (부분 매칭)
         elif product_name and normalized_token in product_name:
             should_remove = True
             remove_reason = "제품명 포함"
-        # 3. 브랜드에 포함되는 경우 (부분 매칭)
+        # 5. 브랜드에 포함되는 경우 (부분 매칭)
         elif brand and normalized_token in brand:
             should_remove = True
             remove_reason = "브랜드 포함"

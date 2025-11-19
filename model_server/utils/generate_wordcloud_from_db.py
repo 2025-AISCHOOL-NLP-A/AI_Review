@@ -132,20 +132,35 @@ def generate_wordcloud_from_db(product_id: int, domain="steam"):
             
             for part_idx, text_part in enumerate(text_parts):
                 try:
+                    ## 원형 처리 x 버전
                     part_tokens = [
                         t for t, pos in okt.pos(text_part) 
                         if pos in ["Noun", "Adjective"] and len(t) > 1
                     ]
+                    all_tokens.extend(part_tokens)
+                    ## 원형 처리 버전
+                    # part_tokens = []
+                    # morphs = okt.pos(text_part, stem=True)
+                    # for t, pos in morphs:
+                    #     if pos in ["Noun", "Adjective"] and len(t) > 1: # ["Noun", "Adjective", "Verb"]
+                    #         part_tokens.append(t)
                     all_tokens.extend(part_tokens)
                 except Exception as e:
                     print(f"⚠️ 배치 {i//REVIEW_BATCH_SIZE + 1}의 부분 {part_idx + 1} 처리 중 오류 (건너뜀): {e}")
                     continue
         else:
             try:
+                ## 원형 처리 x 버전
                 batch_tokens = [
                     t for t, pos in okt.pos(batch_text) 
                     if pos in ["Noun", "Adjective"] and len(t) > 1
                 ]
+                ## 원형 처리 버전
+                # batch_tokens = []
+                # morphs = okt.pos(batch_text, stem=True)
+                # for t, pos in morphs:
+                #     if pos in ["Noun", "Adjective"] and len(t) > 1: # ["Noun", "Adjective", "Verb"]
+                #         batch_tokens.append(t)
                 all_tokens.extend(batch_tokens)
             except Exception as e:
                 print(f"⚠️ 배치 {i//REVIEW_BATCH_SIZE + 1} 처리 중 오류 (건너뜀): {e}")
@@ -286,7 +301,7 @@ if __name__ == "__main__":
     from utils.db_connect import init_db_pool, close_db_pool
     
     # 테스트용 product_id
-    product_id = int(sys.argv[1]) if len(sys.argv) > 1 else 1008
+    product_id = int(sys.argv[1]) if len(sys.argv) > 1 else 1038
     domain = sys.argv[2] if len(sys.argv) > 2 else "electronics"
     
     try:

@@ -217,3 +217,11 @@ canvas {
   width: 1.25rem !important;
   height: 1.25rem !important;
 }
+
+/* ===================== 중앙 정렬 전용 래퍼 ===================== */
+.dashboard-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+  box-sizing: border-box;
+}

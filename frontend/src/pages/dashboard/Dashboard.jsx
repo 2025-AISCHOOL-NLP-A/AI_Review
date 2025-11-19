@@ -190,11 +190,12 @@ function Dashboard() {
 
       {/* Main Content */}
       <div className="dashboard-wrapper">
-        <div
-          id="dashboard-content"
-          ref={dashboardContentRef}
-          className="dashboard-content"
-        >
+        <div className="dashboard-inner mx-auto max-w-[1400px] px-6">
+          <div
+            id="dashboard-content"
+            ref={dashboardContentRef}
+            className="dashboard-content"
+          >
           {/* Header & Filter Section */}
           <DashboardHeader
             loading={loading}
@@ -229,7 +230,7 @@ function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" id="wordcloud-review-section">
             <div className="card">
               <h2 className="text-xl font-semibold mb-4">
-                🌈 감정 워드클라우드
+                리뷰 원문 기반 주요 언급 키워드
               </h2>
               <WordCloudSection
                 loading={loading}
@@ -238,7 +239,7 @@ function Dashboard() {
             </div>
 
             <div className="card">
-              <h2 className="text-xl font-semibold mb-4">💬 리뷰 원문 샘플</h2>
+              <h2 className="text-xl font-semibold mb-4">고객 리뷰 원문 하이라이트</h2>
               <div className="review-table-container">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead>
@@ -294,6 +295,7 @@ function Dashboard() {
 
           {/* ===================== FOOTER ===================== */}
           <Footer />
+          </div>
         </div>
       </div>
     </div>

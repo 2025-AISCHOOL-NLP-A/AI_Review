@@ -16,7 +16,7 @@ const AIInsightReport = ({ loading, dashboardData }) => {
     
     // 객체인 경우 구조화된 마크다운 형식으로 변환
     if (typeof content === 'object' && content !== null) {
-      let result = "# 📊 리뷰 분석 보고서\n\n";
+      let result = "# 리뷰 분석 보고서\n\n";
       
       // 감정 비율
       let positiveRatio = null;

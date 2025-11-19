@@ -532,7 +532,8 @@ function Workplace() {
     <div className={`dashboard-page ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
       <Sidebar />
       <div className="dashboard-wrapper">
-        <div className="dashboard-content">
+        <div className="dashboard-inner mx-auto max-w-[1400px] px-6">
+          <div className="dashboard-content">
           <div className="workplace-container">
           {/* Header Section */}
           <div className="workplace-header">
@@ -648,7 +649,8 @@ function Workplace() {
         
         {/* ===================== FOOTER ===================== */}
         <Footer />
-      </div>
+          </div>
+        </div>
       </div>
 
       {/* Step 1: Product Information Modal */}

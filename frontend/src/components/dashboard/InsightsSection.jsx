@@ -26,7 +26,7 @@ const InsightsSection = ({ loading, dashboardData }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" id="insights-section">
       <div className="card">
-        <h2 className="text-lg font-semibold mb-3">A. 핵심 인사이트</h2>
+        <h2 className="text-lg font-semibold mb-3">A. 핵심 분석 요약</h2>
         <p className="whitespace-pre-wrap text-sm text-gray-700">
           {loading
             ? "데이터 로딩 중..."
@@ -74,7 +74,7 @@ const InsightsSection = ({ loading, dashboardData }) => {
         </p>
       </div>
       <div className="card">
-        <h2 className="text-lg font-semibold mb-3">C. 리뷰 샘플</h2>
+        <h2 className="text-lg font-semibold mb-3">C. 주요 키워드 요약</h2>
         <div className="text-sm text-gray-700">
           {loading ? (
             <p>데이터 로딩 중...</p>

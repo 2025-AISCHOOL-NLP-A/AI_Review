@@ -160,7 +160,7 @@ export default function FileUploadForm({ onFilesReady, disabled = false }) {
         onClick={handleBrowseClick}
       >
         <p className="upload-text">Drop file or browse</p>
-        <p className="upload-format-text">Format: Excel (.xlsx, .xls), CSV (.csv) only (최대 500MB, 최대 5개)</p>
+        <p className="upload-format-text">Format: Excel (.xlsx, .xls), CSV (.csv) only (최대 10MB, 최대 5개)</p>
         <button 
           className="browse-btn" 
           onClick={(e) => { 

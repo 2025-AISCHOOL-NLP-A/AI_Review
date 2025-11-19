@@ -115,38 +115,53 @@ function ReviewManagement() {
           // 날짜 필터는 제외
         };
 
-        // 전체 리뷰를 가져오기 위해 limit을 크게 설정 (날짜 범위 계산용)
-        const result = await reviewService.getReviews(
+        // 최소 날짜와 최대 날짜를 각각 가져오기 위해 두 번의 요청
+        // 1. 오름차순 정렬로 첫 번째 리뷰 (최소 날짜)
+        const minResult = await reviewService.getReviews(
           filters,
           1,
-          10000, // 충분히 큰 값으로 전체 리뷰 가져오기
+          1, // 첫 번째 리뷰만 필요
           "review_date",
           "asc",
           null
         );
 
-        if (result.success && result.data && result.data.length > 0) {
-          const dates = result.data
-            .map((review) => review.review_date)
-            .filter((date) => date != null)
-            .map((date) => new Date(date))
-            .filter((date) => !isNaN(date.getTime()));
+        // 2. 내림차순 정렬로 첫 번째 리뷰 (최대 날짜)
+        const maxResult = await reviewService.getReviews(
+          filters,
+          1,
+          1, // 첫 번째 리뷰만 필요
+          "review_date",
+          "desc",
+          null
+        );
 
-          if (dates.length > 0) {
-            const minDate = new Date(Math.min(...dates));
-            const maxDate = new Date(Math.max(...dates));
+        // 날짜를 YYYY-MM-DD 형식으로 변환
+        const formatDate = (date) => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+          return `${year}-${month}-${day}`;
+        };
 
-            // 날짜를 YYYY-MM-DD 형식으로 변환
-            const formatDate = (date) => {
-              const year = date.getFullYear();
-              const month = String(date.getMonth() + 1).padStart(2, "0");
-              const day = String(date.getDate()).padStart(2, "0");
-              return `${year}-${month}-${day}`;
-            };
+        if (minResult.success && minResult.data && minResult.data.length > 0) {
+          const minReview = minResult.data[0];
+          if (minReview.review_date) {
+            const minDate = new Date(minReview.review_date);
+            if (!isNaN(minDate.getTime())) {
+              setStartDate(formatDate(minDate));
+            }
+          }
+        }
 
-            setStartDate(formatDate(minDate));
-            setEndDate(formatDate(maxDate));
-            setIsDateFilterInitialized(true);
+        if (maxResult.success && maxResult.data && maxResult.data.length > 0) {
+          const maxReview = maxResult.data[0];
+          if (maxReview.review_date) {
+            const maxDate = new Date(maxReview.review_date);
+            if (!isNaN(maxDate.getTime())) {
+              setEndDate(formatDate(maxDate));
+              setIsDateFilterInitialized(true);
+            }
           }
         }
       } catch (error) {
@@ -352,7 +367,8 @@ function ReviewManagement() {
       <Sidebar />
       <div className="dashboard-wrapper">
         <div className="dashboard-content">
-          <div className="review-management-container">
+          <div className="dashboard-inner">
+            <div className="review-management-container">
             {/* Header Section */}
             <div className="review-management-header">
               <h1 className="review-management-title">리뷰 관리</h1>
@@ -455,10 +471,11 @@ function ReviewManagement() {
                 </button>
               </div>
             </div>
-          </div>
+            </div>
 
-          {/* Footer */}
-          <Footer />
+            {/* Footer */}
+            <Footer />
+          </div>
         </div>
       </div>
     </div>

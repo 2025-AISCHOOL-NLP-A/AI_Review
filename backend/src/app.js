@@ -34,12 +34,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// CORS 설정
+// CORS 설정 - 환경 변수로 여러 origin 지원
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  : ["http://localhost:5173"];
+
 app.use(cors({
-  origin: "http://localhost:5173", // React dev server 주소
+  origin: allowedOrigins,
   credentials: true,
 }));
-
 // 요청 로깅 (디버그용)
 app.use((req, _res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);

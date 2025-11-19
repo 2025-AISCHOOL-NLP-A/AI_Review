@@ -44,9 +44,10 @@ export async function analyzeProductReviews(product_id, domain = null) {
     
     console.log(`📡 Python 서버 호출: ${url}`);
     
-    // 타임아웃 설정 (10분 - 대용량 리뷰 처리 고려)
+    // 타임아웃 설정 (30분 - 대용량 리뷰 처리 + 전체 파이프라인 고려)
+    // 전체 파이프라인: 리뷰 분석(배치) + DB 저장 + 인사이트 생성(OpenAI) + 워드클라우드 생성
     const res = await axios.post(url, {}, {
-      timeout: 600000, // 10분
+      timeout: 1800000, // 30분 (리뷰 5000개 이상 + 전체 파이프라인 처리 시간 확보)
       headers: {
         'Content-Type': 'application/json'
       }

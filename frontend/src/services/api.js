@@ -12,6 +12,7 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
   withCredentials: true,
+  timeout: 1800000, // 30분 (대용량 리뷰 분석 파이프라인 처리 시간 확보)
 });
 
 /**

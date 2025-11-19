@@ -10,6 +10,7 @@ import {
   verifyEmailCode,
   updateProfile,
   withdrawUser,
+  refreshToken,
 } from "../controllers/authController.js";
 
 const router = express.Router();
@@ -32,6 +33,8 @@ router.post("/find-password", findPassword);
 router.post("/update-profile", updateProfile);
 // JWT 토큰 검증
 router.get("/verify", verifyToken);
+// 🔄 토큰 갱신 (세션 시간 연장)
+router.post("/refresh", refreshToken);
 // 🔹 회원탈퇴
 router.delete("/withdraw", withdrawUser);
 

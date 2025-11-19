@@ -1,8 +1,7 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import React, { useRef, useState, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
 import Footer from "../../components/layout/Footer/Footer";
-import dashboardService from "../../services/dashboardService";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import KPICards from "../../components/dashboard/KPICards";
 import DashboardCharts from "../../components/dashboard/DashboardCharts";

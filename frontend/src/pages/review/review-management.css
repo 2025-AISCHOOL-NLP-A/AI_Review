@@ -58,6 +58,15 @@
   margin: 0;
 }
 
+.review-count-badge {
+  font-size: 0.95rem;
+  color: var(--review-text-gray);
+  padding: 0.5rem 1rem;
+  background: var(--review-bg-light);
+  border-radius: 8px;
+  border: 1px solid var(--review-border);
+}
+
 /* ===== 필터 섹션 ===== */
 .review-filters {
   display: flex;

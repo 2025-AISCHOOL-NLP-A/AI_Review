@@ -371,7 +371,14 @@ function ReviewManagement() {
             <div className="review-management-container">
             {/* Header Section */}
             <div className="review-management-header">
-              <h1 className="review-management-title">리뷰 관리</h1>
+              <div className="flex items-center justify-between">
+                <h1 className="review-management-title">리뷰 관리</h1>
+                {!loading && (
+                  <div className="review-count-badge">
+                    총 <span className="font-bold text-blue-600">{totalCount.toLocaleString()}</span>개
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Filters Section */}

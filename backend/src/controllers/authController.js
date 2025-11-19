@@ -356,6 +356,59 @@ export const verifyToken = (req, res) => {
 };
 
 // ==============================
+// 🔄 토큰 갱신 (세션 시간 연장)
+// ==============================
+export const refreshToken = async (req, res) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    if (!authHeader)
+      return res.status(401).json({ message: "인증 토큰이 없습니다." });
+
+    const token = authHeader.split(" ")[1];
+    
+    // 토큰 검증 (만료된 토큰도 허용 - 갱신 목적)
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      // 토큰이 만료된 경우에도 디코딩 시도 (만료 시간만 체크)
+      try {
+        decoded = jwt.decode(token);
+        if (!decoded || !decoded.id || !decoded.login_id) {
+          return res.status(401).json({ message: "유효하지 않은 토큰입니다." });
+        }
+      } catch (decodeErr) {
+        return res.status(401).json({ message: "유효하지 않은 토큰입니다." });
+      }
+    }
+
+    // 사용자 정보 확인
+    const [users] = await db.query("SELECT * FROM tb_user WHERE user_id = ?", [decoded.id]);
+    if (users.length === 0) {
+      return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+    }
+
+    const user = users[0];
+
+    // 새로운 토큰 발급 (2시간 연장)
+    const newToken = jwt.sign(
+      { id: user.user_id, login_id: user.login_id },
+      process.env.JWT_SECRET,
+      { expiresIn: "2h" }
+    );
+
+    res.json({
+      message: "토큰이 갱신되었습니다.",
+      token: newToken,
+      user: { id: user.user_id, login_id: user.login_id, email: user.email },
+    });
+  } catch (err) {
+    console.error("❌ 토큰 갱신 오류:", err);
+    res.status(500).json({ message: "토큰 갱신 중 서버 오류가 발생했습니다." });
+  }
+};
+
+// ==============================
 // 🗑️ 회원탈퇴 (DELETE)
 // ==============================
 export const withdrawUser = async (req, res) => {

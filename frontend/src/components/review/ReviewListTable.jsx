@@ -53,28 +53,6 @@ export default function ReviewListTable({
     );
   };
 
-  const getRatingBadge = (rating) => {
-    const ratingNum = parseFloat(rating) || 0;
-    let badgeClass = "rating-badge";
-    let emoji = "⚪";
-    
-    if (ratingNum >= 4) {
-      badgeClass += " rating-high";
-      emoji = "🟩";
-    } else if (ratingNum <= 2) {
-      badgeClass += " rating-low";
-      emoji = "🟥";
-    } else {
-      badgeClass += " rating-medium";
-    }
-
-    return (
-      <span className={badgeClass}>
-        {emoji} {ratingNum.toFixed(1)}
-      </span>
-    );
-  };
-
   return (
     <div className="review-table-container">
       <table className="review-table">

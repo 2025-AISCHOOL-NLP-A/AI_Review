@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import authService from "../../services/authService";
 import { useUser } from "../../contexts/UserContext";
 import Footer from "../../components/layout/Footer/Footer";
-import { sanitizeInput } from "../../utils/inputSanitizer";
+import { sanitizeInput } from "../../utils/format/inputSanitizer";
 import "./login.css";
 import "../../styles/common.css";
 

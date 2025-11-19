@@ -2,7 +2,7 @@
  * 제품 필터링 유틸리티 함수
  * useProductFilter.js의 필터링 로직을 분리하여 재사용 가능하게 만듦
  */
-import { formatDateToYYYYMMDD, isDateInRange } from "./dateUtils";
+import { formatDateToYYYYMMDD, isDateInRange } from "../format/dateUtils";
 
 /**
  * 제품 검색 필터 적용

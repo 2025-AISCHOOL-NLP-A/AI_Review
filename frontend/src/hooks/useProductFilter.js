@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { applyAllFilters } from "../utils/productFilters";
+import { applyAllFilters } from "../utils/data/productFilters";
 
 /**
  * 제품 필터링 및 페이지네이션 커스텀 훅

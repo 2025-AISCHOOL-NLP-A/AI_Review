@@ -1,8 +1,8 @@
 import React, { useState, useRef } from "react";
 import PreviewModal from "./PreviewModal";
 import FileList from "./FileList";
-import { parseFile } from "../../utils/fileParser";
-import { validateFile } from "../../utils/fileValidation";
+import { parseFile } from "../../utils/file/fileParser";
+import { validateFile } from "../../utils/file/fileValidation";
 import "../../styles/modal.css";
 import "./FileUploadForm.css";
 

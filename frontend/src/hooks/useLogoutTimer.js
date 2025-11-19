@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getToken } from "../utils/storage";
-import { getRemainingTime, formatRemainingTime, isTokenExpired } from "../utils/tokenUtils";
+import { getToken } from "../utils/auth/storage";
+import { getRemainingTime, formatRemainingTime, isTokenExpired } from "../utils/auth/tokenUtils";
 import { useUser } from "../contexts/UserContext";
 
 /**

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
-import { getChartColors } from '../../utils/chartColors';
+import { getChartColors } from '../../utils/format/chartColors';
 import './DailyTrendChart.css';
 
 // hex 색상을 rgba로 변환하는 헬퍼 함수

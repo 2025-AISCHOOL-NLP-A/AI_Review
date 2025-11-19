@@ -75,4 +75,4 @@ export {
   calculatePDFViewport,
   getElementViewportPosition,
   isElementInViewport,
-} from "../utils/viewportUtils";
+} from "../utils/ui/viewportUtils";

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import authService from "../services/authService";
+import { isTokenExpired } from "../utils/auth/tokenUtils";
 
 const UserContext = createContext(null);
 
@@ -7,17 +8,6 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(null);
-
-  // JWT 토큰 만료 시간 체크 함수
-  const isTokenExpired = (token) => {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const exp = payload.exp * 1000; // JWT exp는 초 단위이므로 밀리초로 변환
-      return Date.now() >= exp;
-    } catch (error) {
-      return true; // 토큰 파싱 실패 시 만료된 것으로 간주
-    }
-  };
 
   // 사용자 정보 로드
   useEffect(() => {

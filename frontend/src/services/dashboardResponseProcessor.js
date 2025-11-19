@@ -2,7 +2,7 @@
  * 대시보드 API 응답 처리 유틸리티
  * API 응답 데이터를 컴포넌트에서 사용할 수 있는 형식으로 변환합니다.
  */
-import { parseJSON, ensureArray, ensureObject } from "../utils/dataParsing";
+import { parseJSON, ensureArray, ensureObject } from "../utils/data/dataParsing";
 import {
   transformDailyTrend,
   transformKeywords,

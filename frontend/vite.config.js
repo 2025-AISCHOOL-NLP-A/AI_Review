@@ -29,7 +29,7 @@ const cspPlugin = () => {
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const isProduction = mode === 'production'
-  
+
   return {
     plugins: [
       react(),
@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => {
       // HMR을 WebSocket만 사용하도록 설정 (eval 사용 최소화)
       hmr: {
         protocol: 'ws',
-        host: 'localhost'
+        clientPort: 5173
       }
     },
     build: {

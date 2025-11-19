@@ -1,7 +1,16 @@
 import mysql from "mysql2/promise";
 import dotenv from "dotenv";
 
-dotenv.config();
+// dotenv 로드 (이미 로드되었어도 안전하게 처리)
+if (!process.env.DB_HOST) {
+  dotenv.config();
+}
+
+// 환경 변수 확인
+if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_PASSWORD || !process.env.DB_NAME) {
+  console.error("❌ DB 환경 변수가 설정되지 않았습니다!");
+  console.error("필요한 변수: DB_HOST, DB_USER, DB_PASSWORD, DB_NAME");
+}
 
 const db = mysql.createPool({
   host: process.env.DB_HOST,
@@ -15,8 +24,8 @@ const db = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   // 타임아웃 설정
-  acquireTimeout: 60000, // 60초
-  timeout: 60000, // 60초
+  acquireTimeout: 60000, // Pool에서 연결을 가져올 때 타임아웃 (60초)
+  connectTimeout: 60000, // Connection 생성 시 타임아웃 (60초)
   // 재연결 설정
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,

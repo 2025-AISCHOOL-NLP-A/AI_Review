@@ -42,12 +42,29 @@ export async function analyzeProductReviews(product_id, domain = null) {
       url += `?domain=${domain}`;
     }
     
-    const res = await axios.post(url);
+    console.log(`📡 Python 서버 호출: ${url}`);
+    
+    // 타임아웃 설정 (30분 - 대용량 리뷰 처리 + 전체 파이프라인 고려)
+    // 전체 파이프라인: 리뷰 분석(배치) + DB 저장 + 인사이트 생성(OpenAI) + 워드클라우드 생성
+    const res = await axios.post(url, {}, {
+      timeout: 1800000, // 30분 (리뷰 5000개 이상 + 전체 파이프라인 처리 시간 확보)
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log(`✅ Python 서버 응답 성공:`, res.data);
     return res.data;
   } catch (err) {
     console.error("❌ 제품 리뷰 분석 파이프라인 호출 실패:", err.message);
     if (err.response) {
+      console.error("응답 상태:", err.response.status);
       console.error("응답 데이터:", err.response.data);
+    } else if (err.request) {
+      console.error("요청은 전송되었지만 응답을 받지 못했습니다.");
+      console.error("Python 서버가 실행 중인지 확인하세요:", PYTHON_API);
+    } else {
+      console.error("요청 설정 중 오류:", err.message);
     }
     throw err;
   }

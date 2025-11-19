@@ -247,11 +247,12 @@ function Sidebar() {
         {/* 리뷰 관리 */}
         <a
           href="#"
-          className="sidebar-nav-item"
+          className={`sidebar-nav-item ${isActive("/reviews") ? "active" : ""}`}
           data-label="리뷰 관리"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
+            navigate("/reviews");
           }}
           onMouseDown={(e) => {
             e.stopPropagation();

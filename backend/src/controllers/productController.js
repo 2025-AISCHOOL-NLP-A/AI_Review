@@ -2,7 +2,7 @@ import db from "../models/db.js";
 import { getProductDashboardData as getProductDashboard } from "./dashboardController.js";
 import { analyzeReviews } from "./reviewController.js"; // ✅ 실제 리뷰 분석 함수 import
 import { analyzeProductReviews } from "../services/absaService.js"; // Python 서버 직접 호출
-import dotenv from "dotenv";
+// dotenv는 app.js에서 이미 로드됨
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -10,8 +10,6 @@ import multer from "multer";
 import XLSX from "xlsx";
 import csv from "csv-parser";
 import { Readable } from "stream";
-
-dotenv.config();
 
 // ES 모듈에서 __dirname 사용을 위한 설정
 const __filename = fileURLToPath(import.meta.url);
@@ -87,6 +85,24 @@ export const productList = async (req, res) => {
 // ==============================
 // export const dashboard = (req, res) => getProductDashboard(req, res);
 
+// DB 쿼리 재시도 헬퍼 함수
+const executeQueryWithRetry = async (queryFn, maxRetries = 3) => {
+  let retryCount = 0;
+  while (retryCount < maxRetries) {
+    try {
+      return await queryFn();
+    } catch (queryErr) {
+      retryCount++;
+      if ((queryErr.code === 'ECONNRESET' || queryErr.code === 'PROTOCOL_CONNECTION_LOST') && retryCount < maxRetries) {
+        console.log(`🔄 DB 연결 오류 발생. 재시도 ${retryCount}/${maxRetries}...`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // 지수 백오프
+        continue;
+      }
+      throw queryErr; // 다른 에러이거나 재시도 횟수 초과 시 throw
+    }
+  }
+};
+
 export const dashboard = async (req, res) => {
   try {
     const { id: productId } = req.params;
@@ -95,23 +111,38 @@ export const dashboard = async (req, res) => {
       return res.status(400).json({ message: "제품 ID가 필요합니다." });
     }
 
-    // 1. 대시보드 테이블 전체 조회
-    const [[dashboardData]] = await db.query(
-      `SELECT 
-        product_id,
-        total_reviews,
-        sentiment_distribution,
-        product_score,
-        date_sentimental,
-        keyword_summary,
-        heatmap,
-        wordcloud_path,
-        insight_id,
-        updated_at
-      FROM tb_productDashboard
-      WHERE product_id = ?`,
-      [productId]
-    );
+    // 1. 대시보드 테이블 전체 조회 (재시도 로직 포함)
+    let dashboardData;
+    try {
+      const result = await executeQueryWithRetry(async () => {
+        const [[data]] = await db.query(
+          `SELECT 
+            product_id,
+            total_reviews,
+            sentiment_distribution,
+            product_score,
+            date_sentimental,
+            keyword_summary,
+            heatmap,
+            wordcloud_path,
+            insight_id,
+            updated_at
+          FROM tb_productDashboard
+          WHERE product_id = ?`,
+          [productId]
+        );
+        return data;
+      });
+      dashboardData = result;
+    } catch (queryErr) {
+      if (queryErr.code === 'ECONNRESET' || queryErr.code === 'PROTOCOL_CONNECTION_LOST') {
+        return res.status(503).json({ 
+          message: "데이터베이스 연결에 문제가 발생했습니다. 잠시 후 다시 시도해주세요." 
+        });
+      }
+      throw queryErr;
+    }
+    
     if (!dashboardData) {
       return res.status(404).json({ message: "대시보드 데이터를 찾을 수 없습니다." });
     }
@@ -137,52 +168,80 @@ export const dashboard = async (req, res) => {
       }
     }
 
-    // 3. 인사이트 조회
+    // 3. 인사이트 조회 (재시도 로직 포함)
     let insight = null;
     if (dashboardData.insight_id) {
-      const [[insightData]] = await db.query(
-        `SELECT 
-          insight_id,
-          product_id,
-          user_id,
-          pos_top_keywords,
-          neg_top_keywords,
-          insight_summary,
-          improvement_suggestion,
-          created_at,
-          content
-        FROM tb_productInsight
-        WHERE insight_id = ?`,
-        [dashboardData.insight_id]
-      );
-      insight = insightData || null;
+      try {
+        const result = await executeQueryWithRetry(async () => {
+          const [[data]] = await db.query(
+            `SELECT 
+              insight_id,
+              product_id,
+              user_id,
+              pos_top_keywords,
+              neg_top_keywords,
+              insight_summary,
+              improvement_suggestion,
+              created_at,
+              content
+            FROM tb_productInsight
+            WHERE insight_id = ?`,
+            [dashboardData.insight_id]
+          );
+          return data;
+        });
+        insight = result || null;
+      } catch (queryErr) {
+        console.error("⚠️ 인사이트 조회 실패 (계속 진행):", queryErr.message);
+        insight = null; // 인사이트 조회 실패해도 계속 진행
+      }
     }
 
-    // 4. 최신 리뷰 10개 조회
-    const [recentReviews] = await db.query(
-      `SELECT 
-        review_id,
-        product_id,
-        review_text,
-        rating,
-        review_date,
-        source
-      FROM tb_review
-      WHERE product_id = ?
-      ORDER BY review_date DESC
-      LIMIT 10`,
-      [productId]
-    );
+    // 4. 최신 리뷰 10개 조회 (재시도 로직 포함)
+    let recentReviews = [];
+    try {
+      const result = await executeQueryWithRetry(async () => {
+        const [data] = await db.query(
+          `SELECT 
+            review_id,
+            product_id,
+            review_text,
+            rating,
+            review_date,
+            source
+          FROM tb_review
+          WHERE product_id = ?
+          ORDER BY review_date DESC
+          LIMIT 10`,
+          [productId]
+        );
+        return data;
+      });
+      recentReviews = result || [];
+    } catch (queryErr) {
+      console.error("⚠️ 최신 리뷰 조회 실패 (계속 진행):", queryErr.message);
+      recentReviews = []; // 리뷰 조회 실패해도 계속 진행
+    }
 
-    //5. 상품 이름 조회
-    const [[productInfo]] = await db.query(
-      `SELECT 
-        product_name
-      FROM tb_product
-      WHERE product_id = ?
-      LIMIT 1`,
-      [productId]
-    );
+    //5. 상품 이름 조회 (재시도 로직 포함)
+    let productInfo = null;
+    try {
+      const result = await executeQueryWithRetry(async () => {
+        const [[data]] = await db.query(
+          `SELECT 
+            product_name
+          FROM tb_product
+          WHERE product_id = ?
+          LIMIT 1`,
+          [productId]
+        );
+        return data;
+      });
+      productInfo = result;
+    } catch (queryErr) {
+      console.error("⚠️ 제품 정보 조회 실패 (계속 진행):", queryErr.message);
+      productInfo = null; // 제품 정보 조회 실패해도 계속 진행
+    }
     // 5. 응답 데이터 구성
     res.json({
       message: "대시보드 조회 성공",
@@ -204,7 +263,18 @@ export const dashboard = async (req, res) => {
 
   } catch (err) {
     console.error("❌ 대시보드 조회 오류:", err);
-    res.status(500).json({ message: "대시보드 조회 중 서버 오류가 발생했습니다." });
+    
+    // DB 연결 관련 에러인 경우
+    if (err.code === 'ECONNRESET' || err.code === 'PROTOCOL_CONNECTION_LOST') {
+      return res.status(503).json({ 
+        message: "데이터베이스 연결에 문제가 발생했습니다. 잠시 후 다시 시도해주세요." 
+      });
+    }
+    
+    res.status(500).json({ 
+      message: "대시보드 조회 중 서버 오류가 발생했습니다.",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
 
@@ -709,9 +779,18 @@ export const uploadReviews = async (req, res) => {
       }
     }
     
-    // 리뷰 업로드 후 리뷰 분석 자동 실행
+    // 리뷰 업로드 후 리뷰 분석 자동 실행 (비동기, 에러가 발생해도 업로드는 성공)
+    let analysisError = null;
     if (totalInserted > 0) {
-      await performAnalysis(productId);
+      try {
+        console.log(`🔄 리뷰 ${totalInserted}개 추가됨. 자동 분석 시작...`);
+        await performAnalysis(productId);
+        console.log(`✅ 자동 분석 완료`);
+      } catch (analysisErr) {
+        analysisError = analysisErr;
+        console.error(`⚠️ 자동 분석 실패 (리뷰 업로드는 성공):`, analysisErr);
+        // 분석 실패해도 업로드는 성공으로 처리
+      }
     }
 
     res.json({
@@ -722,7 +801,11 @@ export const uploadReviews = async (req, res) => {
         totalDuplicated,
         totalProcessed: totalInserted + totalSkipped + totalDuplicated
       },
-      errors: errors.length > 0 ? errors : undefined
+      errors: errors.length > 0 ? errors : undefined,
+      analysisStatus: totalInserted > 0 
+        ? (analysisError ? "failed" : "completed")
+        : "skipped",
+      analysisError: analysisError ? analysisError.message : undefined
     });
     
   } catch (err) {

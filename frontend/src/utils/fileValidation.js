@@ -2,8 +2,8 @@
  * 파일 업로드 보안 검증 유틸리티
  */
 
-// 파일 크기 제한 (500MB)
-export const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+// 파일 크기 제한 (10MB)
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 // 최대 파일 개수
 export const MAX_FILES = 5;

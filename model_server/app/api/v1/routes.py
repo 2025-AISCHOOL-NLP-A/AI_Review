@@ -44,7 +44,15 @@ def health():
 def analyze_batch(req: AnalyzeBatchRequest, domain: str = "steam"):
     try:
         pipeline = DOMAIN_PIPELINES.get(domain, steam)
-        results = [pipeline.analyze_review(t) for t in req.texts]
+        
+        # 배치 함수가 있으면 사용, 없으면 순차 처리
+        if hasattr(pipeline, 'analyze_reviews'):
+            print(f"⚡ 배치 처리 모드 사용 (도메인: {domain})")
+            results = pipeline.analyze_reviews(req.texts, debug=False, batch_size=16)
+        else:
+            print(f"⚡ 순차 처리 모드 사용 (도메인: {domain})")
+            results = [pipeline.analyze_review(t) for t in req.texts]
+        
         return {"items": results, "count": len(results)}
     except Exception as e:
         import traceback
@@ -110,27 +118,96 @@ def analyze_product_reviews(product_id: int, domain: Optional[str] = None):
         # 3️⃣ 리뷰 분석 수행
         print(f"🧠 {domain} 도메인 모델로 분석 시작...")
         analysis_results = []
-        for review in reviews:
-            review_id = review["review_id"]
-            review_text = review["review_text"]
-            result = pipeline.analyze_review(review_text)
-            analysis_results.append({
-                "review_id": review_id,
-                "result": result
-            })
+        
+        # 배치 함수가 있으면 사용, 없으면 순차 처리
+        if hasattr(pipeline, 'analyze_reviews'):
+            batch_size = 8
+            print(f"⚡ 배치 처리 모드 사용 (배치 크기: {batch_size})")
+            # 리뷰 텍스트만 추출
+            review_texts = [r["review_text"] for r in reviews]
+            # 배치 분석 수행
+            batch_results = pipeline.analyze_reviews(review_texts, debug=False, batch_size=batch_size)
+            # 결과 매핑
+            for review, result in zip(reviews, batch_results):
+                analysis_results.append({
+                    "review_id": review["review_id"],
+                    "result": result
+                })
+        else:
+            print(f"⚡ 순차 처리 모드 사용")
+            for review in reviews:
+                review_id = review["review_id"]
+                review_text = review["review_text"]
+                result = pipeline.analyze_review(review_text)
+                analysis_results.append({
+                    "review_id": review_id,
+                    "result": result
+                })
         
         print(f"✅ 분석 완료: {len(analysis_results)}개 리뷰")
         
-        # 4️⃣ 키워드 매핑 테이블 조회
-        cursor.execute(
-            """
-            SELECT keyword_id, keyword_text 
-            FROM tb_keyword 
-            WHERE category_id = %s
-            """,
-            (category_id,)
-        )
-        keywords = cursor.fetchall()
+        # 3-1️⃣ 분석 후 DB 연결 상태 확인 및 재연결 (분석이 오래 걸려 연결이 끊어질 수 있음)
+        try:
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+            print("✅ DB 연결 상태 정상")
+        except Exception as conn_check_err:
+            print(f"⚠️ DB 연결 끊어짐 감지, 재연결 시도... ({conn_check_err})")
+            try:
+                cursor.close()
+            except:
+                pass
+            try:
+                conn.close()
+            except:
+                pass
+            # 새로운 연결 가져오기
+            conn = get_connection()
+            cursor = conn.cursor()
+            # 제품 정보 다시 조회 (필요한 변수들)
+            cursor.execute(
+                """
+                SELECT p.product_id, p.category_id, p.user_id, c.category_name
+                FROM tb_product p
+                LEFT JOIN tb_productCategory c ON p.category_id = c.category_id
+                WHERE p.product_id = %s
+                """,
+                (product_id,)
+            )
+            product_info = cursor.fetchone()
+            category_id = product_info["category_id"]
+            user_id = product_info["user_id"]
+            print("✅ DB 재연결 완료")
+        
+        # 4️⃣ 키워드 매핑 테이블 조회 (재시도 로직 포함)
+        max_retries = 3
+        keywords = None
+        for retry in range(max_retries):
+            try:
+                cursor.execute(
+                    """
+                    SELECT keyword_id, keyword_text 
+                    FROM tb_keyword 
+                    WHERE category_id = %s
+                    """,
+                    (category_id,)
+                )
+                keywords = cursor.fetchall()
+                break
+            except Exception as kw_err:
+                if retry < max_retries - 1:
+                    print(f"⚠️ 키워드 조회 실패 (재시도 {retry + 1}/{max_retries}): {kw_err}")
+                    # 재연결 시도
+                    try:
+                        cursor.close()
+                        conn.close()
+                    except:
+                        pass
+                    conn = get_connection()
+                    cursor = conn.cursor()
+                else:
+                    raise
+        
         keyword_map = {kw["keyword_text"]: kw["keyword_id"] for kw in keywords}
         
         print(f"🔑 키워드 {len(keyword_map)}개 매핑 완료")

@@ -56,9 +56,9 @@ const SplitBarChart = ({ data, loading }) => {
         ) {
           const ctx = chartRef.current.getContext("2d");
           if (ctx) {
-            const labels = data.map((d) => d.label);
-            const negData = data.map((d) => -d.negRatio);
-            const posData = data.map((d) => d.posRatio);
+            const labels = data.map((d) => d.keyword);
+            const negativeCounts = data.map((d) => d.negative_count);
+            const positiveCounts = data.map((d) => d.positive_count);
 
             chartInstance.current = new Chart(ctx, {
               type: "bar",
@@ -66,16 +66,18 @@ const SplitBarChart = ({ data, loading }) => {
                 labels: labels,
                 datasets: [
                   {
-                    label: "부정 비율 (왼쪽)",
-                    data: negData,
+                    label: "부정",
+                    data: negativeCounts,
                     backgroundColor: negativeColor,
                     barPercentage: 0.7,
+                    stack: "sentiment",
                   },
                   {
-                    label: "긍정 비율 (오른쪽)",
-                    data: posData,
+                    label: "긍정",
+                    data: positiveCounts,
                     backgroundColor: primaryColor,
                     barPercentage: 0.7,
+                    stack: "sentiment",
                   },
                 ],
               },
@@ -92,12 +94,21 @@ const SplitBarChart = ({ data, loading }) => {
                   tooltip: {
                     callbacks: {
                       label: function (context) {
-                        const rawValue = Math.abs(context.raw);
-                        const count =
-                          context.datasetIndex === 0
-                            ? data[context.dataIndex].negCount
-                            : data[context.dataIndex].posCount;
-                        return `${context.dataset.label}: ${rawValue}% (${count}개)`;
+                        const entry = data[context.dataIndex];
+                        const isNegative = context.datasetIndex === 0;
+                        const count = isNegative
+                          ? entry.negative_count
+                          : entry.positive_count;
+                        const ratio = isNegative
+                          ? entry.negative_ratio
+                          : entry.positive_ratio;
+                        const percentage = Math.round(ratio * 100);
+                        return `${context.dataset.label}: ${count}개 (${percentage}%)`;
+                      },
+                      footer: function (tooltipItems) {
+                        if (!tooltipItems.length) return "";
+                        const entry = data[tooltipItems[0].dataIndex];
+                        return `전체 언급량: ${entry.total_mentions}개`;
                       },
                     },
                   },
@@ -105,21 +116,17 @@ const SplitBarChart = ({ data, loading }) => {
                 scales: {
                   x: {
                     stacked: true,
-                    min: -100,
-                    max: 100,
+                    beginAtZero: true,
                     ticks: {
+                      precision: 0,
                       callback: function (value) {
-                        return Math.abs(value) + "%";
+                        return Number(value).toLocaleString();
                       },
                       color: fontColor,
                     },
                     title: {
                       display: true,
-                      text: "감정 비율",
-                    },
-                    grid: {
-                      color: (context) =>
-                        context.tick.value === 0 ? "#000" : "#E5E7EB",
+                      text: "언급량",
                     },
                   },
                   y: {

@@ -229,6 +229,7 @@ const dashboardService = {
         headers: {
           "Content-Type": "multipart/form-data",
         },
+        timeout: 1800000, // 30분 (파일 업로드 + 자동 분석 처리 시간 확보)
       });
 
       return { success: true, data: res.data };

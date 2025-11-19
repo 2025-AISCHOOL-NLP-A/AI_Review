@@ -68,9 +68,9 @@ export const parseExcel = (file) => {
     const reader = new FileReader();
     
     // 파일 크기 제한 (추가 안전장치)
-    const MAX_SIZE = 500 * 1024 * 1024; // 500MB
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
     if (file.size > MAX_SIZE) {
-      reject(new Error("파일 크기가 너무 큽니다. (최대 500MB)"));
+      reject(new Error("파일 크기가 너무 큽니다. (최대 10MB)"));
       return;
     }
 

@@ -14,6 +14,7 @@ import Memberupdate from "./pages/user/Memberupdate";
 import Memberdrop from "./pages/user/Memberdrop";
 import PricingSystem from "./pages/dashboard/PricingSystem";
 import Workplace from "./pages/dashboard/Workplace";
+import ReviewManagement from "./pages/review/ReviewManagement";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import { UserProvider } from "./contexts/UserContext";
 import "./App.css";
@@ -74,6 +75,16 @@ function App() {
           element={
             <ProtectedRoute>
               <Workplace />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 리뷰 관리 페이지 */}
+        <Route
+          path="/reviews"
+          element={
+            <ProtectedRoute>
+              <ReviewManagement />
             </ProtectedRoute>
           }
         />

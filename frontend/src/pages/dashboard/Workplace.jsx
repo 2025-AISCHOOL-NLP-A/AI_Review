@@ -144,25 +144,64 @@ function Workplace() {
 
   // 외부 클릭 시 메뉴 닫기
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const mouseDownRef = { current: null };
+
+    const handleMouseDown = (e) => {
       if (openMenuIndex !== null) {
         const menuElement = menuRefs.current[openMenuIndex];
         const dropdownElement = dropdownRef.current;
         if (menuElement && dropdownElement) {
-          // 메뉴 버튼이나 드롭다운 내부가 아니면 닫기
+          // 메뉴 버튼이나 드롭다운 내부가 아닌 경우 mousedown 위치 저장
           if (!menuElement.contains(e.target) && !dropdownElement.contains(e.target)) {
-            setOpenMenuIndex(null);
+            mouseDownRef.current = { target: e.target, time: Date.now() };
+          } else {
+            mouseDownRef.current = null;
           }
         }
       }
     };
 
+    const handleMouseUp = (e) => {
+      if (openMenuIndex !== null) {
+        // 텍스트 선택이 완료되었는지 확인
+        const selection = window.getSelection();
+        const hasSelection = selection && selection.toString().length > 0;
+        
+        // 텍스트가 선택된 경우 메뉴를 닫지 않음
+        if (hasSelection) {
+          mouseDownRef.current = null;
+          return;
+        }
+
+        const menuElement = menuRefs.current[openMenuIndex];
+        const dropdownElement = dropdownRef.current;
+        if (menuElement && dropdownElement) {
+          // 메뉴 외부에서 mousedown이 시작되고 mouseup이 발생한 경우에만 메뉴 닫기
+          if (
+            mouseDownRef.current &&
+            !menuElement.contains(e.target) &&
+            !dropdownElement.contains(e.target)
+          ) {
+            // 클릭 시간이 짧은 경우에만 메뉴 닫기 (드래그와 구분)
+            const clickDuration = Date.now() - mouseDownRef.current.time;
+            if (clickDuration < 300) {
+              setOpenMenuIndex(null);
+            }
+          }
+        }
+      }
+
+      mouseDownRef.current = null;
+    };
+
     if (openMenuIndex !== null) {
-      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("mousedown", handleMouseDown);
+      document.addEventListener("mouseup", handleMouseUp);
     }
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [openMenuIndex]);
 

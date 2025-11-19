@@ -26,6 +26,10 @@ def init_db_pool():
         charset="utf8mb4",
         autocommit=True,
         cursorclass=pymysql.cursors.DictCursor,
+        # 타임아웃 설정 (대량 리뷰 분석 시 긴 처리 시간 고려)
+        connect_timeout=60,     # 연결 타임아웃 (60초)
+        read_timeout=3600,      # 읽기 타임아웃 (60분 - 대량 리뷰 분석 고려)
+        write_timeout=3600,     # 쓰기 타임아웃 (60분 - 대량 리뷰 분석 고려)
     )
     print("✅ DB Connection Pool 초기화 완료")
 

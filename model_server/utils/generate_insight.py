@@ -1,3 +1,6 @@
+# test 함수 실행 시 주석 해제하고 실행해야 오류가 없음
+# import sys
+# sys.path.append('..') 
 import os
 import json
 from datetime import datetime
@@ -143,12 +146,15 @@ def generate_insight_with_llm(prompt: str) -> dict:
             raise ValueError("OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.")
         
         # LLM 초기화
-        llm = ChatOpenAI(
-            # model="gpt-4o-mini",
-            model="gpt-5-mini",
-            temperature=0,
-            max_tokens=20000
-        )
+        # llm = ChatOpenAI(
+        #     model="gpt-4o-mini",
+        #     temperature=0,
+        #     max_tokens=10000
+        # )
+        llm = ChatOpenAI(model = 'gpt-5-mini',
+                max_tokens = 20000,
+                reasoning_effort = "high",  # "minimal" | "low" | "medium" | "high"
+                )
         
         # 메시지 구성
         messages = [
@@ -346,8 +352,8 @@ if __name__ == "__main__":
     from utils.db_connect import init_db_pool, close_db_pool
     
     # 테스트용
-    product_id = 1014
-    user_id = 10001
+    product_id = 1064
+    user_id = 10012
     
     try:
         # DB Pool 초기화

@@ -38,16 +38,41 @@ export const transformKeywords = (keywordSummary = []) => {
   }
 
   return keywordSummary.map((kw) => {
+    // positive_count와 negative_count가 직접 제공되면 사용
+    const directPosCount = kw.positive_count || kw.positiveCount;
+    const directNegCount = kw.negative_count || kw.negativeCount;
+    
+    // 비율 데이터
     const posRatio = kw.positive_ratio || kw.positive || 0;
     const negRatio = kw.negative_ratio || kw.negative || 0;
     const total = kw.total_count || kw.count || 0;
     
-    // 비율이 0-1 사이인지 0-100 사이인지 확인하여 정규화
-    const normalizedPosRatio = typeof posRatio === "number" && posRatio <= 1 ? posRatio * 100 : posRatio;
-    const normalizedNegRatio = typeof negRatio === "number" && negRatio <= 1 ? negRatio * 100 : negRatio;
+    // 카운트 계산: 직접 제공된 값이 있으면 사용, 없으면 total과 비율로 계산
+    let posCount = 0;
+    let negCount = 0;
     
-    const posCount = Math.round(total * (normalizedPosRatio / 100));
-    const negCount = Math.round(total * (normalizedNegRatio / 100));
+    if (directPosCount !== undefined && directPosCount !== null) {
+      posCount = Number(directPosCount);
+    } else if (total > 0) {
+      // 비율이 0-1 사이인지 0-100 사이인지 확인하여 정규화
+      const normalizedPosRatio = typeof posRatio === "number" && posRatio <= 1 ? posRatio * 100 : posRatio;
+      posCount = Math.round(total * (normalizedPosRatio / 100));
+    }
+    
+    if (directNegCount !== undefined && directNegCount !== null) {
+      negCount = Number(directNegCount);
+    } else if (total > 0) {
+      // 비율이 0-1 사이인지 0-100 사이인지 확인하여 정규화
+      const normalizedNegRatio = typeof negRatio === "number" && negRatio <= 1 ? negRatio * 100 : negRatio;
+      negCount = Math.round(total * (normalizedNegRatio / 100));
+    }
+    
+    // 비율 정규화 (0-100 사이로)
+    const normalizedPosRatio = typeof posRatio === "number" && posRatio <= 1 ? posRatio * 100 : (posRatio || 0);
+    const normalizedNegRatio = typeof negRatio === "number" && negRatio <= 1 ? negRatio * 100 : (negRatio || 0);
+    
+    // total_mentions 계산
+    const totalMentions = posCount + negCount || total;
 
     return {
       keyword_id: kw.keyword_id || null,
@@ -60,6 +85,8 @@ export const transformKeywords = (keywordSummary = []) => {
       negative_ratio: normalizedNegRatio,
       positiveRatio: normalizedPosRatio,
       negativeRatio: normalizedNegRatio,
+      total_count: totalMentions,
+      count: totalMentions,
     };
   });
 };

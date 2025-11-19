@@ -38,6 +38,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - EMAIL_USER=${EMAIL_USER}
       - EMAIL_PASS=${EMAIL_PASS}
+      - CORS_ORIGIN=${CORS_ORIGIN} 
       - PYTHON_API_URL=http://model-server:8000
       - PYTHON_ABSA_URL=http://model-server:8000
     volumes:

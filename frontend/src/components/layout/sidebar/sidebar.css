@@ -195,6 +195,79 @@
   border-top: 1px solid var(--border-color);
 }
 
+/* 로그아웃 남은 시간 표시 */
+.sidebar-timer {
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+.sidebar-timer-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.sidebar-timer-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--main-color);
+  font-family: "Courier New", monospace;
+  letter-spacing: 0.05em;
+}
+
+.sidebar-timer-value.expired {
+  color: #dc2626;
+}
+
+.sidebar-timer-icon-only {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--main-color);
+  cursor: default;
+}
+
+.sidebar-timer-icon-only svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.sidebar-extend-button {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: var(--main-color);
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: "Inter", "Noto Sans KR", sans-serif;
+}
+
+.sidebar-extend-button:hover:not(:disabled) {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-extend-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.sidebar-extend-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .sidebar-user {
   display: flex;
   align-items: center;

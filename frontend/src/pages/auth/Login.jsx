@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import authService from "../../services/authService";
 import { useUser } from "../../contexts/UserContext";
 import Footer from "../../components/layout/Footer/Footer";
@@ -9,6 +9,7 @@ import "../../styles/common.css";
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, loading: userLoading, refreshUser } = useUser();
   const [formData, setFormData] = useState({
     login_id: "",
@@ -19,6 +20,15 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const errorRef = useRef("");
+
+  // 세션 만료로 리다이렉트된 경우 알림 표시
+  useEffect(() => {
+    if (location.state?.expired) {
+      setError("세션이 만료되어 자동으로 로그아웃되었습니다. 다시 로그인해주세요.");
+      // state를 제거하여 새로고침 시 메시지가 다시 표시되지 않도록 함
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
   useEffect(() => {
     errorRef.current = error;

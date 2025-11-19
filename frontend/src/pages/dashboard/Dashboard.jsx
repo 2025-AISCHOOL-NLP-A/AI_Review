@@ -1,8 +1,7 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import React, { useRef, useState, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
 import Footer from "../../components/layout/Footer/Footer";
-import dashboardService from "../../services/dashboardService";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import KPICards from "../../components/dashboard/KPICards";
 import DashboardCharts from "../../components/dashboard/DashboardCharts";
@@ -190,11 +189,12 @@ function Dashboard() {
 
       {/* Main Content */}
       <div className="dashboard-wrapper">
-        <div
-          id="dashboard-content"
-          ref={dashboardContentRef}
-          className="dashboard-content"
-        >
+        <div className="dashboard-inner mx-auto max-w-[1400px] px-6">
+          <div
+            id="dashboard-content"
+            ref={dashboardContentRef}
+            className="dashboard-content"
+          >
           {/* Header & Filter Section */}
           <DashboardHeader
             loading={loading}
@@ -229,7 +229,7 @@ function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" id="wordcloud-review-section">
             <div className="card">
               <h2 className="text-xl font-semibold mb-4">
-                🌈 감정 워드클라우드
+                리뷰 원문 기반 주요 언급 키워드
               </h2>
               <WordCloudSection
                 loading={loading}
@@ -238,7 +238,29 @@ function Dashboard() {
             </div>
 
             <div className="card">
-              <h2 className="text-xl font-semibold mb-4">💬 리뷰 원문 샘플</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">💬 리뷰 원문 샘플</h2>
+                <button
+                  onClick={() => navigate(`/reviews?productId=${productId}`)}
+                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-full flex items-center gap-2 transition-colors duration-200 shadow-sm hover:shadow-md"
+                >
+                  리뷰 관리 페이지로 이동
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
+              </div>
               <div className="review-table-container">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead>
@@ -294,6 +316,7 @@ function Dashboard() {
 
           {/* ===================== FOOTER ===================== */}
           <Footer />
+          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
 import Footer from "../../components/layout/Footer/Footer";
 import ReviewFilterBar from "../../components/review/ReviewFilterBar";
@@ -16,14 +16,14 @@ import "../../components/layout/sidebar/sidebar.css";
 import "./review-management.css";
 
 function ReviewManagement() {
-  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [selectedReviews, setSelectedReviews] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProductFilter, setSelectedProductFilter] = useState("");
-  const [selectedRatingFilter, setSelectedRatingFilter] = useState("");
   const [selectedSentimentFilter, setSelectedSentimentFilter] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [isDateFilterInitialized, setIsDateFilterInitialized] = useState(false);
   const [loading, setLoading] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [products, setProducts] = useState([]);
@@ -39,6 +39,14 @@ function ReviewManagement() {
   // 사이드바 상태 관리
   const sidebarOpen = useSidebar();
 
+  // URL 쿼리 파라미터에서 productId 읽어서 제품 필터 설정
+  useEffect(() => {
+    const productIdFromUrl = searchParams.get("productId");
+    if (productIdFromUrl) {
+      setSelectedProductFilter(productIdFromUrl);
+    }
+  }, [searchParams]);
+
   // 날짜 변경 핸들러
   const handleStartDateChange = (e) => {
     const newStartDate = e.target.value;
@@ -46,6 +54,7 @@ function ReviewManagement() {
       return;
     }
     setStartDate(newStartDate);
+    setIsDateFilterInitialized(true); // 사용자가 수동으로 변경했음을 표시
     setCurrentPage(1);
   };
 
@@ -55,6 +64,7 @@ function ReviewManagement() {
       return;
     }
     setEndDate(newEndDate);
+    setIsDateFilterInitialized(true); // 사용자가 수동으로 변경했음을 표시
     setCurrentPage(1);
   };
 
@@ -85,6 +95,88 @@ function ReviewManagement() {
     fetchProducts();
   }, []);
 
+  // 검색이나 필터가 변경될 때 날짜 범위를 다시 계산하기 위해 초기화 플래그 리셋
+  useEffect(() => {
+    // 검색이나 필터가 변경되면 날짜 범위를 다시 계산할 수 있도록 플래그 리셋
+    setIsDateFilterInitialized(false);
+  }, [selectedProductFilter, selectedSentimentFilter, searchQuery]);
+
+  // 전체 리뷰의 날짜 범위 계산 (날짜 필터 제외)
+  useEffect(() => {
+    if (isDateFilterInitialized) return; // 이미 초기화되었으면 실행하지 않음
+
+    const fetchDateRange = async () => {
+      try {
+        // 날짜 필터를 제외한 필터 조건으로 전체 리뷰의 날짜 범위 계산
+        const filters = {
+          ...(selectedProductFilter && { product_id: parseInt(selectedProductFilter) }),
+          ...(selectedSentimentFilter && { sentiment: selectedSentimentFilter }),
+          ...(searchQuery.trim() && { search: searchQuery.trim() }),
+          // 날짜 필터는 제외
+        };
+
+        // 최소 날짜와 최대 날짜를 각각 가져오기 위해 두 번의 요청
+        // 1. 오름차순 정렬로 첫 번째 리뷰 (최소 날짜)
+        const minResult = await reviewService.getReviews(
+          filters,
+          1,
+          1, // 첫 번째 리뷰만 필요
+          "review_date",
+          "asc",
+          null
+        );
+
+        // 2. 내림차순 정렬로 첫 번째 리뷰 (최대 날짜)
+        const maxResult = await reviewService.getReviews(
+          filters,
+          1,
+          1, // 첫 번째 리뷰만 필요
+          "review_date",
+          "desc",
+          null
+        );
+
+        // 날짜를 YYYY-MM-DD 형식으로 변환
+        const formatDate = (date) => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+          return `${year}-${month}-${day}`;
+        };
+
+        if (minResult.success && minResult.data && minResult.data.length > 0) {
+          const minReview = minResult.data[0];
+          if (minReview.review_date) {
+            const minDate = new Date(minReview.review_date);
+            if (!isNaN(minDate.getTime())) {
+              setStartDate(formatDate(minDate));
+            }
+          }
+        }
+
+        if (maxResult.success && maxResult.data && maxResult.data.length > 0) {
+          const maxReview = maxResult.data[0];
+          if (maxReview.review_date) {
+            const maxDate = new Date(maxReview.review_date);
+            if (!isNaN(maxDate.getTime())) {
+              setEndDate(formatDate(maxDate));
+              setIsDateFilterInitialized(true);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("날짜 범위 계산 중 오류:", error);
+      }
+    };
+
+    fetchDateRange();
+  }, [
+    selectedProductFilter,
+    selectedSentimentFilter,
+    searchQuery,
+    isDateFilterInitialized,
+  ]);
+
   // 리뷰 목록 로드
   useEffect(() => {
     // 이전 요청 취소
@@ -101,7 +193,6 @@ function ReviewManagement() {
       try {
         const filters = {
           ...(selectedProductFilter && { product_id: parseInt(selectedProductFilter) }),
-          ...(selectedRatingFilter && { rating: parseInt(selectedRatingFilter) }),
           ...(selectedSentimentFilter && { sentiment: selectedSentimentFilter }),
           ...(searchQuery.trim() && { search: searchQuery.trim() }),
           ...(startDate && { start_date: startDate }),
@@ -118,7 +209,8 @@ function ReviewManagement() {
         );
 
         if (result.success) {
-          setReviews(result.data || []);
+          const reviewsData = result.data || [];
+          setReviews(reviewsData);
           setTotalPages(result.pagination?.totalPages || 1);
           setTotalCount(result.total || 0);
         } else {
@@ -151,7 +243,6 @@ function ReviewManagement() {
   }, [
     currentPage,
     selectedProductFilter,
-    selectedRatingFilter,
     selectedSentimentFilter,
     searchQuery,
     startDate,
@@ -164,7 +255,8 @@ function ReviewManagement() {
   // 체크박스 전체 선택/해제
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedReviews(reviews.map((review) => review.review_id));
+      // 백엔드에서 보내는 review_id 필드 사용
+      setSelectedReviews(reviews.map((review) => review.review_id).filter((id) => id != null));
     } else {
       setSelectedReviews([]);
     }
@@ -189,14 +281,6 @@ function ReviewManagement() {
   const handleSearch = (e) => {
     if (e.key === "Enter") {
       setCurrentPage(1);
-    }
-  };
-
-  // 리뷰 클릭 처리 (상세보기 등)
-  const handleReviewClick = (review) => {
-    // 리뷰 클릭 시 제품 대시보드로 이동
-    if (review.product_id) {
-      navigate(`/dashboard?productId=${review.product_id}`);
     }
   };
 
@@ -257,7 +341,6 @@ function ReviewManagement() {
         // 선택된 리뷰만 다운로드하기 위한 필터
         review_ids: selectedReviews,
         ...(selectedProductFilter && { product_id: parseInt(selectedProductFilter) }),
-        ...(selectedRatingFilter && { rating: parseInt(selectedRatingFilter) }),
         ...(selectedSentimentFilter && { sentiment: selectedSentimentFilter }),
         ...(searchQuery.trim() && { search: searchQuery.trim() }),
         ...(startDate && { start_date: startDate }),
@@ -284,10 +367,18 @@ function ReviewManagement() {
       <Sidebar />
       <div className="dashboard-wrapper">
         <div className="dashboard-content">
-          <div className="review-management-container">
+          <div className="dashboard-inner">
+            <div className="review-management-container">
             {/* Header Section */}
             <div className="review-management-header">
-              <h1 className="review-management-title">리뷰 관리</h1>
+              <div className="flex items-center justify-between">
+                <h1 className="review-management-title">리뷰 관리</h1>
+                {!loading && (
+                  <div className="review-count-badge">
+                    총 <span className="font-bold text-blue-600">{totalCount.toLocaleString()}</span>개
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Filters Section */}
@@ -307,11 +398,6 @@ function ReviewManagement() {
                 setCurrentPage(1);
               }}
               products={products}
-              selectedRatingFilter={selectedRatingFilter}
-              onRatingFilterChange={(value) => {
-                setSelectedRatingFilter(value);
-                setCurrentPage(1);
-              }}
               selectedSentimentFilter={selectedSentimentFilter}
               onSentimentFilterChange={(value) => {
                 setSelectedSentimentFilter(value);
@@ -324,7 +410,10 @@ function ReviewManagement() {
               onClearDateFilter={() => {
                 setStartDate("");
                 setEndDate("");
+                setIsDateFilterInitialized(false); // 날짜 필터 초기화 시 다시 자동 설정 가능하도록
                 setCurrentPage(1);
+                // 날짜 필터 초기화 후 전체 리뷰의 날짜 범위를 다시 계산하기 위해
+                // useEffect가 다시 실행되도록 함 (isDateFilterInitialized가 false가 되면)
               }}
               getTodayDate={getTodayDate}
             />
@@ -339,7 +428,6 @@ function ReviewManagement() {
               sortField={sortField}
               sortDirection={sortDirection}
               onSort={handleSort}
-              onReviewClick={handleReviewClick}
             />
 
             {/* Footer Section */}
@@ -390,10 +478,11 @@ function ReviewManagement() {
                 </button>
               </div>
             </div>
-          </div>
+            </div>
 
-          {/* Footer */}
-          <Footer />
+            {/* Footer */}
+            <Footer />
+          </div>
         </div>
       </div>
     </div>

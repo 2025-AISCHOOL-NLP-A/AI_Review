@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useUser } from "../../../contexts/UserContext";
+import { useLogoutTimer } from "../../../hooks/useLogoutTimer";
+import authService from "../../../services/authService";
 import "../../../styles/common.css";
 import "./sidebar.css";
 
 function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout: contextLogout } = useUser();
+  const { user, logout: contextLogout, refreshUser } = useUser();
+  const { remainingTime, isExpired } = useLogoutTimer();
+  const [isExtending, setIsExtending] = useState(false);
 
   // localStorage에서 사이드바 상태 불러오기 (기본값: true)
   const [sidebarOpen, setSidebarOpen] = useState(() => {
@@ -46,6 +50,32 @@ function Sidebar() {
   useEffect(() => {
     localStorage.setItem("settingsOpen", settingsOpen.toString());
   }, [settingsOpen]);
+
+  // 세션 시간 연장 핸들러
+  const handleExtendSession = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isExtending || isExpired) return;
+
+    setIsExtending(true);
+    try {
+      const result = await authService.refreshToken();
+      if (result.success) {
+        // 사용자 정보 새로고침
+        await refreshUser();
+        // 성공 메시지 (선택사항 - 간단한 알림)
+        alert("세션이 2시간 연장되었습니다.");
+      } else {
+        alert(result.message || "세션 연장에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("세션 연장 오류:", error);
+      alert("세션 연장 중 오류가 발생했습니다.");
+    } finally {
+      setIsExtending(false);
+    }
+  };
 
   return (
     <aside
@@ -471,6 +501,45 @@ function Sidebar() {
           }
         }}
       >
+        {/* 로그아웃 남은 시간 표시 */}
+        {sidebarOpen && (
+          <div className="sidebar-timer">
+            <div className="sidebar-timer-label">세션 만료까지</div>
+            <div className={`sidebar-timer-value ${isExpired ? "expired" : ""}`}>
+              {remainingTime}
+            </div>
+            {!isExpired && (
+              <button
+                className="sidebar-extend-button"
+                onClick={handleExtendSession}
+                disabled={isExtending}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                }}
+              >
+                {isExtending ? "연장 중..." : "시간 연장하기"}
+              </button>
+            )}
+          </div>
+        )}
+        {!sidebarOpen && (
+          <div className="sidebar-timer-icon-only" title={`세션 만료까지: ${remainingTime}`}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+        )}
         <button
           className="sidebar-logout-button fullsize-icon"
           data-label="로그아웃"

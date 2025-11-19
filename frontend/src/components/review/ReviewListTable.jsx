@@ -12,7 +12,6 @@ export default function ReviewListTable({
   sortField,
   sortDirection,
   onSort,
-  onReviewClick,
 }) {
   const [expandedReviews, setExpandedReviews] = useState(new Set());
 
@@ -50,28 +49,6 @@ export default function ReviewListTable({
     return (
       <span className={`sentiment-badge ${sentimentInfo.class}`}>
         {sentimentInfo.text}
-      </span>
-    );
-  };
-
-  const getRatingBadge = (rating) => {
-    const ratingNum = parseFloat(rating) || 0;
-    let badgeClass = "rating-badge";
-    let emoji = "⚪";
-    
-    if (ratingNum >= 4) {
-      badgeClass += " rating-high";
-      emoji = "🟩";
-    } else if (ratingNum <= 2) {
-      badgeClass += " rating-low";
-      emoji = "🟥";
-    } else {
-      badgeClass += " rating-medium";
-    }
-
-    return (
-      <span className={badgeClass}>
-        {emoji} {ratingNum.toFixed(1)}
       </span>
     );
   };
@@ -138,21 +115,19 @@ export default function ReviewListTable({
             </th>
             <th style={{ textAlign: "center" }}>제품명</th>
             <th>리뷰 내용</th>
-            <th style={{ textAlign: "center" }}>평점</th>
             <th style={{ textAlign: "center" }}>감정 분석</th>
-            <th style={{ textAlign: "center" }}>출처</th>
           </tr>
         </thead>
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan="7" style={{ textAlign: "center", padding: "2rem" }}>
+              <td colSpan="5" style={{ textAlign: "center", padding: "2rem" }}>
                 로딩 중...
               </td>
             </tr>
           ) : reviewData.length === 0 ? (
             <tr>
-              <td colSpan="7" style={{ textAlign: "center", padding: "2rem" }}>
+              <td colSpan="5" style={{ textAlign: "center", padding: "2rem" }}>
                 <div
                   style={{
                     display: "flex",
@@ -172,8 +147,9 @@ export default function ReviewListTable({
             </tr>
           ) : (
             reviewData.map((review) => {
-              const reviewId = review.review_id || review.id;
-              const reviewText = review.review_text || review.content || "";
+              // 백엔드에서 보내는 필드명 그대로 사용
+              const reviewId = review.review_id;
+              const reviewText = review.review_text || "";
               const isExpanded = expandedReviews.has(reviewId);
               const isLongText = reviewText.length > 150;
               const displayText =
@@ -182,11 +158,7 @@ export default function ReviewListTable({
                   : reviewText;
 
               return (
-                <tr
-                  key={reviewId}
-                  onClick={() => onReviewClick && onReviewClick(review)}
-                  style={{ cursor: onReviewClick ? "pointer" : "default" }}
-                >
+                <tr key={reviewId}>
                   <td
                     className="checkbox-column"
                     onClick={(e) => e.stopPropagation()}
@@ -204,7 +176,7 @@ export default function ReviewListTable({
                     />
                   </td>
                   <td style={{ textAlign: "center" }}>
-                    {formatDate(review.review_date || review.date)}
+                    {formatDate(review.review_date)}
                   </td>
                   <td style={{ textAlign: "center" }}>
                     {review.product_name || "-"}
@@ -226,17 +198,7 @@ export default function ReviewListTable({
                     </div>
                   </td>
                   <td style={{ textAlign: "center" }}>
-                    {getRatingBadge(review.rating)}
-                  </td>
-                  <td style={{ textAlign: "center" }}>
-                    {getSentimentBadge(review.sentiment || review.sentiment_analysis)}
-                  </td>
-                  <td style={{ textAlign: "center" }}>
-                    {review.source ? (
-                      <span className="source-badge">{review.source}</span>
-                    ) : (
-                      "-"
-                    )}
+                    {getSentimentBadge(review.sentiment)}
                   </td>
                 </tr>
               );

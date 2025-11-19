@@ -10,8 +10,6 @@ export default function ReviewFilterBar({
   selectedProductFilter,
   onProductFilterChange,
   products,
-  selectedRatingFilter,
-  onRatingFilterChange,
   selectedSentimentFilter,
   onSentimentFilterChange,
   startDate,
@@ -44,26 +42,6 @@ export default function ReviewFilterBar({
           </select>
         </div>
 
-        {/* 평점 필터 */}
-        <div className="filter-dropdown">
-          <select
-            id="review_rating_filter"
-            name="rating_filter"
-            className="review-filter"
-            value={selectedRatingFilter}
-            onChange={(e) => {
-              onRatingFilterChange(e.target.value);
-            }}
-          >
-            <option value="">전체 평점</option>
-            <option value="5">5점</option>
-            <option value="4">4점</option>
-            <option value="3">3점</option>
-            <option value="2">2점</option>
-            <option value="1">1점</option>
-          </select>
-        </div>
-
         {/* 감정 분석 필터 */}
         <div className="filter-dropdown">
           <select
@@ -77,7 +55,6 @@ export default function ReviewFilterBar({
           >
             <option value="">전체 감정</option>
             <option value="positive">긍정</option>
-            <option value="neutral">중립</option>
             <option value="negative">부정</option>
           </select>
         </div>

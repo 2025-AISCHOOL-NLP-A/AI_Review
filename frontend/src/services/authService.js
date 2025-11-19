@@ -223,6 +223,28 @@ const authService = {
       };
     }
   },
+
+  /** 🔄 토큰 갱신 (세션 시간 연장) */
+  async refreshToken() {
+    try {
+      const res = await api.post("/auth/refresh");
+      if (res.data && res.data.token) {
+        setToken(res.data.token);
+        // 이메일 정보도 업데이트
+        if (res.data.user && res.data.user.email) {
+          setUserEmail(res.data.user.email);
+        }
+        return { success: true, message: res.data.message || "세션이 연장되었습니다." };
+      }
+      return { success: false, message: "토큰 갱신에 실패했습니다." };
+    } catch (err) {
+      console.error("토큰 갱신 오류:", err);
+      return handleApiError(err, "세션 연장 중 오류가 발생했습니다.", null) || {
+        success: false,
+        message: getErrorMessage(err, "세션 연장 중 오류가 발생했습니다."),
+      };
+    }
+  },
 };
 
 export default authService;

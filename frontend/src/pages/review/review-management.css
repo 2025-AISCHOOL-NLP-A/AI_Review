@@ -21,6 +21,14 @@
   --review-negative: #EF4444;
 }
 
+/* ===== Dashboard Inner Wrapper ===== */
+.dashboard-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 /* ===== 기본 컨테이너 ===== */
 .review-management-container {
   background: white;
@@ -48,6 +56,15 @@
   font-weight: 700;
   color: var(--review-text);
   margin: 0;
+}
+
+.review-count-badge {
+  font-size: 0.95rem;
+  color: var(--review-text-gray);
+  padding: 0.5rem 1rem;
+  background: var(--review-bg-light);
+  border-radius: 8px;
+  border: 1px solid var(--review-border);
 }
 
 /* ===== 필터 섹션 ===== */

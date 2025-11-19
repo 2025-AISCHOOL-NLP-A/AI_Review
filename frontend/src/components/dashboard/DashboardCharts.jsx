@@ -33,7 +33,7 @@ const DashboardCharts = ({
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">
-              📊 월별 긍·부정 포함 리뷰 비율
+              월별 리뷰 수와 긍/부정 평가 변화 추이
             </h2>
           </div>
           <DailyTrendChart data={dailyTrendData} loading={loading} />
@@ -50,7 +50,7 @@ const DashboardCharts = ({
         </div>
 
         <div className="card lg:col-span-1 flex flex-col">
-          <h2 className="text-xl font-semibold mb-4">🕸️ 속성별 감정 밸런스</h2>
+          <h2 className="text-xl font-semibold mb-4">핵심 속성별 장단점 시각화</h2>
           <RadarChart data={radarData} loading={loading} />
           <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
             <h4 className="font-bold text-gray-700 mb-1">📈 해석:</h4>
@@ -76,14 +76,14 @@ const DashboardCharts = ({
       >
         <div className="card lg:col-span-2" id="split-bar-chart-card">
           <h2 className="text-xl font-semibold mb-4">
-            📊 속성별 긍·부정 분기형 막대 그래프
+            속성별 언급 비중과 긍/부정 평가
           </h2>
           <SplitBarChart data={splitBarRawData} loading={loading} />
         </div>
 
         <div className="card lg:col-span-1" id="heatmap-card">
           <h2 className="text-xl font-semibold mb-4">
-            🔥 속성 상관관계 히트맵
+            동시 언급 속성 패턴 분석
           </h2>
           <Heatmap
             labels={correlationLabels}

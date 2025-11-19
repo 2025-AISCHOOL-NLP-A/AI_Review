@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { sanitizeInput } from "../../utils/inputSanitizer";
+import { sanitizeInput } from "../../utils/format/inputSanitizer";
 
 export default function ProductInfoForm({ onNext, onClose, initialData, onSave, isEditMode = false }) {
   const [form, setForm] = useState({

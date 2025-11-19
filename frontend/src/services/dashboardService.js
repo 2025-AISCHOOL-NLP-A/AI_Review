@@ -1,7 +1,7 @@
 import api from "./api";
 import { processDashboardResponse } from "./dashboardResponseProcessor";
-import { handleApiError, isAbortError, getErrorMessage } from "../utils/errorHandler";
-import { createApiConfig, createApiConfigWithParams } from "../utils/apiHelpers";
+import { handleApiError, isAbortError, getErrorMessage } from "../utils/api/errorHandler";
+import { createApiConfig, createApiConfigWithParams } from "../utils/api/apiHelpers";
 
 const dashboardService = {
   /** 📊 대시보드 데이터 조회 및 처리 */

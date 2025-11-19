@@ -1,5 +1,6 @@
 import axios from "axios";
-import { getToken, removeToken, clearAuthData } from "../utils/storage";
+import { getToken, removeToken, clearAuthData } from "../utils/auth/storage";
+import { isTokenExpired } from "../utils/auth/tokenUtils";
 
 /**
  * API 설정 및 인터셉터
@@ -14,21 +15,6 @@ const api = axios.create({
   withCredentials: true,
   timeout: 1800000, // 30분 (대용량 리뷰 분석 파이프라인 처리 시간 확보)
 });
-
-/**
- * JWT 토큰 만료 시간 체크
- * @param {string} token - JWT 토큰
- * @returns {boolean} 만료 여부
- */
-const isTokenExpired = (token) => {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const exp = payload.exp * 1000; // JWT exp는 초 단위이므로 밀리초로 변환
-    return Date.now() >= exp;
-  } catch (error) {
-    return true; // 토큰 파싱 실패 시 만료된 것으로 간주
-  }
-};
 
 /**
  * 요청 인터셉터: JWT 자동 첨부 및 만료 체크

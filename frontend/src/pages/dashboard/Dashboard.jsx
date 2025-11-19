@@ -21,7 +21,7 @@ import {
 import {
   getTodayDate,
   applyDateFilter,
-} from "../../utils/dashboardDateFilter";
+} from "../../utils/data/dashboardDateFilter";
 import "../../styles/common.css";
 import "./dashboard.css";
 import "../../components/layout/sidebar/sidebar.css";

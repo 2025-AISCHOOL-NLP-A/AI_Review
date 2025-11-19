@@ -2,7 +2,7 @@
  * 대시보드 날짜 필터링 유틸리티 함수
  * 날짜 필터링 관련 로직을 담당합니다.
  */
-import { getTodayDate, formatDateToYYYYMMDD, isDateInRange } from "./dateUtils";
+import { getTodayDate, formatDateToYYYYMMDD, isDateInRange } from "../format/dateUtils";
 
 // getTodayDate를 dateUtils에서 re-export
 export { getTodayDate, formatDateToYYYYMMDD, isDateInRange };

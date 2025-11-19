@@ -1,8 +1,8 @@
 // src/services/authService.js
 import api from "./api";
-import { handleApiError, getErrorMessage, isAbortError } from "../utils/errorHandler";
-import { setToken, setUserEmail, clearAuthData, getUserEmail } from "../utils/storage";
-import { createApiConfig } from "../utils/apiHelpers";
+import { handleApiError, getErrorMessage, isAbortError } from "../utils/api/errorHandler";
+import { setToken, setUserEmail, clearAuthData, getUserEmail } from "../utils/auth/storage";
+import { createApiConfig } from "../utils/api/apiHelpers";
 
 const authService = {
   /** 🔐 로그인 */

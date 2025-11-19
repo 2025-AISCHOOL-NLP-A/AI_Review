@@ -6,7 +6,7 @@ import { useUser } from "../../contexts/UserContext";
 import { useEmailTimerUpdate } from "../../hooks/useEmailTimerUpdate";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
 import Footer from "../../components/layout/Footer/Footer";
-import { sanitizeInput, sanitizeEmail, sanitizeNumber } from "../../utils/inputSanitizer";
+import { sanitizeInput, sanitizeEmail, sanitizeNumber } from "../../utils/format/inputSanitizer";
 import "./memberupdate.css";
 import "../dashboard/dashboard.css";
 import "../../components/layout/sidebar/sidebar.css";

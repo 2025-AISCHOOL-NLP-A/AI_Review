@@ -6,7 +6,7 @@ import UserIdInput from "../../components/auth/UserIdInput";
 import PasswordInput from "../../components/auth/PasswordInput";
 import EmailVerification from "../../components/auth/EmailVerification";
 import AgreementSection from "../../components/auth/AgreementSection";
-import { sanitizeInput, sanitizeEmail, sanitizeNumber } from "../../utils/inputSanitizer";
+import { sanitizeInput, sanitizeEmail, sanitizeNumber } from "../../utils/format/inputSanitizer";
 import "./login_join.css";
 import "../../styles/common.css";
 

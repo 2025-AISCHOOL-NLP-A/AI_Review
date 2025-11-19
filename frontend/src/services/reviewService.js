@@ -1,6 +1,6 @@
 import api from "./api";
-import { handleApiError, getErrorMessage } from "../utils/errorHandler";
-import { createApiConfig, createApiConfigWithParams } from "../utils/apiHelpers";
+import { handleApiError, getErrorMessage } from "../utils/api/errorHandler";
+import { createApiConfig, createApiConfigWithParams } from "../utils/api/apiHelpers";
 
 const reviewService = {
   /**

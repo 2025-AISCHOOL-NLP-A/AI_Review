@@ -1,6 +1,6 @@
 import api from "./api";
-import { handleApiError, isAbortError, getErrorMessage } from "../utils/errorHandler";
-import { createApiConfig, createApiConfigWithParams } from "../utils/apiHelpers";
+import { handleApiError, isAbortError, getErrorMessage } from "../utils/api/errorHandler";
+import { createApiConfig, createApiConfigWithParams } from "../utils/api/apiHelpers";
 
 const insightService = {
   /** 📊 인사이트 목록 조회 */

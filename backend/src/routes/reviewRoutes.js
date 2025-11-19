@@ -1,9 +1,31 @@
 import express from "express";
-import { analyzeReviews } from "../controllers/reviewController.js"; // ✅ 이름 맞춤
+import {
+  analyzeReviews,
+  deleteReview,
+  deleteReviewsBatch,
+  exportReviews,
+  getReviews,
+} from "../controllers/reviewController.js";
+import { verifyAuth } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// 리뷰 분석 실행
+// Protect all review routes
+router.use(verifyAuth);
+
+// List/filter/paginate reviews
+router.get("/", getReviews);
+
+// Export reviews
+router.get("/export", exportReviews);
+
+// Batch delete reviews (placed before single delete)
+router.delete("/batch", deleteReviewsBatch);
+
+// Delete single review
+router.delete("/:id", deleteReview);
+
+// Trigger review analysis
 router.post("/products/:product_id/reviews/analysis", analyzeReviews);
 
 export default router;

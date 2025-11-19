@@ -1,11 +1,18 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // CSP 헤더를 제어하는 플러그인 (개발 환경용)
-const cspPlugin = () => {
+const cspPlugin = (mode) => {
   return {
     name: 'csp-headers',
     configureServer(server) {
+      // 환경 변수 로드
+      const env = loadEnv(mode, process.cwd(), '')
+      const apiBaseUrl = env.VITE_API_BASE_URL || 'http://localhost:3001'
+
+      // API URL에서 호스트 추출 (예: http://223.130.128.36:3001 → http://223.130.128.36:3001)
+      const apiHost = apiBaseUrl
+
       server.middlewares.use((_req, res, next) => {
         // 개발 환경에서만 CSP 헤더 설정 (eval 허용)
         // 프로덕션 빌드에서는 헤더가 적용되지 않음
@@ -16,8 +23,8 @@ const cspPlugin = () => {
           "worker-src 'self' blob: data:; " +
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; " +
           "font-src 'self' https://fonts.gstatic.com; " +
-          "img-src 'self' data: https: http://localhost:3001; " +
-          "connect-src 'self' ws://localhost:5173 http://localhost:3001 http://localhost:8000; " +
+          `img-src 'self' data: https: ${apiHost}; ` +
+          `connect-src 'self' ws://localhost:5173 http://localhost:3001 http://localhost:8000 ${apiHost}; ` +
           "frame-ancestors 'none';"
         )
         next()
@@ -34,11 +41,11 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       // 개발 환경에서만 CSP 플러그인 사용
-      !isProduction && cspPlugin()
+      !isProduction && cspPlugin(mode)
     ].filter(Boolean),
     server: {
       port: 5173,
-      open: true,
+      open: false,
       // HMR을 WebSocket만 사용하도록 설정 (eval 사용 최소화)
       hmr: {
         protocol: 'ws',

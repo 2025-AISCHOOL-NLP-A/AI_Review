@@ -37,16 +37,17 @@ const reviewService = {
       const config = createApiConfigWithParams(signal, params);
       const res = await api.get("/reviews", config);
 
+      // 백엔드 응답 구조: { reviews: [], pagination: {}, total: number }
       return {
         success: true,
-        data: res.data.reviews || res.data.data || [],
+        data: res.data.reviews || [],
         pagination: res.data.pagination || {
           page: parseInt(page),
           limit: parseInt(limit),
           total: res.data.total || 0,
-          totalPages: res.data.totalPages || Math.ceil((res.data.total || 0) / limit),
+          totalPages: res.data.pagination?.totalPages || Math.ceil((res.data.total || 0) / limit),
         },
-        total: res.data.total || res.data.count || 0,
+        total: res.data.total || 0,
       };
     } catch (err) {
       return handleApiError(err, "리뷰 목록을 불러오는데 실패했습니다.", null) || {

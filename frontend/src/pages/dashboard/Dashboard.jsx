@@ -239,7 +239,29 @@ function Dashboard() {
             </div>
 
             <div className="card">
-              <h2 className="text-xl font-semibold mb-4">고객 리뷰 원문 하이라이트</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">💬 리뷰 원문 샘플</h2>
+                <button
+                  onClick={() => navigate(`/reviews?productId=${productId}`)}
+                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-full flex items-center gap-2 transition-colors duration-200 shadow-sm hover:shadow-md"
+                >
+                  리뷰 관리 페이지로 이동
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
+              </div>
               <div className="review-table-container">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead>

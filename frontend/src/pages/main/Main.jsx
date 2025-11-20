@@ -11,6 +11,7 @@ function Main() {
   const { isAuthenticated, loading: userLoading } = useUser();
   const heroRef = useRef(null);
   const previewRef = useRef(null);
+  const marketingRef = useRef(null);
   const priceRef = useRef(null);
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -185,6 +186,9 @@ function Main() {
       <header className="main-header">
         <nav className="nav-buttons">
           <button onClick={() => smoothScrollTo(heroRef.current)}>홈</button>
+          <button onClick={() => smoothScrollTo(marketingRef.current)}>
+            홍보글
+          </button>
           <button onClick={() => smoothScrollTo(previewRef.current)}>
             시연영상
           </button>
@@ -218,7 +222,51 @@ function Main() {
           데이터에서 행동으로, 인사이트를 실행으로 바꾸세요
         </p>
       </section>
+      {/* ===================== MARKETING PROMO SECTION ===================== */}
+      <section className="marketing-wrapper" ref={marketingRef}>
+        <h2 className="section-title">홍보글</h2>
 
+        <div className="marketing-section">
+          <div className="marketing-box">
+            <h3>자동 분석 정확도 강조</h3>
+            <p className="highlight">
+              “리뷰 수만 건도 한 번에 분석해, 고객이 진짜로 불편해하는 지점을
+              정확하게 찾아냅니다.”
+            </p>
+            <ul>
+              <li>– 부정 키워드·감정 패턴 자동 탐지</li>
+              <li>– 반복되는 불만 우선순위 정렬</li>
+              <li>– 경쟁사 대비 강점/약점 도출</li>
+            </ul>
+          </div>
+
+          <div className="marketing-box">
+            <h3>인사이트를 실행 가능한 결과로</h3>
+            <p className="highlight">
+              “흩어진 리뷰를 정리하는 것만이 아니라, 바로 실행 가능한 행동
+              가이드를 제공합니다.”
+            </p>
+            <ul>
+              <li>– 제품 개선 포인트 자동 제안</li>
+              <li>– 마케팅 메시지 추천</li>
+              <li>– UX 개선 힌트 제공</li>
+            </ul>
+          </div>
+
+          <div className="marketing-box">
+            <h3>데이터 기반 의사결정 속도 향상</h3>
+            <p className="highlight">
+              “감에 의존하던 결정을 데이터 기반으로 바꿔, 팀의 대응 속도와
+              효율을 높입니다.”
+            </p>
+            <ul>
+              <li>– 실시간 대시보드 변화 추적</li>
+              <li>– 감정 비율 시각화</li>
+              <li>– 주요 이슈·트렌드 자동 알림</li>
+            </ul>
+          </div>
+        </div>
+      </section>
       {/* ===================== PREVIEW SECTION ===================== */}
       <section className="preview" ref={previewRef}>
         <h2 className="section-title">서비스 시연</h2>

@@ -114,11 +114,13 @@ header button.login-btn:hover {
 
 /* ===================== PREVIEW(시연 영상) 섹션 ===================== */
 .preview {
+  min-height: 100vh; /* ✅ 한 화면 꽉 채우기 */
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  margin: 40px 0;
+  justify-content: center; /* ✅ 세로 중앙 정렬 */
+  margin: 0; /* ✅ 위·아래 여백 제거 */
+  padding: 40px 0; /* 필요하면 살짝만 여백 */
 }
 
 .preview .section-title {
@@ -189,7 +191,12 @@ header button.login-btn:hover {
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.4), transparent);
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.8),
+    rgba(0, 0, 0, 0.4),
+    transparent
+  );
   padding: 20px 16px 16px 16px;
   border-radius: 0 0 12px 12px;
   z-index: 20;
@@ -302,6 +309,73 @@ header button.login-btn:hover {
 .video-timeline-handle:hover {
   transform: translate(-50%, -50%) scale(1.2);
 }
+/* ===================== MARKETING PROMO SECTION ===================== */
+
+.marketing-section {
+  width: 100%;
+  max-width: 1400px;
+  margin: 80px auto;
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  padding: 0 40px;
+  flex-wrap: nowrap;
+}
+
+.marketing-box {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 32px 28px;
+  flex: 1;
+  min-height: 380px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+  text-align: left;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.marketing-box:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+}
+
+.marketing-box h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 14px;
+  color: #111827;
+}
+
+.marketing-box .highlight {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #4f46e5;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.marketing-box ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 12px;
+  line-height: 1.7;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+/* 반응형 (태블릿 이하에서 1열 또는 2열) */
+@media (max-width: 1100px) {
+  .marketing-section {
+    flex-wrap: wrap;
+  }
+  .marketing-box {
+    flex: 1 1 calc(50% - 20px);
+  }
+}
+@media (max-width: 700px) {
+  .marketing-box {
+    flex: 1 1 100%;
+  }
+}
 
 /* ===================== PRICE(요금제) 섹션 ===================== */
 .price-section {
@@ -312,6 +386,13 @@ header button.login-btn:hover {
   align-items: center;
   padding: 40px 0;
   box-sizing: border-box;
+}
+/* 홍보글 섹션 타이틀 */
+.marketing-wrapper .section-title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 40px;
+  color: #111827;
 }
 
 /* 요금제 섹션 타이틀 */
@@ -413,4 +494,3 @@ header button.login-btn:hover {
 }
 
 /* footer 스타일은 common.css로 이동 */
-

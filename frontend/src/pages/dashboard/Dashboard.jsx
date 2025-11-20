@@ -195,127 +195,126 @@ function Dashboard() {
             ref={dashboardContentRef}
             className="dashboard-content"
           >
-          {/* Header & Filter Section */}
-          <DashboardHeader
-            loading={loading}
-            productInfo={productInfo}
-            dashboardData={dashboardData}
-            startDate={startDate}
-            endDate={endDate}
-            appliedStartDate={appliedStartDate}
-            appliedEndDate={appliedEndDate}
-            onStartDateChange={handleStartDateChange}
-            onEndDateChange={handleEndDateChange}
-            onApplyFilter={handleApplyFilter}
-            onResetFilter={handleResetFilter}
-            getTodayDate={getTodayDate}
-          />
+            {/* Header & Filter Section */}
+            <DashboardHeader
+              loading={loading}
+              productInfo={productInfo}
+              dashboardData={dashboardData}
+              startDate={startDate}
+              endDate={endDate}
+              appliedStartDate={appliedStartDate}
+              appliedEndDate={appliedEndDate}
+              onStartDateChange={handleStartDateChange}
+              onEndDateChange={handleEndDateChange}
+              onApplyFilter={handleApplyFilter}
+              onResetFilter={handleResetFilter}
+              getTodayDate={getTodayDate}
+            />
 
-          {/* 1. KPI Summary Cards */}
-          <KPICards loading={loading} dashboardData={dashboardData} />
+            {/* 1. KPI Summary Cards */}
+            <KPICards loading={loading} dashboardData={dashboardData} />
 
-          {/* Main Chart Section & Detailed Analysis Section */}
-          <DashboardCharts
-            loading={loading}
-            dashboardData={dashboardData}
-            dailyTrendData={dailyTrendData}
-            radarData={radarData}
-            splitBarRawData={splitBarRawData}
-            correlationLabels={correlationLabels}
-            correlationMatrix={correlationMatrix}
-          />
+            {/* Main Chart Section & Detailed Analysis Section */}
+            <DashboardCharts
+              loading={loading}
+              dashboardData={dashboardData}
+              dailyTrendData={dailyTrendData}
+              radarData={radarData}
+              splitBarRawData={splitBarRawData}
+              correlationLabels={correlationLabels}
+              correlationMatrix={correlationMatrix}
+            />
 
-          {/* Word Cloud & Review Sample */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" id="wordcloud-review-section">
-            <div className="card">
-              <h2 className="text-xl font-semibold mb-4">
-                리뷰 원문 기반 주요 언급 키워드
-              </h2>
-              <WordCloudSection
-                loading={loading}
-                wordcloud={dashboardData?.wordcloud}
-              />
-            </div>
-
-            <div className="card">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">💬 리뷰 원문 샘플</h2>
-                <button
-                  onClick={() => navigate(`/reviews?productId=${productId}`)}
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-full flex items-center gap-2 transition-colors duration-200 shadow-sm hover:shadow-md"
-                >
-                  리뷰 관리 페이지로 이동
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </button>
-              </div>
-              <div className="review-table-container">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead>
-                    <tr className="text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                      <th className="px-3 py-3 text-left">날짜</th>
-                      <th className="px-3 py-3 text-left">리뷰 내용</th>
-                      <th className="px-3 py-3 text-left">감정 요약</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200 text-sm">
-                    <ReviewTable
-                      loading={loading}
-                      reviews={randomReviews}
-                      expandedReviews={expandedReviews}
-                      onToggleExpand={handleToggleExpand}
-                    />
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          {/* Insights and AI Report Section */}
-          <InsightsSection loading={loading} dashboardData={dashboardData} />
-
-          {/* AI 인사이트 리포트 */}
-          <AIInsightReport loading={loading} dashboardData={dashboardData} />
-
-          {/* PDF Download Button */}
-          <div className="pt-4 pb-12 flex justify-center">
-            <button
-              ref={downloadBtnRef}
-              onClick={handlePDFDownload}
-              className="bg-main text-white px-8 py-3 rounded-xl font-bold text-lg hover-opacity-90 transition shadow-lg flex items-center"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            {/* Word Cloud & Review Sample */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" id="wordcloud-review-section">
+              <div className="card">
+                <h2 className="text-xl font-semibold mb-4">
+                  리뷰 원문 기반 주요 언급 키워드
+                </h2>
+                <WordCloudSection
+                  loading={loading}
+                  wordcloud={dashboardData?.wordcloud}
                 />
-              </svg>
-              📥 [ 리포트 PDF 다운로드 ]
-            </button>
-          </div>
+              </div>
 
-          {/* ===================== FOOTER ===================== */}
-          <Footer />
+              <div className="card">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold">💬 리뷰 원문 샘플</h2>
+                  <button
+                    onClick={() => navigate(`/reviews?productId=${productId}`)}
+                    className="review-page-btn"
+                  >
+                    리뷰 관리 페이지로 이동
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M13 7l5 5m0 0l-5 5m5-5H6"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <div className="review-table-container">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead>
+                      <tr className="text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                        <th className="px-3 py-3 text-left">날짜</th>
+                        <th className="px-3 py-3 text-left">리뷰 내용</th>
+                        <th className="px-3 py-3 text-left">감정 요약</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200 text-sm">
+                      <ReviewTable
+                        loading={loading}
+                        reviews={randomReviews}
+                        expandedReviews={expandedReviews}
+                        onToggleExpand={handleToggleExpand}
+                      />
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Insights and AI Report Section */}
+            <InsightsSection loading={loading} dashboardData={dashboardData} />
+
+            {/* AI 인사이트 리포트 */}
+            <AIInsightReport loading={loading} dashboardData={dashboardData} />
+
+            {/* PDF Download Button */}
+            <div className="pt-4 pb-12 flex justify-center">
+              <button
+                ref={downloadBtnRef}
+                onClick={handlePDFDownload}
+                className="bg-main text-white px-8 py-3 rounded-xl font-bold text-lg hover-opacity-90 transition shadow-lg flex items-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+                [ 리포트 PDF 다운로드 ]
+              </button>
+            </div>
+
+            {/* ===================== FOOTER ===================== */}
+            <Footer />
           </div>
         </div>
       </div>

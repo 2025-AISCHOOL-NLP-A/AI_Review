@@ -25,11 +25,22 @@ Chart.register(
 const RadarChart = ({ data, loading }) => {
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
+  const containerRef = useRef(null);
 
-  // Color constants
-  const primaryColor = "#5B8EFF"; // 긍정 비율 (파란색)
-  const negativeColor = "#D8B4FE"; // 부정 비율 (매우 연한 보라색) - 파란색과 조화롭고 부드러운 느낌
-  const fontColor = "#333333";
+  // Get colors from CSS variables
+  const getColors = () => {
+    const root = containerRef.current || document.documentElement;
+    return {
+      primaryColor: getComputedStyle(root).getPropertyValue('--chart-primary-color').trim() || '#6F98FF',
+      primaryBg: getComputedStyle(root).getPropertyValue('--chart-primary-bg').trim() || 'rgba(111, 152, 255, 0.25)',
+      primaryHover: getComputedStyle(root).getPropertyValue('--chart-primary-hover').trim() || '#587FE6',
+      neutralColor: getComputedStyle(root).getPropertyValue('--chart-neutral-color').trim() || '#FFC577',
+      neutralBg: getComputedStyle(root).getPropertyValue('--chart-neutral-bg').trim() || 'rgba(255, 197, 119, 0.25)',
+      neutralHover: getComputedStyle(root).getPropertyValue('--chart-neutral-hover').trim() || '#F3B96B',
+      textColor: getComputedStyle(root).getPropertyValue('--chart-text-color').trim() || '#6B7280',
+      gridColor: getComputedStyle(root).getPropertyValue('--chart-grid-color').trim() || 'rgba(0, 0, 0, 0.1)',
+    };
+  };
 
   useEffect(() => {
     if (loading || !data || data.labels.length === 0) {
@@ -58,6 +69,8 @@ const RadarChart = ({ data, loading }) => {
         ) {
           const ctx = chartRef.current.getContext("2d");
           if (ctx) {
+            const colors = getColors();
+
             chartInstance.current = new Chart(ctx, {
               type: "radar",
               data: {
@@ -66,12 +79,12 @@ const RadarChart = ({ data, loading }) => {
                   {
                     label: "긍정 비율",
                     data: data.positive,
-                    backgroundColor: "rgba(91, 142, 255, 0.4)",
-                    borderColor: primaryColor,
-                    pointBackgroundColor: primaryColor,
+                    backgroundColor: colors.primaryBg,
+                    borderColor: colors.primaryColor,
+                    pointBackgroundColor: colors.primaryColor,
                     pointBorderColor: "#fff",
                     pointHoverBackgroundColor: "#fff",
-                    pointHoverBorderColor: primaryColor,
+                    pointHoverBorderColor: colors.primaryHover,
                     borderWidth: 2,
                     pointRadius: 5, // 포인트 크기
                     pointHoverRadius: 7, // 호버 시 포인트 크기
@@ -79,12 +92,12 @@ const RadarChart = ({ data, loading }) => {
                   {
                     label: "부정 비율",
                     data: data.negative,
-                    backgroundColor: "rgba(216, 180, 254, 0.3)", // 매우 연한 보라색 배경 (투명도 조정)
-                    borderColor: negativeColor, // 매우 연한 보라색 테두리
-                    pointBackgroundColor: negativeColor, // 매우 연한 보라색 포인트
+                    backgroundColor: colors.neutralBg,
+                    borderColor: colors.neutralColor,
+                    pointBackgroundColor: colors.neutralColor,
                     pointBorderColor: "#fff",
                     pointHoverBackgroundColor: "#fff",
-                    pointHoverBorderColor: negativeColor,
+                    pointHoverBorderColor: colors.neutralHover,
                     borderWidth: 2.5, // 테두리 두께 (가시성 개선)
                     pointRadius: 5, // 포인트 크기
                     pointHoverRadius: 7, // 호버 시 포인트 크기
@@ -100,8 +113,8 @@ const RadarChart = ({ data, loading }) => {
                 plugins: {
                   legend: {
                     position: "top",
-                    labels: { 
-                      color: fontColor,
+                    labels: {
+                      color: colors.textColor,
                       font: {
                         size: 12,
                       },
@@ -125,17 +138,17 @@ const RadarChart = ({ data, loading }) => {
                 scales: {
                   r: {
                     beginAtZero: true,
-                    angleLines: { 
-                      color: "#E5E7EB",
+                    angleLines: {
+                      color: colors.gridColor,
                       lineWidth: 1.5,
                     },
-                    grid: { 
-                      color: "#E5E7EB",
+                    grid: {
+                      color: colors.gridColor,
                       lineWidth: 1,
                     },
-                    pointLabels: { 
-                      color: fontColor, 
-                      font: { 
+                    pointLabels: {
+                      color: colors.textColor,
+                      font: {
                         size: 13,
                         weight: 'bold',
                         family: "'Pretendard', 'Noto Sans KR', sans-serif",
@@ -147,7 +160,7 @@ const RadarChart = ({ data, loading }) => {
                     ticks: {
                       stepSize: 20,
                       backdropColor: "rgba(255, 255, 255, 0.9)",
-                      color: fontColor,
+                      color: colors.textColor,
                       font: {
                         size: 11,
                         family: "'Pretendard', 'Noto Sans KR', sans-serif",
@@ -202,7 +215,7 @@ const RadarChart = ({ data, loading }) => {
   }
 
   return (
-    <div className="radar-chart-container">
+    <div ref={containerRef} className="radar-chart-container">
       <canvas
         ref={chartRef}
         className="radar-chart-canvas"
@@ -212,4 +225,3 @@ const RadarChart = ({ data, loading }) => {
 };
 
 export default RadarChart;
-

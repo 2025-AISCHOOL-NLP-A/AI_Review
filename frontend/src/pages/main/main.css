@@ -310,6 +310,23 @@ header button.login-btn:hover {
   transform: translate(-50%, -50%) scale(1.2);
 }
 /* ===================== MARKETING PROMO SECTION ===================== */
+.marketing-wrapper {
+  min-height: 100vh;
+  padding: 120px 0 80px; /* 헤더 높이 때문에 상단 패딩을 충분히 줌 */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* 홍보글 섹션 타이틀 */
+.marketing-wrapper .section-title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 40px;
+  color: #111827;
+}
 
 .marketing-section {
   width: 100%;
@@ -386,13 +403,6 @@ header button.login-btn:hover {
   align-items: center;
   padding: 40px 0;
   box-sizing: border-box;
-}
-/* 홍보글 섹션 타이틀 */
-.marketing-wrapper .section-title {
-  font-size: 3rem;
-  font-weight: 700;
-  margin-bottom: 40px;
-  color: #111827;
 }
 
 /* 요금제 섹션 타이틀 */

@@ -9,8 +9,12 @@ import {
     upload,
     createProductWithReviews,
 } from "../controllers/productController.js";
+import { getUploadProgress } from "../controllers/sseController.js";
 
 const router = express.Router();
+
+// SSE 엔드포인트: 업로드 진행 상황 스트리밍
+router.get("/:productId/reviews/upload/progress/:taskId", getUploadProgress);
 
 // 리뷰 파일 업로드
 router.post("/:id/reviews/upload", upload.array('files', 10), uploadReviews);

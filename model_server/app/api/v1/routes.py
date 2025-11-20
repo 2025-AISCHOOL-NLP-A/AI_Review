@@ -63,6 +63,7 @@ def analyze_batch(req: AnalyzeBatchRequest, domain: str = "steam"):
         raise HTTPException(status_code=500, detail=str(e))
 
 # 제품 리뷰 전체 분석 파이프라인 엔드포인트 (SSE 스트리밍)
+# 기존 전체 분석 파이프라인
 @router.post("/products/{product_id}/reviews/analysis")
 async def analyze_product_reviews(product_id: int, domain: Optional[str] = None):
     """
@@ -394,4 +395,29 @@ async def analyze_product_reviews(product_id: int, domain: Optional[str] = None)
                 conn.close()
     
     return StreamingResponse(generate_progress(), media_type="text/event-stream")
+
+
+# 워드클라우드 단독 생성 (기간 필터 포함)
+@router.post("/products/{product_id}/wordcloud")
+def create_wordcloud(product_id: int, domain: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None):
+    """
+    기간별 워드클라우드 생성 후 경로를 반환합니다.
+    - start_date/end_date: YYYY-MM-DD 형식 (옵션)
+    - domain: steam/cosmetics/electronics (옵션)
+    리뷰가 없으면 200으로 success=false를 반환합니다(404 대신).
+    """
+    try:
+        domain_name = domain or "steam"
+        wc_path = generate_wordcloud_from_db(product_id, domain_name, start_date, end_date)
+        if not wc_path:
+            return {
+                "success": False,
+                "wordcloud_path": None,
+                "message": "워드클라우드 생성 대상 리뷰가 없습니다."
+            }
+        return {"success": True, "wordcloud_path": wc_path}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 

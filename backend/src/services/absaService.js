@@ -95,3 +95,36 @@ export async function analyzeProductReviews(product_id, domain = null) {
     throw err;
   }
 }
+
+/**
+ * 기간 필터를 적용한 워드클라우드 생성 요청
+ * @param {number} product_id
+ * @param {string|null} domain
+ * @param {string|null} startDate - YYYY-MM-DD
+ * @param {string|null} endDate - YYYY-MM-DD
+ * @returns {object} - { success, wordcloud_path }
+ */
+export async function generateWordcloud(product_id, domain = null, startDate = null, endDate = null) {
+  try {
+    const params = {};
+    if (domain) params.domain = domain;
+    if (startDate) params.start_date = startDate;
+    if (endDate) params.end_date = endDate;
+
+    const res = await axios.post(
+      `${PYTHON_API}/v1/products/${product_id}/wordcloud`,
+      {},
+      {
+        params,
+        timeout: 300000, // 워드클라우드 생성 여유 시간
+      }
+    );
+    return res.data;
+  } catch (err) {
+    console.error("워드클라우드 생성 요청 실패:", err.message);
+    if (err.response) {
+      console.error("응답 상태:", err.response.status, "응답 데이터:", err.response.data);
+    }
+    throw err;
+  }
+}

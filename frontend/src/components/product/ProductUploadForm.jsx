@@ -5,6 +5,7 @@ import dashboardService from "../../services/dashboardService";
 export default function ProductUploadForm({ onClose, formData, onSuccess, onSubmittingChange }) {
   const [mappedFiles, setMappedFiles] = useState([]); // [{ file, mapping }]
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [productId, setProductId] = useState(null); // 생성된 제품 ID
 
   // isSubmitting 상태 변경 시 부모에게 알림
   React.useEffect(() => {
@@ -32,6 +33,30 @@ export default function ProductUploadForm({ onClose, formData, onSuccess, onSubm
   // FileUploadForm에서 파일이 준비되었을 때 호출
   const handleFilesReady = (files) => {
     setMappedFiles(files);
+  };
+
+  // 업로드 시작 시 호출
+  const handleUploadStart = () => {
+    // FileUploadForm에서 업로드가 시작되면 isSubmitting 유지
+  };
+
+  // 업로드 완료 시 호출
+  const handleUploadComplete = (uploadResult) => {
+    if (!uploadResult.success) {
+      alert(`제품은 생성되었지만 파일 업로드에 실패했습니다: ${uploadResult.message || "파일 업로드에 실패했습니다."}`);
+    }
+
+    // 업로드 완료 후 성공 메시지 표시
+    alert("제품이 성공적으로 생성되었습니다.");
+
+    // 제품 생성 성공 시 항상 onSuccess 호출하여 워크플레이스로 돌아가기
+    if (onSuccess) {
+      onSuccess({ product_id: productId });
+    } else {
+      onClose();
+    }
+
+    setIsSubmitting(false);
   };
 
   // 창 닫기 처리 (업로드 중일 때 경고 표시)
@@ -78,43 +103,32 @@ export default function ProductUploadForm({ onClose, formData, onSuccess, onSubm
         return;
       }
 
-      const productId = result.data?.product?.product_id || result.data?.product_id;
+      const createdProductId = result.data?.product?.product_id || result.data?.product_id;
 
-      if (!productId) {
+      if (!createdProductId) {
         alert("제품 ID를 가져올 수 없습니다.");
         setIsSubmitting(false);
         return;
       }
 
-      // 파일이 있으면 업로드 (실패해도 제품은 생성되었으므로 계속 진행)
-      if (mappedFiles.length > 0) {
-        if (!allFilesMapped) {
-          alert("모든 파일의 컬럼 매핑을 완료해주세요.");
-          setIsSubmitting(false);
-          return;
+      setProductId(createdProductId);
+
+      // 파일이 없으면 바로 완료
+      if (mappedFiles.length === 0) {
+        alert("제품이 성공적으로 생성되었습니다.");
+
+        if (onSuccess) {
+          onSuccess(result.data?.product || { product_id: createdProductId });
+        } else {
+          onClose();
         }
-
-        // 파일 업로드 및 매핑 정보 전송
-        const uploadResult = await dashboardService.uploadReviewFiles(productId, mappedFiles);
-
-        if (!uploadResult.success) {
-          alert(`제품은 생성되었지만 파일 업로드에 실패했습니다: ${uploadResult.message || "파일 업로드에 실패했습니다."}`);
-          // 파일 업로드 실패해도 제품은 생성되었으므로 워크플레이스로 돌아감
-        }
+        setIsSubmitting(false);
       }
-
-      alert("제품이 성공적으로 생성되었습니다.");
-      
-      // 제품 생성 성공 시 항상 onSuccess 호출하여 워크플레이스로 돌아가기
-      if (onSuccess) {
-        onSuccess(result.data?.product || { product_id: productId });
-      } else {
-        onClose();
-      }
+      // 파일이 있으면 FileUploadForm이 자동으로 업로드 시작 (autoUpload=true)
+      // handleUploadComplete에서 완료 처리
     } catch (error) {
       console.error("제품 생성 중 오류:", error);
       alert("제품 생성 중 오류가 발생했습니다.");
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -124,20 +138,24 @@ export default function ProductUploadForm({ onClose, formData, onSuccess, onSubm
       <h2>Upload Files</h2>
       <p>Please upload your file.</p>
 
-      <FileUploadForm 
+      <FileUploadForm
         onFilesReady={handleFilesReady}
-        disabled={isSubmitting}
+        productId={productId}
+        onUploadStart={handleUploadStart}
+        onUploadComplete={handleUploadComplete}
+        autoUpload={true}
+        disabled={isSubmitting && !productId}
       />
 
       <div className="button-row">
-        <button 
-          className="cancel" 
+        <button
+          className="cancel"
           onClick={handleClose}
         >
           Cancel
         </button>
-        <button 
-          className="next" 
+        <button
+          className="next"
           onClick={handleAnalyze}
           disabled={isSubmitting || !formData || (mappedFiles.length > 0 && !allFilesMapped)}
         >
@@ -147,4 +165,3 @@ export default function ProductUploadForm({ onClose, formData, onSuccess, onSubm
     </>
   );
 }
-

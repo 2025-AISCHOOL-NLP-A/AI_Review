@@ -5,15 +5,20 @@ import {
     keywordReview,
     deleteProduct,
     updateProduct,
-    uploadReviews,
-    upload,
     createProductWithReviews,
 } from "../controllers/productController.js";
-
+import {
+    analyzeReviews,
+    uploadReviews,
+    upload,
+} from "../controllers/reviewController.js";
 const router = express.Router();
 
 // 리뷰 파일 업로드
 router.post("/:id/reviews/upload", upload.array('files', 10), uploadReviews);
+
+// Trigger review analysis
+router.post("/:id/reviews/analysis", analyzeReviews);
 
 // 특정 키워드에 대한 리뷰 조회
 router.get("/:id/reviews", keywordReview);

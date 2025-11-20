@@ -27,10 +27,16 @@ export const getColorFromCSSVar = (element, varName, fallback) => {
  */
 export const getChartColors = (element = null) => {
   return {
-    primary: getColorFromCSSVar(element, '--chart-primary-color', "#5B8EFF"),
-    neutral: getColorFromCSSVar(element, '--chart-neutral-color', "#D8B4FE"), // 부정 비율 (매우 연한 보라색)
-    newReview: getColorFromCSSVar(element, '--chart-new-review-color', "#111827"),
-    font: getColorFromCSSVar(element, '--chart-font-color', "#333333"),
+    primary: getColorFromCSSVar(element, '--chart-primary-color', "#6F98FF"),
+    primaryHover: getColorFromCSSVar(element, '--chart-primary-hover', "#587FE6"),
+    primaryBg: getColorFromCSSVar(element, '--chart-primary-bg', "rgba(111, 152, 255, 0.25)"),
+    neutral: getColorFromCSSVar(element, '--chart-neutral-color', "#FFC577"),
+    neutralHover: getColorFromCSSVar(element, '--chart-neutral-hover', "#F3B96B"),
+    neutralBg: getColorFromCSSVar(element, '--chart-neutral-bg', "rgba(255, 197, 119, 0.25)"),
+    lineColor: getColorFromCSSVar(element, '--chart-line-color', "rgba(0, 0, 0, 0.8)"),
+    gridColor: getColorFromCSSVar(element, '--chart-grid-color', "rgba(0, 0, 0, 0.1)"),
+    textColor: getColorFromCSSVar(element, '--chart-text-color', "#6B7280"),
   };
 };
+
 

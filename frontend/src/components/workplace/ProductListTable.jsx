@@ -1,6 +1,7 @@
 import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ProductActionMenu from "./ProductActionMenu";
+import "../../pages/dashboard/workplace.css";
 
 /**
  * 제품 목록 테이블 컴포넌트
@@ -48,73 +49,52 @@ export default function ProductListTable({
             <th
               className="sortable-header"
               onClick={() => onSort("registered_date")}
-              style={{ cursor: "pointer", userSelect: "none", textAlign: "center" }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  width: "100%",
-                }}
-              >
-                <span style={{ flex: 1, textAlign: "center" }}>등록일</span>
+              <div className="sortable-header-content">
+                <span className="sortable-header-label">등록일</span>
                 <span
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "2px",
-                    fontSize: "0.7rem",
-                    alignItems: "center",
-                    color: sortField === "registered_date" ? "#5B8EFF" : "#9CA3AF",
-                    marginLeft: "auto",
-                  }}
+                  className={`sort-icons-container ${
+                    sortField === "registered_date" ? "active" : "inactive"
+                  }`}
                 >
                   <span
-                    style={{
-                      opacity: sortField === "registered_date" && sortDirection === "asc" ? 1 : 0.3,
-                    }}
+                    className={`sort-icon-asc ${
+                      sortField === "registered_date" && sortDirection === "asc" ? "active" : ""
+                    }`}
                   >
                     ▲
                   </span>
                   <span
-                    style={{
-                      opacity: sortField === "registered_date" && sortDirection === "desc" ? 1 : 0.3,
-                    }}
+                    className={`sort-icon-desc ${
+                      sortField === "registered_date" && sortDirection === "desc" ? "active" : ""
+                    }`}
                   >
                     ▼
                   </span>
                 </span>
               </div>
             </th>
-            <th style={{ textAlign: "center" }}>제품명</th>
-            <th style={{ textAlign: "center" }}>브랜드</th>
-            <th style={{ textAlign: "center" }}>카테고리</th>
+            <th className="text-center">제품명</th>
+            <th className="text-center">브랜드</th>
+            <th className="text-center">카테고리</th>
             <th className="action-column"></th>
           </tr>
         </thead>
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan="6" style={{ textAlign: "center", padding: "2rem" }}>
+              <td colSpan="6" className="table-empty-cell">
                 로딩 중...
               </td>
             </tr>
           ) : workplaceData.length === 0 ? (
             <tr>
-              <td colSpan="6" style={{ textAlign: "center", padding: "2rem" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: "8px",
-                  }}
-                >
-                  <p style={{ margin: 0, fontSize: "1rem", color: "#6b7280" }}>
+              <td colSpan="6" className="table-empty-cell">
+                <div className="empty-state-container">
+                  <p className="empty-state-text-primary">
                     등록된 제품이 없습니다.
                   </p>
-                  <p style={{ margin: 0, fontSize: "0.875rem", color: "#9ca3af" }}>
+                  <p className="empty-state-text-secondary">
                     제품을 추가하여 분석을 시작하세요.
                   </p>
                 </div>
@@ -124,10 +104,10 @@ export default function ProductListTable({
             workplaceData.map((item, index) => (
               <tr
                 key={item.product_id}
+                className="clickable"
                 onClick={() => {
                   navigate(`/dashboard?productId=${item.product_id}`);
                 }}
-                style={{ cursor: "pointer" }}
               >
                 <td className="checkbox-column" onClick={(e) => e.stopPropagation()}>
                   <input
@@ -142,14 +122,36 @@ export default function ProductListTable({
                     onClick={(e) => e.stopPropagation()}
                   />
                 </td>
-                <td style={{ textAlign: "center" }}>{formatDate(item)}</td>
-                <td className="product-cell" style={{ textAlign: "center" }}>
-                  {item.product_name || "-"}
+                <td className="text-center">{formatDate(item)}</td>
+                <td className="product-cell">
+                  <span
+                    className={item.has_dashboard_error === 1 ? "product-name-error" : ""}
+                  >
+                    {item.has_dashboard_error === 1 && (
+                      <svg
+                        className="warning-icon"
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                      </svg>
+                    )}
+                    {item.product_name || "-"}
+                  </span>
                 </td>
-                <td style={{ textAlign: "center" }}>
+                <td className="text-center">
                   {item.brand && item.brand.trim() !== "" ? item.brand : "-"}
                 </td>
-                <td style={{ textAlign: "center" }}>{getCategoryName(item.category_id)}</td>
+                <td className="text-center">{getCategoryName(item.category_id)}</td>
                 <td className="action-column" onClick={(e) => e.stopPropagation()}>
                   <div
                     className="meatballs-menu"

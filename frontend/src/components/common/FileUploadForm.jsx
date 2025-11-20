@@ -3,6 +3,7 @@ import PreviewModal from "./PreviewModal";
 import FileList from "./FileList";
 import { parseFile } from "../../utils/file/fileParser";
 import { validateFile } from "../../utils/file/fileValidation";
+import dashboardService from "../../services/dashboardService";
 import "../../styles/modal.css";
 import "./FileUploadForm.css";
 
@@ -12,19 +13,45 @@ import "./FileUploadForm.css";
  * @param {Object} props
  * @param {Function} props.onFilesReady - 매핑 완료된 파일들이 준비되었을 때 호출
  *   (files: Array<{ file: File, mapping: { reviewColumn, dateColumn, ratingColumn } }>) => void
+ * @param {number} props.productId - 제품 ID (업로드 시 필요)
+ * @param {Function} props.onUploadComplete - 업로드 완료 시 호출 (result) => void
+ * @param {Function} props.onUploadStart - 업로드 시작 시 호출 () => void
+ * @param {boolean} props.autoUpload - 파일 매핑 완료 시 자동 업로드 여부 (기본: false)
  * @param {boolean} props.disabled - 업로드 비활성화 여부
  */
-export default function FileUploadForm({ onFilesReady, disabled = false }) {
+export default function FileUploadForm({
+  onFilesReady,
+  productId,
+  onUploadComplete,
+  onUploadStart,
+  autoUpload = false,
+  disabled = false
+}) {
   const [mappedFiles, setMappedFiles] = useState([]); // [{ id, file, mapping, previewData }]
   const [previewFile, setPreviewFile] = useState(null);
   const [previewData, setPreviewData] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [progressMessage, setProgressMessage] = useState("");
+  const progressRef = useRef(0);
   const fileInputRef = useRef(null);
+
+  // productId가 설정되고 autoUpload가 true이며 파일이 있으면 자동 업로드
+  React.useEffect(() => {
+    if (autoUpload && productId && mappedFiles.length > 0 && !isUploading) {
+      const filesToUpload = mappedFiles.map((mf) => ({
+        file: mf.file,
+        mapping: mf.mapping,
+      }));
+      executeUpload(filesToUpload);
+    }
+  }, [productId]); // productId 변경 시에만 실행
 
   // 파일 읽기 및 Preview 표시
   const handleFileSelect = async (files) => {
     const fileArray = Array.isArray(files) ? files : Array.from(files);
-    
+
     if (fileArray.length === 0) return;
 
     // 첫 번째 파일만 Preview에 표시
@@ -68,14 +95,14 @@ export default function FileUploadForm({ onFilesReady, disabled = false }) {
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragOver(false);
-    if (disabled) return;
+    if (disabled || isUploading) return;
     const droppedFiles = e.dataTransfer.files;
     handleFileSelect(droppedFiles);
   };
 
   const handleDragOver = (e) => {
     e.preventDefault();
-    if (!disabled) setIsDragOver(true);
+    if (!disabled && !isUploading) setIsDragOver(true);
   };
 
   const handleDragLeave = (e) => {
@@ -84,12 +111,77 @@ export default function FileUploadForm({ onFilesReady, disabled = false }) {
   };
 
   const handleBrowseClick = () => {
-    if (disabled) return;
+    if (disabled || isUploading) return;
     fileInputRef.current?.click();
   };
 
+  // 업로드 실행
+  const executeUpload = async (filesToUpload) => {
+    if (!productId) {
+      console.error("productId가 필요합니다.");
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    setProgressMessage("파일 업로드 준비 중...");
+    progressRef.current = 0;
+
+    if (onUploadStart) {
+      onUploadStart();
+    }
+
+    try {
+      const progressCallback = (progress, message) => {
+        progressRef.current = progress;
+        setUploadProgress(progress);
+        if (message) {
+          setProgressMessage(message);
+        }
+      };
+
+      const uploadResult = await dashboardService.uploadReviewFiles(
+        productId,
+        filesToUpload,
+        progressCallback
+      );
+
+      // 진행도가 100%가 아니면 최대 5초 대기
+      if (progressRef.current < 100) {
+        let waitCount = 0;
+        const maxWait = 5;
+        while (progressRef.current < 100 && waitCount < maxWait) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          waitCount++;
+        }
+
+        if (progressRef.current < 100) {
+          progressRef.current = 100;
+          setUploadProgress(100);
+          setProgressMessage("처리 완료");
+        }
+      }
+
+      if (onUploadComplete) {
+        onUploadComplete(uploadResult);
+      }
+
+      return uploadResult;
+    } catch (error) {
+      console.error("업로드 오류:", error);
+      setProgressMessage("업로드 실패");
+      throw error;
+    } finally {
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadProgress(0);
+        setProgressMessage("");
+      }, 500);
+    }
+  };
+
   // Preview에서 확인 버튼 클릭 시
-  const handlePreviewConfirm = (mapping) => {
+  const handlePreviewConfirm = async (mapping) => {
     if (!previewFile || !previewData) return;
 
     // 매핑된 파일 목록에 추가
@@ -100,24 +192,31 @@ export default function FileUploadForm({ onFilesReady, disabled = false }) {
       previewData: previewData,
     };
 
-    setMappedFiles((prev) => [...prev, newMappedFile]);
+    const updatedMappedFiles = [...mappedFiles, newMappedFile];
+    setMappedFiles(updatedMappedFiles);
 
     // Preview 모달 닫기
     setPreviewFile(null);
     setPreviewData(null);
-    
+
     // 파일 입력 초기화
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
 
     // 부모 컴포넌트에 변경사항 알림
+    const filesToNotify = updatedMappedFiles.map((mf) => ({
+      file: mf.file,
+      mapping: mf.mapping,
+    }));
+
     if (onFilesReady) {
-      const allMappedFiles = [...mappedFiles, newMappedFile];
-      onFilesReady(allMappedFiles.map((mf) => ({
-        file: mf.file,
-        mapping: mf.mapping,
-      })));
+      onFilesReady(filesToNotify);
+    }
+
+    // 자동 업로드 모드이고 productId가 있으면 업로드 실행
+    if (autoUpload && productId) {
+      await executeUpload(filesToNotify);
     }
   };
 
@@ -153,7 +252,7 @@ export default function FileUploadForm({ onFilesReady, disabled = false }) {
   return (
     <>
       <div
-        className={`upload-dropzone ${isDragOver ? "drag-over" : ""} ${disabled ? "disabled" : ""}`}
+        className={`upload-dropzone ${isDragOver ? "drag-over" : ""} ${disabled || isUploading ? "disabled" : ""}`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -161,13 +260,13 @@ export default function FileUploadForm({ onFilesReady, disabled = false }) {
       >
         <p className="upload-text">Drop file or browse</p>
         <p className="upload-format-text">Format: Excel (.xlsx, .xls), CSV (.csv) only (최대 10MB, 최대 5개)</p>
-        <button 
-          className="browse-btn" 
-          onClick={(e) => { 
-            e.stopPropagation(); 
-            if (!disabled) handleBrowseClick(); 
+        <button
+          className="browse-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!disabled && !isUploading) handleBrowseClick();
           }}
-          disabled={disabled}
+          disabled={disabled || isUploading}
         >
           Browse
         </button>
@@ -179,15 +278,36 @@ export default function FileUploadForm({ onFilesReady, disabled = false }) {
           accept=".csv,.xlsx,.xls"
           onChange={(e) => handleFileSelect(e.target.files)}
           style={{ display: "none" }}
-          disabled={disabled}
+          disabled={disabled || isUploading}
         />
       </div>
+
+      {/* 업로드 진행도 표시 */}
+      {isUploading && (
+        <div className="upload-progress-container">
+          <div className="upload-progress-header">
+            <span className="upload-progress-text">
+              {progressMessage || "업로드 중..."}
+            </span>
+            <span className="upload-progress-percent">{uploadProgress}%</span>
+          </div>
+          <div className="upload-progress-bar">
+            <div
+              className="upload-progress-fill"
+              style={{ width: `${uploadProgress}%` }}
+            ></div>
+          </div>
+          <div className="upload-loading-spinner">
+            <div className="spinner"></div>
+          </div>
+        </div>
+      )}
 
       {/* 매핑 완료된 파일 목록 */}
       <FileList
         mappedFiles={mappedFiles}
         onDelete={handleDeleteFile}
-        disabled={disabled}
+        disabled={disabled || isUploading}
       />
 
       {/* Preview 모달 */}
@@ -205,4 +325,5 @@ export default function FileUploadForm({ onFilesReady, disabled = false }) {
 
 // 외부에서 사용할 수 있도록 유틸리티 함수 export
 export { FileUploadForm };
+
 

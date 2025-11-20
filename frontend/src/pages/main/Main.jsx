@@ -11,6 +11,7 @@ function Main() {
   const { isAuthenticated, loading: userLoading } = useUser();
   const heroRef = useRef(null);
   const previewRef = useRef(null);
+  const marketingRef = useRef(null);
   const priceRef = useRef(null);
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -19,6 +20,19 @@ function Main() {
   const [showControls, setShowControls] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const controlsTimeoutRef = useRef(null);
+  // 재생/정지 토글
+  const togglePlay = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (video.paused || video.ended) {
+      video.play();
+      setIsPlaying(true);
+    } else {
+      video.pause();
+      setIsPlaying(false);
+    }
+  };
 
   // 이미 로그인된 사용자가 메인 페이지에 접근하면 워크플레이스로 리다이렉트
   // 단, 로딩이 완전히 끝나고 실제로 인증된 상태일 때만 리다이렉트
@@ -30,11 +44,11 @@ function Main() {
       const token = sessionStorage.getItem("token");
       if (token) {
         try {
-          const payload = JSON.parse(atob(token.split('.')[1]));
+          const payload = JSON.parse(atob(token.split(".")[1]));
           const exp = payload.exp * 1000;
           // 토큰이 만료되지 않았을 때만 리다이렉트
           if (Date.now() < exp) {
-            navigate('/wp', { replace: true });
+            navigate("/wp", { replace: true });
           }
         } catch (error) {
           // 토큰 파싱 실패 시 리다이렉트하지 않음
@@ -65,14 +79,14 @@ function Main() {
       setDuration(video.duration);
     };
 
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    video.addEventListener('loadedmetadata', handleLoadedMetadata);
-    video.addEventListener('durationchange', handleDurationChange);
+    video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("loadedmetadata", handleLoadedMetadata);
+    video.addEventListener("durationchange", handleDurationChange);
 
     return () => {
-      video.removeEventListener('timeupdate', handleTimeUpdate);
-      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      video.removeEventListener('durationchange', handleDurationChange);
+      video.removeEventListener("timeupdate", handleTimeUpdate);
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      video.removeEventListener("durationchange", handleDurationChange);
     };
   }, []);
 
@@ -100,10 +114,10 @@ function Main() {
 
   // 시간 포맷팅 함수
   const formatTime = (seconds) => {
-    if (isNaN(seconds)) return '0:00';
+    if (isNaN(seconds)) return "0:00";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   // 타임라인 클릭/드래그 핸들러
@@ -129,14 +143,14 @@ function Main() {
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (!isDragging) return;
-      const timeline = document.querySelector('.video-timeline');
+      const timeline = document.querySelector(".video-timeline");
       if (!timeline) return;
-      
+
       const rect = timeline.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
       const percentage = Math.max(0, Math.min(1, clickX / rect.width));
       const newTime = percentage * duration;
-      
+
       if (videoRef.current) {
         videoRef.current.currentTime = newTime;
         setCurrentTime(newTime);
@@ -148,13 +162,13 @@ function Main() {
     };
 
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
     }
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging, duration]);
 
@@ -172,10 +186,19 @@ function Main() {
       <header className="main-header">
         <nav className="nav-buttons">
           <button onClick={() => smoothScrollTo(heroRef.current)}>홈</button>
-          <button onClick={() => smoothScrollTo(previewRef.current)}>시연영상</button>
-          <button onClick={() => smoothScrollTo(priceRef.current)}>요금제</button>
+          <button onClick={() => smoothScrollTo(marketingRef.current)}>
+            기능 소개
+          </button>
+          <button onClick={() => smoothScrollTo(previewRef.current)}>
+            시연영상
+          </button>
+          <button onClick={() => smoothScrollTo(priceRef.current)}>
+            요금제
+          </button>
           <span className="nav-divider"></span>
-          <button className="login-btn" onClick={() => navigate("/login")}>로그인</button>
+          <button className="login-btn" onClick={() => navigate("/login")}>
+            로그인
+          </button>
         </nav>
       </header>
 
@@ -190,23 +213,87 @@ function Main() {
           리뷰 분석 자동화 플랫폼, <strong>꿰뚫어뷰</strong>와 함께하세요.
         </p>
         <p className="hero-description">
-          AI 리뷰 분석은 고객이 진짜로 원하는 것을 찾아내는 가장 빠른 방법입니다.<br />
-          숨은 불만과 강점을 파악해, 제품 전략과 마케팅 방향을 개선할 수 있습니다.<br />
+          AI 리뷰 분석은 고객이 진짜로 원하는 것을 찾아내는 가장 빠른
+          방법입니다.
+          <br />
+          숨은 불만과 강점을 파악해, 제품 전략과 마케팅 방향을 개선할 수
+          있습니다.
+          <br />
           데이터에서 행동으로, 인사이트를 실행으로 바꾸세요
         </p>
       </section>
+      {/* ===================== MARKETING PROMO SECTION ===================== */}
+      <section className="marketing-wrapper" ref={marketingRef}>
+        <h2 className="section-title">기능 소개</h2>
 
+        <div className="marketing-section">
+          <div className="marketing-box">
+            <img
+              src="./images/analysis.png"
+              alt="자동 분석 정확성 강조사진"
+              className="marketing-pic"
+            />
+            <h3>자동 분석 정확도 강조</h3>
+            <p className="highlight">
+              “리뷰 수만 건도 한 번에 분석해, 고객이 진짜로 불편해하는 지점을
+              정확하게 찾아냅니다.”
+            </p>
+            <ul>
+              <li>– 부정 키워드·감정 패턴 자동 탐지</li>
+              <li>– 반복되는 불만 우선순위 정렬</li>
+              <li>– 경쟁사 대비 강점/약점 도출</li>
+            </ul>
+          </div>
+
+          <div className="marketing-box">
+            <img
+              src="./images/action-guide.png"
+              alt="인사이트를 실행 가능한 결과 강조사진"
+              className="marketing-pic"
+            />
+            <h3>인사이트를 실행 가능한 결과로</h3>
+            <p className="highlight">
+              “흩어진 리뷰를 정리하는 것만이 아니라, 바로 실행 가능한 행동
+              가이드를 제공합니다.”
+            </p>
+            <ul>
+              <li>– 제품 개선 포인트 자동 제안</li>
+              <li>– 마케팅 메시지 추천</li>
+              <li>– UX 개선 힌트 제공</li>
+            </ul>
+          </div>
+
+          <div className="marketing-box">
+            <img
+              src="./images/dashboard.png"
+              alt="데이터 기반 의사결정 속도 향상 강조사진"
+              className="marketing-pic"
+            />
+            <h3>데이터 기반 의사결정 속도 향상</h3>
+            <p className="highlight">
+              “감에 의존하던 결정을 데이터 기반으로 바꿔, 팀의 대응 속도와
+              효율을 높입니다.”
+            </p>
+            <ul>
+              <li>– 실시간 대시보드 변화 추적</li>
+              <li>– 감정 비율 시각화</li>
+              <li>– 주요 이슈·트렌드 자동 알림</li>
+            </ul>
+          </div>
+        </div>
+      </section>
       {/* ===================== PREVIEW SECTION ===================== */}
       <section className="preview" ref={previewRef}>
         <h2 className="section-title">서비스 시연</h2>
         <div className="preview-video">
           <div className="video-wrapper">
-            <video 
+            <video
               ref={videoRef}
-              muted 
-              loop
+              muted
+              // loop //무한재생 기능
               controls={false}
               controlsList="nodownload"
+              onClick={togglePlay} // ✅ 영상 영역 클릭으로도 재생/정지
               onContextMenu={(e) => e.preventDefault()}
               onPlay={() => {
                 setIsPlaying(true);
@@ -217,12 +304,14 @@ function Main() {
                 setShowControls(true);
               }}
               onMouseEnter={() => {
+                setIsHovered(true);
                 setShowControls(true);
                 if (controlsTimeoutRef.current) {
                   clearTimeout(controlsTimeoutRef.current);
                 }
               }}
               onMouseLeave={() => {
+                setIsHovered(false);
                 if (isPlaying && !isDragging) {
                   controlsTimeoutRef.current = setTimeout(() => {
                     setShowControls(false);
@@ -234,7 +323,7 @@ function Main() {
               브라우저가 비디오 태그를 지원하지 않습니다.
             </video>
             {!isPlaying && (
-              <button 
+              <button
                 className="video-play-button"
                 onClick={() => {
                   videoRef.current?.play();
@@ -242,13 +331,23 @@ function Main() {
                 }}
                 aria-label="재생"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="64" height="64">
-                  <path d="M8 5v14l11-7z"/>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="white"
+                  width="64"
+                  height="64"
+                >
+                  <path d="M8 5v14l11-7z" />
                 </svg>
               </button>
             )}
             {/* 커스텀 비디오 컨트롤러 */}
-            <div className={`video-controls ${showControls || !isPlaying ? 'show' : 'hide'}`}>
+            <div
+              className={`video-controls ${
+                showControls || !isPlaying ? "show" : "hide"
+              }`}
+            >
               <div className="video-controls-top">
                 <button
                   className="video-control-btn"
@@ -264,30 +363,52 @@ function Main() {
                   aria-label={isPlaying ? "일시정지" : "재생"}
                 >
                   {isPlaying ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="24" height="24">
-                      <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="white"
+                      width="24"
+                      height="24"
+                    >
+                      <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
                     </svg>
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="24" height="24">
-                      <path d="M8 5v14l11-7z"/>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="white"
+                      width="24"
+                      height="24"
+                    >
+                      <path d="M8 5v14l11-7z" />
                     </svg>
                   )}
                 </button>
-                <span className="video-time">{formatTime(currentTime)} / {formatTime(duration)}</span>
+                <span className="video-time">
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </span>
               </div>
               {/* 타임라인 (프로그레스 바) */}
-              <div 
-                className="video-timeline" 
+              <div
+                className="video-timeline"
                 onClick={handleTimelineClick}
                 onMouseDown={handleTimelineMouseDown}
               >
-                <div 
-                  className="video-timeline-progress" 
-                  style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+                <div
+                  className="video-timeline-progress"
+                  style={{
+                    width: `${
+                      duration > 0 ? (currentTime / duration) * 100 : 0
+                    }%`,
+                  }}
                 ></div>
-                <div 
+                <div
                   className="video-timeline-handle"
-                  style={{ left: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+                  style={{
+                    left: `${
+                      duration > 0 ? (currentTime / duration) * 100 : 0
+                    }%`,
+                  }}
                 ></div>
               </div>
             </div>
@@ -344,4 +465,3 @@ function Main() {
 }
 
 export default Main;
-

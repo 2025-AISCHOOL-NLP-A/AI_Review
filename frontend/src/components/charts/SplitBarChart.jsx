@@ -23,11 +23,19 @@ Chart.register(
 const SplitBarChart = ({ data, loading }) => {
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
+  const containerRef = useRef(null);
 
-  // Color constants
-  const primaryColor = "#5B8EFF";
-  const negativeColor = "#D8B4FE"; // 부정 비율 (매우 연한 보라색) - 모든 차트와 일관성 유지
-  const fontColor = "#333333";
+  // Get colors from CSS variables
+  const getColors = () => {
+    const root = containerRef.current || document.documentElement;
+    return {
+      primaryColor: getComputedStyle(root).getPropertyValue('--chart-primary-color').trim() || '#6F98FF',
+      primaryHover: getComputedStyle(root).getPropertyValue('--chart-primary-hover').trim() || '#587FE6',
+      neutralColor: getComputedStyle(root).getPropertyValue('--chart-neutral-color').trim() || '#FFC577',
+      neutralHover: getComputedStyle(root).getPropertyValue('--chart-neutral-hover').trim() || '#F3B96B',
+      textColor: getComputedStyle(root).getPropertyValue('--chart-text-color').trim() || '#6B7280',
+    };
+  };
 
   useEffect(() => {
     if (loading || !data || data.length === 0) {
@@ -56,6 +64,7 @@ const SplitBarChart = ({ data, loading }) => {
         ) {
           const ctx = chartRef.current.getContext("2d");
           if (ctx) {
+            const colors = getColors();
             const labels = data.map((d) => d.keyword);
             const negativeCounts = data.map((d) => d.negative_count);
             const positiveCounts = data.map((d) => d.positive_count);
@@ -68,14 +77,16 @@ const SplitBarChart = ({ data, loading }) => {
                   {
                     label: "부정",
                     data: negativeCounts,
-                    backgroundColor: negativeColor,
+                    backgroundColor: colors.neutralColor,
+                    hoverBackgroundColor: colors.neutralHover,
                     barPercentage: 0.7,
                     stack: "sentiment",
                   },
                   {
                     label: "긍정",
                     data: positiveCounts,
-                    backgroundColor: primaryColor,
+                    backgroundColor: colors.primaryColor,
+                    hoverBackgroundColor: colors.primaryHover,
                     barPercentage: 0.7,
                     stack: "sentiment",
                   },
@@ -88,8 +99,8 @@ const SplitBarChart = ({ data, loading }) => {
                 plugins: {
                   legend: {
                     position: "top",
-                    labels: { color: fontColor },
-                    onClick: () => {}, // 범례 클릭 시 데이터셋 숨김 기능 비활성화
+                    labels: { color: colors.textColor },
+                    onClick: () => { }, // 범례 클릭 시 데이터셋 숨김 기능 비활성화
                   },
                   tooltip: {
                     callbacks: {
@@ -122,7 +133,7 @@ const SplitBarChart = ({ data, loading }) => {
                       callback: function (value) {
                         return Number(value).toLocaleString();
                       },
-                      color: fontColor,
+                      color: colors.textColor,
                     },
                     title: {
                       display: true,
@@ -132,7 +143,7 @@ const SplitBarChart = ({ data, loading }) => {
                   y: {
                     stacked: true,
                     grid: { display: false },
-                    ticks: { color: fontColor },
+                    ticks: { color: colors.textColor },
                   },
                 },
               },
@@ -180,7 +191,7 @@ const SplitBarChart = ({ data, loading }) => {
   }
 
   return (
-    <div className="splitbar-chart-container">
+    <div ref={containerRef} className="splitbar-chart-container">
       <canvas ref={chartRef} className="splitbar-chart-canvas"></canvas>
     </div>
   );

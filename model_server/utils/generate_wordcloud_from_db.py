@@ -70,7 +70,7 @@ def load_stopwords(domain="steam", debug=False):
 # ======================================
 # 🔹 워드클라우드 생성 함수
 # ======================================
-def generate_wordcloud_from_db(product_id: int, domain="steam"):
+def generate_wordcloud_from_db(product_id: int, domain="steam", start_date: str = None, end_date: str = None):
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -82,9 +82,19 @@ def generate_wordcloud_from_db(product_id: int, domain="steam"):
     product_name = product_info["product_name"] if product_info else None
     brand = product_info["brand"] if product_info else None
 
-    # 1️⃣ 리뷰 불러오기
+    # 1️⃣ 리뷰 불러오기 (기간 필터 적용)
+    where_clause = "WHERE product_id = %s"
+    params = [product_id]
+    if start_date:
+        where_clause += " AND DATE(review_date) >= %s"
+        params.append(start_date)
+    if end_date:
+        where_clause += " AND DATE(review_date) <= %s"
+        params.append(end_date)
+
     cursor.execute(
-        "SELECT review_text FROM tb_review WHERE product_id = %s", (product_id,)
+        f"SELECT review_text FROM tb_review {where_clause}",
+        tuple(params),
     )
     reviews = [r["review_text"] for r in cursor.fetchall() if r["review_text"]]
 
@@ -269,8 +279,14 @@ def generate_wordcloud_from_db(product_id: int, domain="steam"):
 
     os.makedirs(static_dir, exist_ok=True)
 
-    save_path = os.path.join(static_dir, f"product_{product_id}_wc.png")
-    public_path = f"/static/wordclouds/product_{product_id}_wc.png"
+    suffix = ""
+    if start_date or end_date:
+        start_token = start_date.replace("-", "") if start_date else "start"
+        end_token = end_date.replace("-", "") if end_date else "end"
+        suffix = f"_{start_token}_{end_token}"
+
+    save_path = os.path.join(static_dir, f"product_{product_id}_wc{suffix}.png")
+    public_path = f"/static/wordclouds/product_{product_id}_wc{suffix}.png"
 
     # 폰트 경로 설정 (utils/font 폴더의 폰트 사용)
     font_dir = os.path.join(current_dir, "font")
@@ -287,15 +303,17 @@ def generate_wordcloud_from_db(product_id: int, domain="steam"):
     wc.to_file(save_path)
 
     # 7️⃣ DB 경로 업데이트
-    cursor.execute(
-        """
-        UPDATE tb_productDashboard
-        SET wordcloud_path = %s
-        WHERE product_id = %s
-    """,
-        (public_path, product_id),
-    )
-    conn.commit()
+    # 대시보드 테이블 업데이트는 전체 기간 기본 경로일 때만 수행 (기간 필터 시에는 파일만 생성)
+    if not start_date and not end_date:
+        cursor.execute(
+            """
+            UPDATE tb_productDashboard
+            SET wordcloud_path = %s
+            WHERE product_id = %s
+        """,
+            (public_path, product_id),
+        )
+        conn.commit()
     conn.close()
     return public_path
 

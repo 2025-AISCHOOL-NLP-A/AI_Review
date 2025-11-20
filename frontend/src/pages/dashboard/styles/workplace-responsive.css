@@ -1,0 +1,64 @@
+/* ========================================
+   Workplace Responsive Styles
+   ======================================== */
+
+/* ===== 반응형 디자인 ===== */
+@media (max-width: 1200px) {
+  .workplace-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .workplace-filters > * {
+    width: 100%;
+  }
+
+  .filters-left {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .date-filter-container {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .date-input {
+    flex: 1;
+  }
+}
+
+@media (max-width: 1024px) {
+  .workplace-container {
+    padding: 1rem;
+  }
+
+  .workplace-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .workplace-table {
+    min-width: 600px;
+  }
+
+  .workplace-filters {
+    width: 100%;
+  }
+
+  .workplace-footer {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .workplace-footer .pagination {
+    grid-column: 1;
+    justify-self: center;
+  }
+
+  .workplace-footer .action-buttons {
+    grid-column: 1;
+    justify-self: center;
+  }
+}
+

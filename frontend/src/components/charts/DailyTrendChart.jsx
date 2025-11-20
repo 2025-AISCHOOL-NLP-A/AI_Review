@@ -16,7 +16,7 @@ const hexToRgba = (hex, alpha = 1) => {
 // Vanishing 애니메이션 함수
 function animateOpacity(dataset, chart, start, end) {
   const duration = 400;
-  const frameRate = 1000 / 60; 
+  const frameRate = 1000 / 60;
   const totalFrames = duration / frameRate;
   let frame = 0;
 
@@ -85,8 +85,8 @@ const DailyTrendChart = ({ data, loading }) => {
       const colors = getChartColors(containerRef.current);
       const primaryColor = colors.primary;
       const neutralColor = colors.neutral;
-      const newReviewColor = colors.newReview;
-      const fontColor = colors.font;
+      const lineColor = colors.lineColor;
+      const textColor = colors.textColor;
 
       try {
         // 데이터 검증 및 준비
@@ -112,264 +112,264 @@ const DailyTrendChart = ({ data, loading }) => {
 
         // 배열 길이 맞추기 (모든 배열을 dates 길이에 맞춤)
         const targetLength = chartData.dates.length;
-        const paddedPositive = chartData.positive.length < targetLength 
-          ? [...chartData.positive, ...new Array(targetLength - chartData.positive.length).fill(0)] 
+        const paddedPositive = chartData.positive.length < targetLength
+          ? [...chartData.positive, ...new Array(targetLength - chartData.positive.length).fill(0)]
           : chartData.positive.slice(0, targetLength);
-        const paddedNegative = chartData.negative.length < targetLength 
-          ? [...chartData.negative, ...new Array(targetLength - chartData.negative.length).fill(0)] 
+        const paddedNegative = chartData.negative.length < targetLength
+          ? [...chartData.negative, ...new Array(targetLength - chartData.negative.length).fill(0)]
           : chartData.negative.slice(0, targetLength);
-        const paddedNewReviews = chartData.newReviews.length < targetLength 
-          ? [...chartData.newReviews, ...new Array(targetLength - chartData.newReviews.length).fill(0)] 
+        const paddedNewReviews = chartData.newReviews.length < targetLength
+          ? [...chartData.newReviews, ...new Array(targetLength - chartData.newReviews.length).fill(0)]
           : chartData.newReviews.slice(0, targetLength);
 
         // 차트 생성
         chartInstance.current = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: chartData.dates,
-          datasets: [
-            {
-              label: "긍정 비율 (%)",
-              data: paddedPositive,
-              backgroundColor: primaryColor,
-              yAxisID: "y",
-              order: 2, // 막대는 아래쪽 (큰 order 값)
-            },
-            {
-              label: "부정 비율 및 기타 (%)",
-              data: paddedNegative,
-              backgroundColor: neutralColor,
-              yAxisID: "y",
-              order: 2, // 막대는 아래쪽 (큰 order 값)
-            },
-            {
-              type: "line",
-              label: "해당일 신규 리뷰 수 (건수)",
-              data: paddedNewReviews,
-              borderColor: newReviewColor,
-              borderWidth: 3, // 선 두께 증가로 더 잘 보이게
-              pointBackgroundColor: newReviewColor,
-              pointRadius: 4, // 포인트 크기 증가
-              pointHoverRadius: 6, // 호버 시 포인트 크기 증가
-              pointBorderWidth: 2, // 포인트 테두리 두께
-              pointBorderColor: newReviewColor, // 포인트 테두리도 원본 색상 사용
-              yAxisID: "y1",
-              fill: false,
-              tension: 0.3,
-              order: 1, // 선은 위쪽 (작은 order 값) - order가 작을수록 위에 표시됨
-              pointStyle: 'line', // 범례 아이콘을 선으로 표시
-              // 애니메이션용 원본 색상 저장
-              _originalColor: newReviewColor,
-              // 현재 선의 투명도 (0~1)
-              _opacity: 1,
-              // segment를 사용하여 렌더링 시점에 opacity 조절
-              segment: {
-                borderColor: (ctx) => {
-                  const ds = ctx.chart.data.datasets[2];
-                  const color = ds._originalColor || newReviewColor;
-                  
-                  return hexToRgba(color, ds._opacity || 1); // _opacity 사용
-                },
-                backgroundColor: (ctx) => {
-                  const ds = ctx.chart.data.datasets[2];
-                  const color = ds._originalColor || newReviewColor;
-                  
-                  return hexToRgba(color, ds._opacity || 1); // _opacity 사용
+          type: "bar",
+          data: {
+            labels: chartData.dates,
+            datasets: [
+              {
+                label: "긍정 비율 (%)",
+                data: paddedPositive,
+                backgroundColor: primaryColor,
+                yAxisID: "y",
+                order: 2, // 막대는 아래쪽 (큰 order 값)
+              },
+              {
+                label: "부정 비율 및 기타 (%)",
+                data: paddedNegative,
+                backgroundColor: neutralColor,
+                yAxisID: "y",
+                order: 2, // 막대는 아래쪽 (큰 order 값)
+              },
+              {
+                type: "line",
+                label: "해당일 신규 리뷰 수 (건수)",
+                data: paddedNewReviews,
+                borderColor: lineColor,
+                borderWidth: 3, // 선 두께 증가로 더 잘 보이게
+                pointBackgroundColor: lineColor,
+                pointRadius: 4, // 포인트 크기 증가
+                pointHoverRadius: 6, // 호버 시 포인트 크기 증가
+                pointBorderWidth: 2, // 포인트 테두리 두께
+                pointBorderColor: lineColor, // 포인트 테두리도 원본 색상 사용
+                yAxisID: "y1",
+                fill: false,
+                tension: 0.3,
+                order: 1, // 선은 위쪽 (작은 order 값) - order가 작을수록 위에 표시됨
+                pointStyle: 'line', // 범례 아이콘을 선으로 표시
+                // 애니메이션용 원본 색상 저장
+                _originalColor: lineColor,
+                // 현재 선의 투명도 (0~1)
+                _opacity: 1,
+                // segment를 사용하여 렌더링 시점에 opacity 조절
+                segment: {
+                  borderColor: (ctx) => {
+                    const ds = ctx.chart.data.datasets[2];
+                    const color = ds._originalColor || lineColor;
+
+                    return hexToRgba(color, ds._opacity || 1); // _opacity 사용
+                  },
+                  backgroundColor: (ctx) => {
+                    const ds = ctx.chart.data.datasets[2];
+                    const color = ds._originalColor || lineColor;
+
+                    return hexToRgba(color, ds._opacity || 1); // _opacity 사용
+                  },
                 },
               },
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          aspectRatio: chartData.dates.length > 10 ? 2 : 1.5,
-          layout: {
-            padding: {
-              top: 20,
-            },
+            ],
           },
-          plugins: {
-            legend: {
-              position: "top",
-              onClick: (e, legendItem, legend) => {
-                // 범례 클릭 시 애니메이션과 함께 업데이트 (페이드아웃 효과)
-                const index = legendItem.datasetIndex;
-                
-                // 선 그래프(인덱스 2)만 페이드아웃 효과 적용
-                if (index === 2) {
-                  const chart = legend.chart;
-                  const meta = chart.getDatasetMeta(index);
-                  const dataset = chart.data.datasets[index];
-                  
-                  if (meta && dataset) {
-                    // CSS 변수에서 원본 색상 가져오기
-                    const colors = getChartColors(containerRef.current);
-                    const originalHexColor = colors.newReview || newReviewColor;
-                    
-                    // 원본 색상 저장 (항상 hex 형식)
-                    dataset._originalColor = originalHexColor;
-                    
-                    // 현재 숨김 상태 확인
-                    const hidden = !meta.hidden;
-                    meta.hidden = hidden;
-                    
-                    // 애니메이션 위한 opacity 설정
-                    if (hidden) {
-                      // 사라질 때 → 1 → 0
-                      dataset._opacity = 1;
-                      animateOpacity(dataset, chart, 1, 0);
-                    } else {
-                      // 나타날 때 → 0 → 1
-                      dataset._opacity = 0;
-                      animateOpacity(dataset, chart, 0, 1);
-                    }
-                  }
-                } else {
-                  // 다른 데이터셋은 기본 동작 사용
-                  const chart = legend.chart;
-                  const meta = chart.getDatasetMeta(index);
-                  if (meta) {
-                    meta.hidden = !meta.hidden;
-                    chart.update('active');
-                  }
-                }
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            aspectRatio: chartData.dates.length > 10 ? 2 : 1.5,
+            layout: {
+              padding: {
+                top: 20,
               },
-              labels: { 
-                color: fontColor,
-                generateLabels: (chart) => {
-                  // Chart.js의 기본 범례 라벨 생성 함수 사용
-                  const labels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
-                  
-                  // 각 라벨에 대해 데이터셋 타입에 맞게 스타일 조정
-                  labels.forEach((label) => {
-                    const datasetIndex = label.datasetIndex;
-                    if (datasetIndex !== undefined) {
-                      const dataset = chart.data.datasets[datasetIndex];
-                      
-                      // 선 차트인 경우 legend 색상은 항상 _originalColor 사용
-                      if (dataset && dataset.type === 'line') {
-                        const originalColor = dataset._originalColor || dataset.borderColor;
-                        
-                        label.fillStyle = 'transparent';
-                        label.strokeStyle = originalColor;  // 항상 HEX 적용
-                        label.lineWidth = dataset.borderWidth || 3;
-                        label.pointStyle = 'line';
-                        label.usePointStyle = true;
+            },
+            plugins: {
+              legend: {
+                position: "top",
+                onClick: (e, legendItem, legend) => {
+                  // 범례 클릭 시 애니메이션과 함께 업데이트 (페이드아웃 효과)
+                  const index = legendItem.datasetIndex;
+
+                  // 선 그래프(인덱스 2)만 페이드아웃 효과 적용
+                  if (index === 2) {
+                    const chart = legend.chart;
+                    const meta = chart.getDatasetMeta(index);
+                    const dataset = chart.data.datasets[index];
+
+                    if (meta && dataset) {
+                      // CSS 변수에서 원본 색상 가져오기
+                      const colors = getChartColors(containerRef.current);
+                      const originalHexColor = colors.lineColor;
+
+                      // 원본 색상 저장 (항상 hex 형식)
+                      dataset._originalColor = originalHexColor;
+
+                      // 현재 숨김 상태 확인
+                      const hidden = !meta.hidden;
+                      meta.hidden = hidden;
+
+                      // 애니메이션 위한 opacity 설정
+                      if (hidden) {
+                        // 사라질 때 → 1 → 0
+                        dataset._opacity = 1;
+                        animateOpacity(dataset, chart, 1, 0);
                       } else {
-                        label.usePointStyle = false;
+                        // 나타날 때 → 0 → 1
+                        dataset._opacity = 0;
+                        animateOpacity(dataset, chart, 0, 1);
                       }
                     }
-                  });
-                  
-                  return labels;
+                  } else {
+                    // 다른 데이터셋은 기본 동작 사용
+                    const chart = legend.chart;
+                    const meta = chart.getDatasetMeta(index);
+                    if (meta) {
+                      meta.hidden = !meta.hidden;
+                      chart.update('active');
+                    }
+                  }
+                },
+                labels: {
+                  color: textColor,
+                  generateLabels: (chart) => {
+                    // Chart.js의 기본 범례 라벨 생성 함수 사용
+                    const labels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+
+                    // 각 라벨에 대해 데이터셋 타입에 맞게 스타일 조정
+                    labels.forEach((label) => {
+                      const datasetIndex = label.datasetIndex;
+                      if (datasetIndex !== undefined) {
+                        const dataset = chart.data.datasets[datasetIndex];
+
+                        // 선 차트인 경우 legend 색상은 항상 _originalColor 사용
+                        if (dataset && dataset.type === 'line') {
+                          const originalColor = dataset._originalColor || dataset.borderColor;
+
+                          label.fillStyle = 'transparent';
+                          label.strokeStyle = originalColor;  // 항상 HEX 적용
+                          label.lineWidth = dataset.borderWidth || 3;
+                          label.pointStyle = 'line';
+                          label.usePointStyle = true;
+                        } else {
+                          label.usePointStyle = false;
+                        }
+                      }
+                    });
+
+                    return labels;
+                  },
+                },
+              },
+              tooltip: {
+                mode: "index",
+                intersect: false,
+              },
+            },
+            // 선 차트가 바 차트 위에 그려지도록 설정
+            interaction: {
+              mode: 'index',
+              intersect: false,
+            },
+            // 애니메이션 설정 - 페이드아웃 효과 (위치 변경 없이 opacity만 조절)
+            animations: {
+              // 전체 애니메이션 비활성화 (위치 이동 방지)
+              x: false,
+              y: false,
+              // opacity 애니메이션만 사용
+              opacity: {
+                duration: 400,
+                easing: 'easeOutQuart',
+              },
+            },
+            animation: {
+              duration: 400, // 애니메이션 지속 시간 (ms)
+              easing: 'easeOutQuart', // 페이드아웃에 적합한 이징 함수
+              // 위치 애니메이션 비활성화
+              x: false,
+              y: false,
+              onStart: (animation) => {
+                // 애니메이션 시작 전 원본 색상 확실하게 저장
+                const chart = animation.chart;
+                const lineDataset = chart.data.datasets[2];
+
+                if (lineDataset) {
+                  // CSS 변수에서 항상 최신 원본 색상 가져오기
+                  const colors = getChartColors(containerRef.current);
+                  const originalHexColor = colors.lineColor;
+
+                  // _originalColor가 없거나 rgba로 변환된 경우 원본 hex로 저장
+                  if (!lineDataset._originalColor ||
+                    (typeof lineDataset._originalColor === 'string' && lineDataset._originalColor.startsWith('rgba'))) {
+                    lineDataset._originalColor = originalHexColor;
+                  }
+                }
+              },
+              // onProgress와 onComplete 제거 - segment.borderColor가 렌더링 시점에 처리
+            },
+            elements: {
+              line: {
+                borderWidth: 3,
+                borderJoinStyle: 'round',
+                borderCapStyle: 'round',
+              },
+              point: {
+                radius: 4,
+                hoverRadius: 6,
+                borderWidth: 2,
+                // 포인트도 segment와 동일한 방식으로 처리
+                backgroundColor: (ctx) => {
+                  const ds = ctx.chart.data.datasets[2];
+                  const color = ds._originalColor || lineColor;
+
+                  return hexToRgba(color, ds._opacity || 1); // _opacity 사용
+                },
+                borderColor: (ctx) => {
+                  const ds = ctx.chart.data.datasets[2];
+                  const color = ds._originalColor || lineColor;
+
+                  return hexToRgba(color, ds._opacity || 1); // _opacity 사용
                 },
               },
             },
-            tooltip: {
-              mode: "index",
-              intersect: false,
-            },
-          },
-          // 선 차트가 바 차트 위에 그려지도록 설정
-          interaction: {
-            mode: 'index',
-            intersect: false,
-          },
-          // 애니메이션 설정 - 페이드아웃 효과 (위치 변경 없이 opacity만 조절)
-          animations: {
-            // 전체 애니메이션 비활성화 (위치 이동 방지)
-            x: false,
-            y: false,
-            // opacity 애니메이션만 사용
-            opacity: {
-              duration: 400,
-              easing: 'easeOutQuart',
-            },
-          },
-          animation: {
-            duration: 400, // 애니메이션 지속 시간 (ms)
-            easing: 'easeOutQuart', // 페이드아웃에 적합한 이징 함수
-            // 위치 애니메이션 비활성화
-            x: false,
-            y: false,
-            onStart: (animation) => {
-              // 애니메이션 시작 전 원본 색상 확실하게 저장
-              const chart = animation.chart;
-              const lineDataset = chart.data.datasets[2];
-              
-              if (lineDataset) {
-                // CSS 변수에서 항상 최신 원본 색상 가져오기
-                const colors = getChartColors(containerRef.current);
-                const originalHexColor = colors.newReview || newReviewColor;
-                
-                // _originalColor가 없거나 rgba로 변환된 경우 원본 hex로 저장
-                if (!lineDataset._originalColor || 
-                    (typeof lineDataset._originalColor === 'string' && lineDataset._originalColor.startsWith('rgba'))) {
-                  lineDataset._originalColor = originalHexColor;
-                }
-              }
-            },
-            // onProgress와 onComplete 제거 - segment.borderColor가 렌더링 시점에 처리
-          },
-          elements: {
-            line: {
-              borderWidth: 3,
-              borderJoinStyle: 'round',
-              borderCapStyle: 'round',
-            },
-            point: {
-              radius: 4,
-              hoverRadius: 6,
-              borderWidth: 2,
-              // 포인트도 segment와 동일한 방식으로 처리
-              backgroundColor: (ctx) => {
-                const ds = ctx.chart.data.datasets[2];
-                const color = ds._originalColor || newReviewColor;
-                
-                return hexToRgba(color, ds._opacity || 1); // _opacity 사용
+            scales: {
+              x: {
+                stacked: false,
+                grid: { display: false },
+                ticks: {
+                  padding: 10,
+                  maxTicksLimit: undefined, // 제한 제거 - 전체 데이터 표시
+                  color: textColor,
+                },
               },
-              borderColor: (ctx) => {
-                const ds = ctx.chart.data.datasets[2];
-                const color = ds._originalColor || newReviewColor;
-                
-                return hexToRgba(color, ds._opacity || 1); // _opacity 사용
+              y: {
+                stacked: false,
+                position: "left",
+                title: {
+                  display: true,
+                  text: "비율 (%)",
+                  color: primaryColor,
+                },
+                max: 100,
+                ticks: { color: primaryColor },
+              },
+              y1: {
+                position: "right",
+                title: {
+                  display: true,
+                  text: "신규 리뷰 수 (건수)",
+                  color: lineColor,
+                },
+                grid: { drawOnChartArea: false },
+                ticks: { color: lineColor },
               },
             },
           },
-          scales: {
-            x: {
-              stacked: false,
-              grid: { display: false },
-              ticks: {
-                padding: 10,
-                maxTicksLimit: undefined, // 제한 제거 - 전체 데이터 표시
-                color: fontColor,
-              },
-            },
-            y: {
-              stacked: false,
-              position: "left",
-              title: {
-                display: true,
-                text: "비율 (%)",
-                color: primaryColor,
-              },
-              max: 100,
-              ticks: { color: primaryColor },
-            },
-            y1: {
-              position: "right",
-              title: {
-                display: true,
-                text: "신규 리뷰 수 (건수)",
-                color: newReviewColor,
-              },
-              grid: { drawOnChartArea: false },
-              ticks: { color: newReviewColor },
-            },
-          },
-        },
         });
 
         // 차트 업데이트 및 리사이즈 강제 실행

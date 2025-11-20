@@ -3,7 +3,7 @@ import Sidebar from "../../components/layout/sidebar/Sidebar";
 import Footer from "../../components/layout/Footer/Footer";
 import "./dashboard.css";
 import "../../components/layout/sidebar/sidebar.css";
-import "./pricingsystem.css";
+import "./styles/pricingsystem.css";
 import "../../styles/common.css";
 
 function PricingSystem() {

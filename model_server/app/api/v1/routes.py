@@ -347,9 +347,9 @@ async def analyze_product_reviews(product_id: int, domain: Optional[str] = None)
             # 8️⃣ 워드클라우드 생성
             yield send_progress("wordcloud", 90, "워드클라우드 생성 중...")
             print(f"🌈 워드클라우드 생성 시작...")
-            wc_base64 = generate_wordcloud_base64(product_id, domain_name)
+            wc_path = generate_wordcloud_from_db(product_id, domain_name)
             
-            if wc_base64:
+            if wc_path:
                 yield send_progress("wordcloud", 98, "워드클라우드 생성 완료")
             else:
                 yield send_progress("wordcloud", 98, "워드클라우드 생성 실패")
@@ -365,7 +365,7 @@ async def analyze_product_reviews(product_id: int, domain: Optional[str] = None)
                 "analyzed_count": len(analysis_results),
                 "inserted_count": insert_count,
                 "insight_id": insight_id,
-                "wordcloud": wc_base64,
+                "wordcloud_path": wc_path,
                 "message": "리뷰 분석, 인사이트 생성 및 대시보드 업데이트 완료"
             }
             

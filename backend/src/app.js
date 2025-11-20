@@ -56,19 +56,21 @@ app.use(express.json());
 // 라우트 등록
 app.use("/auth", authRoutes);
 
-// 인사이트 라우트 추가
-app.use("/insights", verifyAuth, insightRoutes);
-
 // SSE 엔드포인트는 별도로 등록 (인증 미들웨어 없이)
 // EventSource는 헤더를 설정할 수 없으므로 쿼리 파라미터로 토큰을 받습니다.
 // 컨트롤러에서 쿼리 파라미터 토큰으로 인증 처리
 app.get("/products/:productId/reviews/upload/progress/:taskId", getUploadProgress);
+
+// 인사이트 라우트 추가
+app.use("/insights", verifyAuth, insightRoutes);
 
 // 제품과 대시보드 라우트 추가 (SSE 엔드포인트 제외)
 app.use("/products", verifyAuth, productRoutes);
 
 // 리뷰 단독 분석 API (FastAPI 연동 테스트용)
 app.use("/reviews", verifyAuth, reviewRoutes);
+
+
 
 // 서버 시작
 const PORT = process.env.PORT || 3001;

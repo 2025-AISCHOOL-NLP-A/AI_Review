@@ -25,7 +25,5 @@ router.delete("/batch", deleteReviewsBatch);
 // Delete single review
 router.delete("/:id", deleteReview);
 
-// Trigger review analysis
-router.post("/products/:product_id/reviews/analysis", analyzeReviews);
 
 export default router;

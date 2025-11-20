@@ -5,18 +5,20 @@ import {
     keywordReview,
     deleteProduct,
     updateProduct,
-    uploadReviews,
-    upload,
     createProductWithReviews,
 } from "../controllers/productController.js";
-
+import {
+    analyzeReviews,
+    uploadReviews,
+    upload,
+} from "../controllers/reviewController.js";
 const router = express.Router();
-
-// SSE 엔드포인트는 app.js에서 별도로 등록 (인증 미들웨어 없이)
-// EventSource는 헤더를 설정할 수 없으므로 쿼리 파라미터로 토큰을 받습니다.
 
 // 리뷰 파일 업로드
 router.post("/:id/reviews/upload", upload.array('files', 10), uploadReviews);
+
+// Trigger review analysis
+router.post("/:id/reviews/analysis", analyzeReviews);
 
 // 특정 키워드에 대한 리뷰 조회
 router.get("/:id/reviews", keywordReview);

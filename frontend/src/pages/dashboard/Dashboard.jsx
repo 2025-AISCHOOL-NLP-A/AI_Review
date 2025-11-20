@@ -18,10 +18,7 @@ import {
   processSplitBarData,
   processHeatmapData,
 } from "../../utils/data";
-import {
-  getTodayDate,
-  applyDateFilter,
-} from "../../utils/data/dashboardDateFilter";
+import { getTodayDate } from "../../utils/data/dashboardDateFilter";
 import "../../styles/common.css";
 import "./dashboard.css";
 import "../../components/layout/sidebar/sidebar.css";
@@ -56,6 +53,7 @@ function Dashboard() {
     setEndDate,
     setAppliedStartDate,
     setAppliedEndDate,
+    fetchDashboardData,
   } = useDashboardData(productId);
 
   // Chart period state (daily, weekly, monthly)
@@ -87,39 +85,20 @@ function Dashboard() {
     [startDate]
   );
 
-  const handleApplyFilter = useCallback(
-    () => {
-      const filteredData = applyDateFilter({
-        originalDashboardData,
-        startDate,
-        endDate,
-      });
+  const handleApplyFilter = useCallback(() => {
+    const rangeStart = startDate || null;
+    const rangeEnd = endDate || null;
+    fetchDashboardData({ startDate: rangeStart, endDate: rangeEnd });
+  }, [startDate, endDate, fetchDashboardData]);
 
-      if (filteredData) {
-        setDashboardData(filteredData);
-      }
+  const handleResetFilter = useCallback(() => {
+    setStartDate("");
+    setEndDate("");
+    setAppliedStartDate("");
+    setAppliedEndDate("");
+    fetchDashboardData({ startDate: null, endDate: null });
+  }, [fetchDashboardData]);
 
-      // 적용된 날짜 저장
-      setAppliedStartDate(startDate);
-      setAppliedEndDate(endDate);
-    },
-    [originalDashboardData, startDate, endDate]
-  );
-
-  const handleResetFilter = useCallback(
-    () => {
-      setStartDate("");
-      setEndDate("");
-      setAppliedStartDate("");
-      setAppliedEndDate("");
-      if (originalDashboardData) {
-        setDashboardData(originalDashboardData);
-      }
-    },
-    [originalDashboardData]
-  );
-
-  // 리뷰 확장/축소 핸들러
   const handleToggleExpand = (reviewId) => {
     setExpandedReviews((prev) => {
       const newSet = new Set(prev);
@@ -155,7 +134,7 @@ function Dashboard() {
 
   // Process keyword data for charts using positive_ratio and negative_ratio from DB
   // 날짜 필터와 무관하게 원본 데이터 사용 (RadarChart는 전체 기간 데이터 표시)
-  const keywordsForRadar = originalDashboardData?.keywords || dashboardData?.keywords || [];
+  const keywordsForRadar = dashboardData?.keywords || [];
   const radarData = useMemo(() => {
     return processRadarData(keywordsForRadar);
   }, [keywordsForRadar]);

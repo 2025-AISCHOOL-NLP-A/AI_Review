@@ -6,9 +6,15 @@ import { getToken } from "../utils/auth/storage";
 
 const dashboardService = {
   /** 📊 대시보드 데이터 조회 및 처리 */
-  async getDashboardData(productId = 1007, signal = null, productInfo = null) {
+  async getDashboardData(productId = 1007, signal = null, productInfo = null, startDate = null, endDate = null) {
     try {
-      const config = createApiConfig(signal);
+      const params = {};
+      if (startDate) params.start_date = startDate;
+      if (endDate) params.end_date = endDate;
+
+      const config = Object.keys(params).length
+        ? createApiConfigWithParams(signal, params)
+        : createApiConfig(signal);
       const url = `/products/${productId}/dashboard`;
 
       const res = await api.get(url, config);

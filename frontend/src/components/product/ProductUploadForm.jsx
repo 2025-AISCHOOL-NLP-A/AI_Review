@@ -5,6 +5,8 @@ import dashboardService from "../../services/dashboardService";
 export default function ProductUploadForm({ onClose, formData, onSuccess, onSubmittingChange }) {
   const [mappedFiles, setMappedFiles] = useState([]); // [{ file, mapping }]
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0); // 업로드 진행도 (0-100)
+  const [progressMessage, setProgressMessage] = useState(""); // 진행도 메시지
 
   // isSubmitting 상태 변경 시 부모에게 알림
   React.useEffect(() => {
@@ -94,8 +96,19 @@ export default function ProductUploadForm({ onClose, formData, onSuccess, onSubm
           return;
         }
 
-        // 파일 업로드 및 매핑 정보 전송
-        const uploadResult = await dashboardService.uploadReviewFiles(productId, mappedFiles);
+        // 파일 업로드 및 매핑 정보 전송 (SSE 방식)
+        setUploadProgress(0); // 진행도 초기화
+        setProgressMessage("파일 업로드 준비 중...");
+        const uploadResult = await dashboardService.uploadReviewFiles(
+          productId, 
+          mappedFiles,
+          (progress, message) => {
+            setUploadProgress(progress);
+            if (message) {
+              setProgressMessage(message);
+            }
+          }
+        );
 
         if (!uploadResult.success) {
           alert(`제품은 생성되었지만 파일 업로드에 실패했습니다: ${uploadResult.message || "파일 업로드에 실패했습니다."}`);
@@ -116,6 +129,8 @@ export default function ProductUploadForm({ onClose, formData, onSuccess, onSubm
       alert("제품 생성 중 오류가 발생했습니다.");
     } finally {
       setIsSubmitting(false);
+      setUploadProgress(0); // 진행도 초기화
+      setProgressMessage(""); // 메시지 초기화
     }
   };
 
@@ -128,6 +143,27 @@ export default function ProductUploadForm({ onClose, formData, onSuccess, onSubm
         onFilesReady={handleFilesReady}
         disabled={isSubmitting}
       />
+
+      {/* 업로드 진행도 표시 */}
+      {isSubmitting && (
+        <div className="upload-progress-container">
+          <div className="upload-progress-header">
+            <span className="upload-progress-text">
+              {progressMessage || "업로드 중..."}
+            </span>
+            <span className="upload-progress-percent">{uploadProgress}%</span>
+          </div>
+          <div className="upload-progress-bar">
+            <div 
+              className="upload-progress-fill" 
+              style={{ width: `${uploadProgress}%` }}
+            ></div>
+          </div>
+          <div className="upload-loading-spinner">
+            <div className="spinner"></div>
+          </div>
+        </div>
+      )}
 
       <div className="button-row">
         <button 

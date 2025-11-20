@@ -40,8 +40,19 @@ export const productList = async (req, res) => {
             p.brand,
             p.registered_date,
             p.category_id,
-            p.user_id
+            p.user_id,
+            CASE 
+              WHEN d.product_id IS NULL THEN 1
+              WHEN d.total_reviews IS NULL OR d.total_reviews = 0 THEN 1
+              WHEN NOT EXISTS (
+                SELECT 1 FROM tb_review r 
+                WHERE r.product_id = p.product_id 
+                LIMIT 1
+              ) THEN 1
+              ELSE 0
+            END AS has_dashboard_error
           FROM tb_product p
+          LEFT JOIN tb_productDashboard d ON p.product_id = d.product_id
           WHERE p.user_id = ?
           ORDER BY p.product_id DESC
         `, [userId]);

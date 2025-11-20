@@ -78,11 +78,10 @@ export const useDashboardData = (productId) => {
             result: result,
           });
 
-          // 404 에러인 경우 워크플레이스로 이동 제안
+          // 404 에러인 경우 대시보드 데이터가 없음을 알림 후 워크플레이스로 이동
           if (result?.status === 404) {
-            if (window.confirm(`${errorMsg}\n\n워크플레이스로 이동하시겠습니까?`)) {
-              navigate("/wp");
-            }
+            alert(`이 제품의 대시보드 데이터가 아직 준비되지 않았습니다.\n\n리뷰를 추가하고 분석을 완료한 후 다시 시도해주세요.`);
+            navigate("/wp");
           } else {
             alert(`오류: ${errorMsg}\n\n상태 코드: ${result?.status || 'N/A'}`);
           }
@@ -113,6 +112,15 @@ export const useDashboardData = (productId) => {
           // 대시보드 응답에서 제품 정보 추출
           if (combinedData.product) {
             setProductInfo(combinedData.product);
+          }
+          
+          // 대시보드 데이터가 비어있거나 리뷰가 없는 경우 알림 후 워크플레이스로 이동
+          const totalReviews = combinedData.stats?.totalReviews || 0;
+          const hasReviews = (combinedData.reviews && combinedData.reviews.length > 0) || totalReviews > 0;
+          
+          if (!hasReviews) {
+            alert("이 제품의 대시보드 데이터가 아직 준비되지 않았습니다.\n\n리뷰를 추가하고 분석을 완료한 후 다시 시도해주세요.");
+            navigate("/wp");
           }
           
           setOriginalDashboardData(combinedData);

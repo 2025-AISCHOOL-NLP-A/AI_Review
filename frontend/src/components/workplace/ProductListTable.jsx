@@ -144,7 +144,14 @@ export default function ProductListTable({
                 </td>
                 <td style={{ textAlign: "center" }}>{formatDate(item)}</td>
                 <td className="product-cell" style={{ textAlign: "center" }}>
-                  {item.product_name || "-"}
+                  <span
+                    style={{
+                      color: item.has_dashboard_error === 1 ? "#ef4444" : "inherit",
+                      fontWeight: item.has_dashboard_error === 1 ? "600" : "normal",
+                    }}
+                  >
+                    {item.product_name || "-"}
+                  </span>
                 </td>
                 <td style={{ textAlign: "center" }}>
                   {item.brand && item.brand.trim() !== "" ? item.brand : "-"}

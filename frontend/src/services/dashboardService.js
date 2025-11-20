@@ -210,8 +210,8 @@ const dashboardService = {
     }
   },
 
-  /** 📤 리뷰 파일 업로드 및 매핑 정보 전송 */
-  async uploadReviewFiles(productId, files) {
+  /** 📤 리뷰 파일 업로드 및 매핑 정보 전송 (SSE 방식 진행도 추적) */
+  async uploadReviewFiles(productId, files, onProgress = null) {
     try {
       const formData = new FormData();
       
@@ -225,12 +225,19 @@ const dashboardService = {
         }));
       });
 
+      // 파일 업로드 요청 (taskId 반환 가정)
       const res = await api.post(`/products/${productId}/reviews/upload`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
         timeout: 1800000, // 30분 (파일 업로드 + 자동 분석 처리 시간 확보)
       });
+
+      // SSE로 진행도 추적 시작
+      const taskId = res.data?.taskId || res.data?.uploadId || res.data?.data?.taskId;
+      if (taskId && onProgress) {
+        await this.trackUploadProgress(productId, taskId, onProgress);
+      }
 
       return { success: true, data: res.data };
     } catch (err) {
@@ -239,6 +246,57 @@ const dashboardService = {
         message: getErrorMessage(err, "파일 업로드에 실패했습니다."),
       };
     }
+  },
+
+  /** 📡 SSE를 통한 업로드 진행도 추적 */
+  async trackUploadProgress(productId, taskId, onProgress) {
+    return new Promise((resolve, reject) => {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+      const token = localStorage.getItem("token");
+      
+      // SSE 엔드포인트 URL 구성
+      const sseUrl = `${API_BASE_URL}/products/${productId}/reviews/upload/progress/${taskId}`;
+      
+      // EventSource 생성 (토큰은 쿼리 파라미터로 전달)
+      const eventSource = new EventSource(`${sseUrl}?token=${encodeURIComponent(token || "")}`);
+      
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.progress !== undefined) {
+            // 진행도 업데이트
+            onProgress(data.progress, data.message || null);
+          }
+          
+          // 완료 또는 에러 처리
+          if (data.status === "completed" || data.progress === 100) {
+            eventSource.close();
+            resolve(data);
+          } else if (data.status === "error") {
+            eventSource.close();
+            reject(new Error(data.message || "업로드 진행도 추적 중 오류가 발생했습니다."));
+          }
+        } catch (parseError) {
+          console.error("SSE 데이터 파싱 오류:", parseError);
+        }
+      };
+      
+      eventSource.onerror = (error) => {
+        console.error("SSE 연결 오류:", error);
+        eventSource.close();
+        // SSE 연결 실패해도 업로드는 계속 진행될 수 있으므로 resolve
+        resolve({ progress: 100, message: "진행도 추적을 완료할 수 없습니다." });
+      };
+      
+      // 타임아웃 설정 (30분)
+      setTimeout(() => {
+        if (eventSource.readyState !== EventSource.CLOSED) {
+          eventSource.close();
+          resolve({ progress: 100, message: "진행도 추적 시간이 초과되었습니다." });
+        }
+      }, 1800000);
+    });
   },
 };
 

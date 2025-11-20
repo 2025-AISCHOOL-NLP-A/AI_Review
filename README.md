@@ -97,6 +97,12 @@ python main.py
 - `GET /products/{product_id}/dashboard` - 제품 대시보드
 - `POST /products/{product_id}/reviews/upload - 리뷰 추가 및 분석
 
+### 리뷰 API (/reviews)
+- `GET /reviews` - 리뷰 목록 조회
+- `DELETE /reviews/{review_id}` - 단일 리뷰 삭제
+- `DELETE /reviews/batch` - 여러 리뷰 일괄 삭제
+- `GET /reviews/export` - 리뷰 데이터 다운로드 (CSV/Excel)
+
 
 ## 🔧 개발 환경
 

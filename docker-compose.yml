@@ -40,6 +40,7 @@ services:
       - CORS_ORIGIN=${CORS_ORIGIN}
       - PYTHON_API_URL=http://model-server:8000
       - PYTHON_ABSA_URL=http://model-server:8000
+      - MODEL_SERVER_URL=http://model-server:8000
     depends_on:
       - model-server
     networks:

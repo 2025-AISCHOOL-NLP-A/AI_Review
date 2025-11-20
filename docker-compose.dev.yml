@@ -41,6 +41,7 @@ services:
       - CORS_ORIGIN=${CORS_ORIGIN} 
       - PYTHON_API_URL=http://model-server:8000
       - PYTHON_ABSA_URL=http://model-server:8000
+      - MODEL_SERVER_URL=http://model-server:8000
     volumes:
       # 코드만 마운트 (node_modules는 이미지에 설치됨)
       - ./backend:/app

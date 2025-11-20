@@ -1,12 +1,27 @@
 import { getTask } from "../utils/taskManager.js";
+import jwt from "jsonwebtoken";
 
 /**
  * SSE 엔드포인트: 업로드 진행 상황 스트리밍
  * GET /products/:productId/reviews/upload/progress/:taskId
+ * EventSource는 헤더를 설정할 수 없으므로 쿼리 파라미터로 토큰을 받습니다.
  */
 export const getUploadProgress = async (req, res) => {
     const { taskId } = req.params;
-    const userId = req.user?.id;
+    
+    // EventSource는 헤더를 설정할 수 없으므로 쿼리 파라미터에서 토큰 확인
+    let userId = req.user?.id;
+    
+    // 쿼리 파라미터에서 토큰 확인 (EventSource용)
+    if (!userId && req.query.token) {
+        try {
+            const token = req.query.token;
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            userId = decoded.id;
+        } catch (err) {
+            return res.status(401).json({ message: "유효하지 않은 토큰입니다." });
+        }
+    }
 
     if (!userId) {
         return res.status(401).json({ message: "인증된 사용자 정보가 없습니다." });

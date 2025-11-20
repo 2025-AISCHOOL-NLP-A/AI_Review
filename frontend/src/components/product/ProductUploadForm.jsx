@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import FileUploadForm from "../common/FileUploadForm";
 import dashboardService from "../../services/dashboardService";
 
@@ -7,6 +7,7 @@ export default function ProductUploadForm({ onClose, formData, onSuccess, onSubm
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0); // 업로드 진행도 (0-100)
   const [progressMessage, setProgressMessage] = useState(""); // 진행도 메시지
+  const progressRef = useRef(0); // 진행도 추적용 ref
 
   // isSubmitting 상태 변경 시 부모에게 알림
   React.useEffect(() => {
@@ -99,20 +100,44 @@ export default function ProductUploadForm({ onClose, formData, onSuccess, onSubm
         // 파일 업로드 및 매핑 정보 전송 (SSE 방식)
         setUploadProgress(0); // 진행도 초기화
         setProgressMessage("파일 업로드 준비 중...");
+        
+        // 진행도 업데이트 콜백
+        const progressCallback = (progress, message) => {
+          progressRef.current = progress;
+          setUploadProgress(progress);
+          if (message) {
+            setProgressMessage(message);
+          }
+        };
+        
         const uploadResult = await dashboardService.uploadReviewFiles(
           productId, 
           mappedFiles,
-          (progress, message) => {
-            setUploadProgress(progress);
-            if (message) {
-              setProgressMessage(message);
-            }
-          }
+          progressCallback
         );
 
         if (!uploadResult.success) {
           alert(`제품은 생성되었지만 파일 업로드에 실패했습니다: ${uploadResult.message || "파일 업로드에 실패했습니다."}`);
           // 파일 업로드 실패해도 제품은 생성되었으므로 워크플레이스로 돌아감
+        }
+        
+        // uploadReviewFiles가 완료되면 SSE 추적도 완료된 상태이므로
+        // 진행도가 100%인지 확인하고, 아니면 잠시 대기
+        if (progressRef.current < 100) {
+          // 진행도가 아직 100%가 아니면 최대 5초 대기
+          let waitCount = 0;
+          const maxWait = 5; // 5초 대기
+          while (progressRef.current < 100 && waitCount < maxWait) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            waitCount++;
+          }
+          
+          // 여전히 100%가 아니면 강제로 100% 설정
+          if (progressRef.current < 100) {
+            progressRef.current = 100;
+            setUploadProgress(100);
+            setProgressMessage("처리 완료");
+          }
         }
       }
 
@@ -128,9 +153,12 @@ export default function ProductUploadForm({ onClose, formData, onSuccess, onSubm
       console.error("제품 생성 중 오류:", error);
       alert("제품 생성 중 오류가 발생했습니다.");
     } finally {
-      setIsSubmitting(false);
-      setUploadProgress(0); // 진행도 초기화
-      setProgressMessage(""); // 메시지 초기화
+      // 진행도가 완료된 후에만 상태 초기화
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setUploadProgress(0);
+        setProgressMessage("");
+      }, 500); // 0.5초 후 초기화 (UI가 완료 메시지를 볼 수 있도록)
     }
   };
 

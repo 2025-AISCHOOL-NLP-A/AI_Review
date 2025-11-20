@@ -95,7 +95,7 @@ python main.py
 - `PUT /products/{product_id}` - 제품 정보 수정
 - `DELETE /products/{product_id}` - 제품 삭제
 - `GET /products/{product_id}/dashboard` - 제품 대시보드
-- `POST /products/{product_id}/reviews/upload - 리뷰 추가 및 분석
+- `POST /products/{product_id}/reviews/upload` - 리뷰 추가 및 분석
 
 ### 리뷰 API (/reviews)
 - `GET /reviews` - 리뷰 목록 조회
@@ -118,13 +118,7 @@ python main.py
 - [Frontend Service](./frontend/README.md)  
 - [AI Analysis Service](./model_server/README.md)
 
-## 🤝 기여 방법
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
 
 ## 📄 라이선스
 

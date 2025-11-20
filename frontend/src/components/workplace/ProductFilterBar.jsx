@@ -17,6 +17,8 @@ export default function ProductFilterBar({
   onEndDateChange,
   onClearDateFilter,
   getTodayDate,
+  minRegisteredDate,
+  maxRegisteredDate,
 }) {
   return (
     <div className="workplace-filters">
@@ -75,7 +77,8 @@ export default function ProductFilterBar({
           placeholder="시작일"
           value={startDate}
           onChange={onStartDateChange}
-          max={endDate || getTodayDate()}
+          min={minRegisteredDate || undefined}
+          max={endDate || maxRegisteredDate || getTodayDate()}
         />
         <span className="date-separator">~</span>
         <input
@@ -86,8 +89,8 @@ export default function ProductFilterBar({
           placeholder="종료일"
           value={endDate}
           onChange={onEndDateChange}
-          min={startDate || undefined}
-          max={getTodayDate()}
+          min={startDate || minRegisteredDate || undefined}
+          max={maxRegisteredDate || getTodayDate()}
         />
         {(startDate || endDate) && (
           <button

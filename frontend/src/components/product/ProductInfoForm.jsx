@@ -24,13 +24,13 @@ export default function ProductInfoForm({ onNext, onClose, initialData, onSave, 
     const { name, value } = e.target;
     let sanitizedValue = value;
 
-    // 입력 필드별 sanitization
+    // 입력 필드별 sanitization (입력 중에는 스페이스바 허용을 위해 trim 비활성화)
     if (name === "productName") {
-      // 제품명: HTML 제거, 최대 200자
-      sanitizedValue = sanitizeInput(value, { type: 'text', maxLength: 200 });
+      // 제품명: HTML 제거, 최대 200자, 입력 중에는 trim 비활성화
+      sanitizedValue = sanitizeInput(value, { type: 'text', maxLength: 200, trim: false });
     } else if (name === "brand") {
-      // 브랜드: HTML 제거, 최대 100자
-      sanitizedValue = sanitizeInput(value, { type: 'text', maxLength: 100 });
+      // 브랜드: HTML 제거, 최대 100자, 입력 중에는 trim 비활성화
+      sanitizedValue = sanitizeInput(value, { type: 'text', maxLength: 100, trim: false });
     }
     // category는 select이므로 sanitization 불필요
 

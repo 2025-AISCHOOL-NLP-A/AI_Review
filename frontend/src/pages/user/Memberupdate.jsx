@@ -69,6 +69,14 @@ function Memberupdate() {
     setFormData((p) => ({ ...p, [name]: sanitizedValue }));
   };
 
+  // 비밀번호 필드에서 스페이스바 입력 방지
+  const handlePasswordKeyDown = (e) => {
+    const passwordFields = ["current_password", "new_password", "new_password_confirm"];
+    if (passwordFields.includes(e.target.name) && (e.key === " " || e.keyCode === 32)) {
+      e.preventDefault();
+    }
+  };
+
   // 새 비밀번호 유효성 (영문/숫자/특수문자 8~20)
   const pwPattern =
     /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z0-9!@#$%^&*]{8,20}$/;
@@ -309,6 +317,7 @@ function Memberupdate() {
                         placeholder="기존 비밀번호"
                         value={formData.current_password}
                         onChange={handleChange}
+                        onKeyDown={handlePasswordKeyDown}
                         autoComplete="current-password"
                         required
                       />
@@ -376,6 +385,7 @@ function Memberupdate() {
                         placeholder="비밀번호 수정"
                         value={formData.new_password}
                         onChange={handleChange}
+                        onKeyDown={handlePasswordKeyDown}
                         autoComplete="new-password"
                       />
                       <button
@@ -438,6 +448,7 @@ function Memberupdate() {
                         placeholder="수정된 비밀번호 확인"
                         value={formData.new_password_confirm}
                         onChange={handleChange}
+                        onKeyDown={handlePasswordKeyDown}
                         autoComplete="new-password"
                       />
                       <button

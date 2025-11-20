@@ -14,6 +14,13 @@ export default function PasswordInput({
 }) {
   const [showPassword, setShowPassword] = useState(false);
 
+  // 스페이스바 입력 방지
+  const handleKeyDown = (e) => {
+    if (e.key === " " || e.keyCode === 32) {
+      e.preventDefault();
+    }
+  };
+
   return (
     <div className="input-with-icon">
       <div className="form-icon">
@@ -31,6 +38,7 @@ export default function PasswordInput({
           placeholder={placeholder}
           value={value}
           onChange={onChange}
+          onKeyDown={handleKeyDown}
           autoComplete={autoComplete}
           required={required}
         />

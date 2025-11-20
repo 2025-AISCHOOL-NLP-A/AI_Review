@@ -84,6 +84,12 @@ function Login() {
   };
 
   const handleKeyDown = (e) => {
+    // 비밀번호 필드에서 스페이스바 입력 방지
+    if (e.target.name === "password" && (e.key === " " || e.keyCode === 32)) {
+      e.preventDefault();
+      return;
+    }
+    // Enter 키로 로그인 제출
     if (e.key === "Enter" && !loading) {
       e.preventDefault();
       handleSubmit(e);

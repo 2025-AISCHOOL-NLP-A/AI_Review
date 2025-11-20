@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
 import Footer from "../../components/layout/Footer/Footer";
@@ -12,7 +12,7 @@ import ProductListTable from "../../components/workplace/ProductListTable";
 import ProductPagination from "../../components/workplace/ProductPagination";
 import { useProductFilter } from "../../hooks/useProductFilter";
 import { useProductSort } from "../../hooks/useProductSort";
-import { getTodayDate } from "../../utils/format/dateUtils";
+import { getTodayDate, formatDateToYYYYMMDD } from "../../utils/format/dateUtils";
 import { useSidebar } from "../../hooks/useSidebar";
 import { CATEGORY_NAMES } from "../../constants";
 import { sanitizeInput } from "../../utils/format/inputSanitizer";
@@ -295,6 +295,42 @@ function Workplace() {
     };
   }, [refreshTrigger]); // refreshTrigger만 의존성으로 설정
 
+  // 등록일의 최솟값과 최댓값 계산
+  const { minRegisteredDate, maxRegisteredDate } = useMemo(() => {
+    if (!allProducts || allProducts.length === 0) {
+      return { minRegisteredDate: undefined, maxRegisteredDate: undefined };
+    }
+
+    const dates = allProducts
+      .map((product) => {
+        const dateString = product.registered_date || product.updated_at || product.created_at;
+        if (!dateString) return null;
+        const date = new Date(dateString);
+        return isNaN(date.getTime()) ? null : date;
+      })
+      .filter((date) => date !== null);
+
+    if (dates.length === 0) {
+      return { minRegisteredDate: undefined, maxRegisteredDate: undefined };
+    }
+
+    const minDate = new Date(Math.min(...dates));
+    const maxDate = new Date(Math.max(...dates));
+
+    return {
+      minRegisteredDate: formatDateToYYYYMMDD(minDate),
+      maxRegisteredDate: formatDateToYYYYMMDD(maxDate),
+    };
+  }, [allProducts]);
+
+  // 등록일 최솟값과 최댓값이 계산되면 시작일과 종료일을 자동으로 설정
+  useEffect(() => {
+    if (minRegisteredDate && maxRegisteredDate && !startDate && !endDate) {
+      setStartDate(minRegisteredDate);
+      setEndDate(maxRegisteredDate);
+    }
+  }, [minRegisteredDate, maxRegisteredDate]);
+
   // 정렬 변경 시 페이지 초기화
   const handleSortWithPageReset = (field) => {
     handleSort(field);
@@ -544,8 +580,8 @@ function Workplace() {
           <ProductFilterBar
             searchQuery={searchQuery}
             onSearchChange={(e) => {
-              // 검색 쿼리 sanitization
-              const sanitizedValue = sanitizeInput(e.target.value, { type: 'text', maxLength: 100 });
+              // 검색 쿼리 sanitization (스페이스바 허용을 위해 trim 비활성화)
+              const sanitizedValue = sanitizeInput(e.target.value, { type: 'text', maxLength: 100, trim: false });
               setSearchQuery(sanitizedValue);
             }}
             onSearchKeyDown={handleSearch}
@@ -561,10 +597,18 @@ function Workplace() {
             onStartDateChange={handleStartDateChange}
             onEndDateChange={handleEndDateChange}
             onClearDateFilter={() => {
-              setStartDate("");
-              setEndDate("");
+              // 초기화 시 최솟값과 최댓값으로 재설정
+              if (minRegisteredDate && maxRegisteredDate) {
+                setStartDate(minRegisteredDate);
+                setEndDate(maxRegisteredDate);
+              } else {
+                setStartDate("");
+                setEndDate("");
+              }
             }}
             getTodayDate={getTodayDate}
+            minRegisteredDate={minRegisteredDate}
+            maxRegisteredDate={maxRegisteredDate}
           />
 
           {/* Table Section */}
@@ -649,7 +693,7 @@ function Workplace() {
         
         {/* ===================== FOOTER ===================== */}
         <Footer />
-          </div>
+        </div>
         </div>
       </div>
 

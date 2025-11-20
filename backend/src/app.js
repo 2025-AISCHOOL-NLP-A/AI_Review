@@ -62,7 +62,7 @@ app.use("/insights", verifyAuth, insightRoutes);
 app.use("/products", verifyAuth, productRoutes);
 
 // 리뷰 단독 분석 API (FastAPI 연동 테스트용)
-app.use("/reviews", reviewRoutes);
+app.use("/reviews", verifyAuth, reviewRoutes);
 
 // 서버 시작
 const PORT = process.env.PORT || 3001;

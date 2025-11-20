@@ -6,9 +6,7 @@ from typing import List, Dict, Any
 import torch
 from transformers import pipeline as hf_pipeline
 
-# =========================================================
-# 설정 로드
-# =========================================================
+#설정 로드
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
 cfg = json.load(open(CONFIG_PATH, encoding="utf-8"))
@@ -30,13 +28,15 @@ def get_absa_pipeline():
         try:
             _pipeline_device = 0 if torch.cuda.is_available() else -1
             print(f"화장품 ABSA model 로드 중: {cfg['absa_model']} (device={_pipeline_device})")
+            t0_load = time.monotonic()
             _pipeline_cache = hf_pipeline(
                 task="text-classification",
                 model=cfg['absa_model'],
                 tokenizer=cfg['absa_model'],
-                return_all_scores=True,
                 device=_pipeline_device,
             )
+            load_ms = (time.monotonic() - t0_load) * 1000
+            print(f"[Cosmetics] ABSA 모델 로드 완료: {load_ms:.1f}ms")
         except Exception as e:
             print("Cosmetics ABSA 파이프라인 로딩 실패")
             raise RuntimeError(f"Failed to load cosmetics ABSA model '{cfg['absa_model']}': {e}")
@@ -52,6 +52,7 @@ def analyze_aspects_single_phase(text, debug=False, max_length: int | None = 256
     """
     absa = get_absa_pipeline()
     results = {}
+    t0 = time.monotonic()
 
     if debug:
         print(f"\n [DEBUG] 리뷰 분석 중: {text[:50]}...")
@@ -64,10 +65,11 @@ def analyze_aspects_single_phase(text, debug=False, max_length: int | None = 256
             padding=True,
             max_length=max_length if max_length else 256,
             batch_size=16,
+            top_k=None,
         )
 
         # 가장 높은 점수의 라벨 선택
-        best_pred = max(preds[0], key=lambda x: x["score"])
+        best_pred = max(preds, key=lambda x: x["score"])
         label_raw = best_pred["label"]
         score = round(best_pred["score"], 4)
 
@@ -84,7 +86,8 @@ def analyze_aspects_single_phase(text, debug=False, max_length: int | None = 256
         results[aspect] = {"label": label_kr, "score": score}
 
     if debug:
-        print(f"  탐지된 aspect 수: {len(results)}")
+        elapsed_ms = (time.monotonic() - t0) * 1000
+        print(f"  탐지된 aspect 수: {len(results)} | aspect 분석 소요: {elapsed_ms:.1f}ms")
 
     return results
 
@@ -138,6 +141,7 @@ def analyze_reviews(texts: List[str], debug: bool = False, batch_size: int = 16,
     if not texts:
         return []
 
+    t0_total = time.monotonic()
     absa = get_absa_pipeline()
 
     # 입력 전개: 각 리뷰에 대해 모든 aspect 결합
@@ -157,7 +161,8 @@ def analyze_reviews(texts: List[str], debug: bool = False, batch_size: int = 16,
             truncation=True,
             padding=True,
             max_length=max_length if max_length else 256,
-            batch_size=batch_size
+            batch_size=batch_size,
+            top_k=None
         )
         preds_all.extend(preds_chunk)
     elapsed = (time.monotonic() - start) * 1000
@@ -166,7 +171,7 @@ def analyze_reviews(texts: List[str], debug: bool = False, batch_size: int = 16,
     # 결과 재구성: 텍스트별 aspect 결과 맵
     per_text_aspect: List[Dict[str, Dict[str, float]]] = [dict() for _ in texts]
     for (ti, aspect, _), pred in zip(expanded_inputs, preds_all):
-        best_pred = max(pred[0], key=lambda x: x["score"])
+        best_pred = max(pred, key=lambda x: x["score"])
         label_raw = best_pred["label"]
         if label_raw == "LABEL_3":
             continue
@@ -201,6 +206,8 @@ def analyze_reviews(texts: List[str], debug: bool = False, batch_size: int = 16,
 
     if debug:
         print(f"[Cosmetics] 배치 결과 개수: {len(outputs)}")
+        total_ms = (time.monotonic() - t0_total) * 1000
+        print(f"[Cosmetics] 배치 end-to-end: reviews={len(texts)}, inputs={len(expanded_inputs)}, total={total_ms:.1f}ms (inference={elapsed:.1f}ms)")
 
     return outputs
 
@@ -214,11 +221,12 @@ def analyze_review(text, debug=False):
         "text": "리뷰 텍스트",
         "aspects": ["가격", "기능/효과", ...],
         "results": [
-            {"aspect": "가격", "label": "긍정", "POS": 0.8, "NEG": 0.2},
+            {"aspect": "가격", "label": "긍정", "POS": 0.85, "NEG": 0.15},
             ...
         ]
     }
     """
+    t0_total = time.monotonic()
     # 1. 35개 aspect별 분석
     aspect_results = analyze_aspects_single_phase(text, debug=debug)
 
@@ -250,32 +258,12 @@ def analyze_review(text, debug=False):
 
         detected_aspects.append(group_name)
 
+    if debug:
+        total_ms = (time.monotonic() - t0_total) * 1000
+        print(f"[Cosmetics] 단건 end-to-end: {total_ms:.1f}ms (aspects={len(aspect_results)}, groups={len(compressed)})")
+
     return {"text": text, "aspects": detected_aspects, "results": results}
 
 # =========================================================
 # 5. 테스트
 # =========================================================
-""""
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="화장품 ABSA 파이프라인 테스트")
-    parser.add_argument("--text", type=str, help="분석할 리뷰 텍스트")
-    parser.add_argument("--debug", action="store_true", help="디버그 모드 (aspect별 상세 출력)")
-    args = parser.parse_args()
-
-    sample_texts = [
-        "끈적이고 흡수력이 안 좋아요. 여러 가지 화장품 바르는 걸 싫어해서 한 번에 해결된다는 이 화장품으로 선택했는데 유분기가 많아서 별로예요. 잘 발리지 않고 제형이 묽어서 사용하기 불편해요.",
-        "가격은 합리적이고 향도 은은해서 하루 종일 기분이 좋아요. 발림성이 좋아서 소량만 써도 충분합니다.",
-    ]
-
-    texts_to_run = [args.text] if args.text else sample_texts
-
-    for idx, text in enumerate(texts_to_run, start=1):
-        result = analyze_review(text, debug=args.debug)
-
-        print("\n--- 6개 그룹 키워드 분석 결과 ---")
-        print(f"[{idx}] 리뷰 텍스트: {result['text']}")
-        for item in result["results"]:
-            print(f"  - {item['aspect']}: {item['label']} (POS: {item['POS']}, NEG: {item['NEG']})")
-            """

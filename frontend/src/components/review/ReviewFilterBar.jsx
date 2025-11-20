@@ -18,6 +18,8 @@ export default function ReviewFilterBar({
   onEndDateChange,
   onClearDateFilter,
   getTodayDate,
+  minReviewDate,
+  maxReviewDate,
 }) {
   return (
     <div className="review-filters">
@@ -98,7 +100,8 @@ export default function ReviewFilterBar({
           placeholder="시작일"
           value={startDate}
           onChange={onStartDateChange}
-          max={endDate || getTodayDate()}
+          min={minReviewDate || undefined}
+          max={endDate || maxReviewDate || getTodayDate()}
         />
         <span className="date-separator">~</span>
         <input
@@ -109,8 +112,8 @@ export default function ReviewFilterBar({
           placeholder="종료일"
           value={endDate}
           onChange={onEndDateChange}
-          min={startDate || undefined}
-          max={getTodayDate()}
+          min={startDate || minReviewDate || undefined}
+          max={maxReviewDate || getTodayDate()}
         />
         {(startDate || endDate) && (
           <button

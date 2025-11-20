@@ -97,6 +97,7 @@ export const sanitizeScript = (input) => {
  * @param {Object} options - 옵션
  * @param {boolean} options.allowHtml - HTML 허용 여부 (기본: false)
  * @param {boolean} options.maxLength - 최대 길이
+ * @param {boolean} options.trim - 앞뒤 공백 제거 여부 (기본: true)
  * @returns {string} 정리된 문자열
  */
 export const sanitizeText = (input, options = {}) => {
@@ -104,8 +105,8 @@ export const sanitizeText = (input, options = {}) => {
     return '';
   }
 
-  const { allowHtml = false, maxLength = null } = options;
-  let sanitized = input.trim();
+  const { allowHtml = false, maxLength = null, trim = true } = options;
+  let sanitized = trim ? input.trim() : input;
 
   // HTML 제거 (허용하지 않는 경우)
   if (!allowHtml) {
@@ -204,9 +205,10 @@ export const sanitizeInput = (input, options = {}) => {
     type = 'text', // 'text', 'email', 'number', 'url', 'path'
     maxLength = null,
     allowHtml = false,
+    trim = true, // 기본적으로 trim 적용, 검색 필드 등에서는 false로 설정
   } = options;
 
-  let sanitized = input.trim();
+  let sanitized = trim ? input.trim() : input;
 
   // 타입별 정리
   switch (type) {
@@ -221,7 +223,7 @@ export const sanitizeInput = (input, options = {}) => {
       break;
     default:
       // text 타입
-      sanitized = sanitizeText(sanitized, { allowHtml, maxLength });
+      sanitized = sanitizeText(sanitized, { allowHtml, maxLength, trim });
       break;
   }
 

@@ -24,6 +24,8 @@ function ReviewManagement() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [isDateFilterInitialized, setIsDateFilterInitialized] = useState(false);
+  const [minReviewDate, setMinReviewDate] = useState("");
+  const [maxReviewDate, setMaxReviewDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [products, setProducts] = useState([]);
@@ -144,12 +146,16 @@ function ReviewManagement() {
           return `${year}-${month}-${day}`;
         };
 
+        let minDateStr = "";
+        let maxDateStr = "";
+
         if (minResult.success && minResult.data && minResult.data.length > 0) {
           const minReview = minResult.data[0];
           if (minReview.review_date) {
             const minDate = new Date(minReview.review_date);
             if (!isNaN(minDate.getTime())) {
-              setStartDate(formatDate(minDate));
+              minDateStr = formatDate(minDate);
+              setMinReviewDate(minDateStr);
             }
           }
         }
@@ -159,13 +165,30 @@ function ReviewManagement() {
           if (maxReview.review_date) {
             const maxDate = new Date(maxReview.review_date);
             if (!isNaN(maxDate.getTime())) {
-              setEndDate(formatDate(maxDate));
-              setIsDateFilterInitialized(true);
+              maxDateStr = formatDate(maxDate);
+              setMaxReviewDate(maxDateStr);
             }
           }
         }
+
+        // 날짜 범위 계산이 완료된 후 한 번에 startDate와 endDate 설정 (중복 요청 방지)
+        if (minDateStr && maxDateStr) {
+          setStartDate(minDateStr);
+          setEndDate(maxDateStr);
+        } else if (minDateStr) {
+          setStartDate(minDateStr);
+          setEndDate(minDateStr); // 최소 날짜만 있는 경우 동일하게 설정
+        } else if (maxDateStr) {
+          setStartDate(maxDateStr); // 최대 날짜만 있는 경우 동일하게 설정
+          setEndDate(maxDateStr);
+        }
+
+        // 날짜 범위 계산이 완료되었거나 리뷰가 없는 경우 초기화 완료 처리
+        setIsDateFilterInitialized(true);
       } catch (error) {
         console.error("날짜 범위 계산 중 오류:", error);
+        // 오류 발생 시에도 초기화 완료 처리하여 리뷰 목록이 로드되도록 함
+        setIsDateFilterInitialized(true);
       }
     };
 
@@ -179,6 +202,12 @@ function ReviewManagement() {
 
   // 리뷰 목록 로드
   useEffect(() => {
+    // 날짜 필터가 초기화되지 않았으면 리뷰 목록을 로드하지 않음 (깜빡임 방지)
+    // 또는 날짜 범위 계산 중이면 리뷰 목록을 로드하지 않음 (중복 요청 방지)
+    if (!isDateFilterInitialized) {
+      return;
+    }
+
     // 이전 요청 취소
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -250,6 +279,7 @@ function ReviewManagement() {
     sortField,
     sortDirection,
     reviewsPerPage,
+    isDateFilterInitialized, // 날짜 필터 초기화 상태를 의존성에 추가
   ]);
 
   // 체크박스 전체 선택/해제
@@ -385,9 +415,11 @@ function ReviewManagement() {
             <ReviewFilterBar
               searchQuery={searchQuery}
               onSearchChange={(e) => {
+                // 검색 쿼리 sanitization (스페이스바 허용을 위해 trim 비활성화)
                 const sanitizedValue = sanitizeInput(e.target.value, {
                   type: "text",
                   maxLength: 100,
+                  trim: false,
                 });
                 setSearchQuery(sanitizedValue);
               }}
@@ -408,14 +440,22 @@ function ReviewManagement() {
               onStartDateChange={handleStartDateChange}
               onEndDateChange={handleEndDateChange}
               onClearDateFilter={() => {
-                setStartDate("");
-                setEndDate("");
+                // 초기화 시 최솟값과 최댓값으로 재설정
+                if (minReviewDate && maxReviewDate) {
+                  setStartDate(minReviewDate);
+                  setEndDate(maxReviewDate);
+                } else {
+                  setStartDate("");
+                  setEndDate("");
+                }
                 setIsDateFilterInitialized(false); // 날짜 필터 초기화 시 다시 자동 설정 가능하도록
                 setCurrentPage(1);
                 // 날짜 필터 초기화 후 전체 리뷰의 날짜 범위를 다시 계산하기 위해
                 // useEffect가 다시 실행되도록 함 (isDateFilterInitialized가 false가 되면)
               }}
               getTodayDate={getTodayDate}
+              minReviewDate={minReviewDate}
+              maxReviewDate={maxReviewDate}
             />
 
             {/* Table Section */}

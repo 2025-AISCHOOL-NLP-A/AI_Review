@@ -25,6 +25,32 @@ export async function analyzeBatchSteam(texts) {
 }
 
 /**
+ * 🧠 화장품 리뷰 배치 분석
+ * @param {string[]} texts - 리뷰 텍스트 배열
+ * @returns {object} - 분석 결과(JSON)
+ */
+
+export async function analyzeBatchCosmetics(texts) {
+  try {
+    const res = await axios.post(
+      `${PYTHON_API}/v1/analyze-batch?domain=cosmetics`,
+      {
+        texts,
+        aspect_th: 0.35,
+        margin: 0.03,
+      },
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+    return res.data;
+  } catch (err) {
+    console.error("❌ ABSA API 호출 실패(cosmetics):", err.message);
+    throw err;
+  }
+}
+
+/**
  * 🚀 제품 리뷰 전체 분석 파이프라인 호출
  * Python 서버의 전체 파이프라인 엔드포인트 사용
  * - 리뷰 분석

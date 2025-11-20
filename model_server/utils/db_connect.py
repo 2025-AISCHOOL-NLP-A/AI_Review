@@ -31,7 +31,7 @@ def init_db_pool():
         read_timeout=3600,      # 읽기 타임아웃 (60분 - 대량 리뷰 분석 고려)
         write_timeout=3600,     # 쓰기 타임아웃 (60분 - 대량 리뷰 분석 고려)
     )
-    print("✅ DB Connection Pool 초기화 완료")
+    print("[OK] DB Connection Pool 초기화 완료")
 
 
 def get_connection():
@@ -47,4 +47,4 @@ def close_db_pool():
     if db_pool:
         db_pool.close()
         db_pool = None
-        print("✅ DB Connection Pool 종료 완료")
+        print("[OK] DB Connection Pool 종료 완료")

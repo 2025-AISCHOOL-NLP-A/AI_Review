@@ -485,19 +485,6 @@ export const dashboard = async (req, res) => {
       }
     }
 
-    // 기본(필터 없음)에서 이미지가 비어 있으면 on-demand 생성
-    if (!shouldApplyDateFilter && !wordcloudImage) {
-      try {
-        const wcResult = await generateWordcloud(productId, null, null, null);
-        if (wcResult?.wordcloud) {
-          wordcloudImage = wcResult.wordcloud;
-          wordcloudPath = null;
-        }
-      } catch (err) {
-        console.error("워드클라우드 기본 생성 실패(무시하고 진행):", err.message);
-      }
-    }
-
     // 최종 워드클라우드 로딩 (경로가 있으면 파일에서 로드)
     if (!wordcloudImage && wordcloudPath) {
       try {

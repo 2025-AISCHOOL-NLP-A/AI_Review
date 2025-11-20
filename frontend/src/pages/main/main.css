@@ -344,7 +344,7 @@ header button.login-btn:hover {
   border-radius: 20px;
   padding: 32px 28px;
   flex: 1;
-  min-height: 380px;
+  min-height: 400px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
   text-align: left;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -377,6 +377,17 @@ header button.login-btn:hover {
   line-height: 1.7;
   font-size: 0.95rem;
   color: #374151;
+}
+
+/* 홍보글 박스 사진 */
+.marketing-box .marketing-pic {
+  width: 340px;
+  height: 180px;
+  margin-bottom: 20px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  background-color: #8e8e91;
 }
 
 /* 반응형 (태블릿 이하에서 1열 또는 2열) */

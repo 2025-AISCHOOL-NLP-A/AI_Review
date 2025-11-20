@@ -187,7 +187,7 @@ function Main() {
         <nav className="nav-buttons">
           <button onClick={() => smoothScrollTo(heroRef.current)}>홈</button>
           <button onClick={() => smoothScrollTo(marketingRef.current)}>
-            홍보글
+            기능 소개
           </button>
           <button onClick={() => smoothScrollTo(previewRef.current)}>
             시연영상
@@ -224,10 +224,15 @@ function Main() {
       </section>
       {/* ===================== MARKETING PROMO SECTION ===================== */}
       <section className="marketing-wrapper" ref={marketingRef}>
-        <h2 className="section-title">홍보글</h2>
+        <h2 className="section-title">기능 소개</h2>
 
         <div className="marketing-section">
           <div className="marketing-box">
+            <img
+              src="./images/analysis.png"
+              alt="자동 분석 정확성 강조사진"
+              className="marketing-pic"
+            />
             <h3>자동 분석 정확도 강조</h3>
             <p className="highlight">
               “리뷰 수만 건도 한 번에 분석해, 고객이 진짜로 불편해하는 지점을
@@ -241,6 +246,11 @@ function Main() {
           </div>
 
           <div className="marketing-box">
+            <img
+              src="./images/action-guide.png"
+              alt="인사이트를 실행 가능한 결과 강조사진"
+              className="marketing-pic"
+            />
             <h3>인사이트를 실행 가능한 결과로</h3>
             <p className="highlight">
               “흩어진 리뷰를 정리하는 것만이 아니라, 바로 실행 가능한 행동
@@ -254,6 +264,11 @@ function Main() {
           </div>
 
           <div className="marketing-box">
+            <img
+              src="./images/dashboard.png"
+              alt="데이터 기반 의사결정 속도 향상 강조사진"
+              className="marketing-pic"
+            />
             <h3>데이터 기반 의사결정 속도 향상</h3>
             <p className="highlight">
               “감에 의존하던 결정을 데이터 기반으로 바꿔, 팀의 대응 속도와

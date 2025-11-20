@@ -1,0 +1,19 @@
+/* ========================================
+   Workplace CSS Variables
+   ======================================== */
+
+:root {
+  --workplace-primary: #5B8EFF;
+  --workplace-primary-hover: #4A7AE8;
+  --workplace-border: #E5E7EB;
+  --workplace-bg-gray: #F3F4F6;
+  --workplace-bg-light: #F9FAFB;
+  --workplace-text: #333333;
+  --workplace-text-gray: #6B7280;
+  --workplace-danger: #EF4444;
+  --workplace-danger-hover: #DC2626;
+  --workplace-danger-bg: #FEE2E2;
+  --workplace-transition: 0.2s;
+  --workplace-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+

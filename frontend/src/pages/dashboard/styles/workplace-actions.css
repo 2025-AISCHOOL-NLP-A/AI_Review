@@ -1,0 +1,242 @@
+/* ========================================
+   Workplace Actions Styles
+   ======================================== */
+
+/* ===== 액션 메뉴 ===== */
+.meatballs-menu {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.meatballs-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--workplace-text-gray);
+  transition: all var(--workplace-transition);
+  border-radius: 4px;
+}
+
+.meatballs-btn:hover {
+  color: var(--workplace-text);
+  background: var(--workplace-bg-gray);
+}
+
+.dropdown-menu {
+  position: fixed;
+  background: #fff;
+  border: 1px solid var(--workplace-border);
+  border-radius: 8px;
+  box-shadow: var(--workplace-shadow);
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+  z-index: 1000;
+  overflow: visible;
+  animation: fadeIn 0.12s ease-in-out;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  color: var(--workplace-text);
+  width: 100%;
+}
+
+.dropdown-item:hover {
+  background: var(--workplace-bg-light);
+}
+
+.dropdown-item.delete-item {
+  color: var(--workplace-danger);
+}
+
+.dropdown-item.delete-item:hover {
+  background: var(--workplace-danger-bg);
+  color: var(--workplace-danger-hover);
+}
+
+.dropdown-item svg {
+  flex-shrink: 0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== 푸터 섹션 ===== */
+.workplace-footer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  margin-top: 2rem;
+  gap: 1rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.workplace-footer .pagination {
+  grid-column: 2;
+  justify-self: center;
+}
+
+.workplace-footer .action-buttons {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pagination-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--workplace-border);
+  border-radius: 8px;
+  background: white;
+  color: var(--workplace-text);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--workplace-transition);
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--workplace-bg-light);
+  border-color: #D1D5DB;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.page-number {
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--workplace-border);
+  border-radius: 8px;
+  background: white;
+  color: var(--workplace-text);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--workplace-transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-number:hover {
+  background: var(--workplace-bg-light);
+  border-color: #D1D5DB;
+}
+
+.page-number.active {
+  background: var(--workplace-primary);
+  color: white;
+  border-color: var(--workplace-primary);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.download-btn,
+.delete-btn,
+.add-btn {
+  padding: 0.625rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all var(--workplace-transition);
+}
+
+.download-btn {
+  border: 1px solid var(--workplace-border);
+  background: white;
+  color: var(--workplace-text);
+}
+
+.download-btn:hover:not(:disabled) {
+  background: var(--workplace-bg-light);
+  border-color: #D1D5DB;
+}
+
+.download-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--workplace-border);
+  color: #9CA3AF;
+}
+
+.delete-btn {
+  border: 1px solid var(--workplace-danger);
+  background: white;
+  color: var(--workplace-danger);
+}
+
+.delete-btn:hover:not(:disabled) {
+  background: var(--workplace-danger-bg);
+  border-color: var(--workplace-danger-hover);
+}
+
+.delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--workplace-border);
+  color: #9CA3AF;
+}
+
+.delete-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.add-btn {
+  border: none;
+  background: var(--workplace-primary);
+  color: white;
+}
+
+.add-btn:hover {
+  background: var(--workplace-primary-hover);
+}
+
+.plus-icon {
+  width: 1rem;
+  height: 1rem;
+}
+

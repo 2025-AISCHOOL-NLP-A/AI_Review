@@ -1,0 +1,234 @@
+/* ========================================
+   Workplace Table Styles
+   ======================================== */
+
+/* ===== 테이블 섹션 ===== */
+.workplace-table-container {
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  overflow-y: visible;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+}
+
+.workplace-table {
+  width: 100%;
+  min-width: 600px;
+  max-width: 100%;
+  border-collapse: collapse;
+  background: white;
+  table-layout: fixed;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.workplace-table thead {
+  background: var(--workplace-bg-gray);
+}
+
+.workplace-table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--workplace-text);
+  border-bottom: 1px solid var(--workplace-border);
+  vertical-align: middle;
+}
+
+.workplace-table th.checkbox-column,
+.workplace-table th.action-column {
+  width: 3rem;
+  min-width: 3rem;
+  max-width: 3rem;
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+}
+
+.workplace-table thead tr th:nth-child(2) {
+  width: 12rem;
+  min-width: 12rem;
+  text-align: center;
+}
+
+.workplace-table thead tr th:nth-child(3) {
+  width: auto;
+}
+
+.workplace-table thead tr th:nth-child(4) {
+  width: 12rem;
+  min-width: 12rem;
+}
+
+.workplace-table thead tr th:nth-child(5) {
+  width: 10rem;
+  min-width: 10rem;
+}
+
+.workplace-table th.sortable-header {
+  transition: background-color var(--workplace-transition);
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+}
+
+.workplace-table th.sortable-header:hover {
+  background-color: var(--workplace-border);
+}
+
+.workplace-table th.sortable-header > div {
+  width: 100%;
+  min-width: 0;
+}
+
+.workplace-table th.sortable-header > div > span:first-child,
+.workplace-table th.sortable-header > div > span:last-child {
+  flex-shrink: 0;
+}
+
+.sortable-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.sortable-header-label {
+  flex: 1;
+  text-align: center;
+}
+
+.sort-icons-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.7rem;
+  align-items: center;
+  margin-left: auto;
+}
+
+.sort-icons-container.active {
+  color: #5B8EFF;
+}
+
+.sort-icons-container.inactive {
+  color: #9CA3AF;
+}
+
+.sort-icon-asc {
+  opacity: 0.3;
+}
+
+.sort-icon-asc.active {
+  opacity: 1;
+}
+
+.sort-icon-desc {
+  opacity: 0.3;
+}
+
+.sort-icon-desc.active {
+  opacity: 1;
+}
+
+.workplace-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--workplace-border);
+  font-size: 0.875rem;
+  color: var(--workplace-text);
+  vertical-align: middle;
+  line-height: 1.5;
+}
+
+.workplace-table td.checkbox-column,
+.workplace-table td.action-column {
+  width: 3rem;
+  min-width: 3rem;
+  max-width: 3rem;
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+  vertical-align: middle;
+}
+
+.workplace-table tbody tr td:nth-child(2) {
+  text-align: center;
+}
+
+.workplace-table tbody tr:hover {
+  background: var(--workplace-bg-light);
+}
+
+.workplace-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.workplace-table input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  accent-color: var(--workplace-primary);
+}
+
+.product-cell {
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+}
+
+/* 테이블 헤더 중앙 정렬 */
+.workplace-table th.text-center {
+  text-align: center;
+}
+
+/* 테이블 셀 중앙 정렬 */
+.workplace-table td.text-center {
+  text-align: center;
+}
+
+/* 테이블 행 클릭 가능 */
+.workplace-table tbody tr.clickable {
+  cursor: pointer;
+}
+
+/* 로딩/빈 상태 셀 */
+.table-empty-cell {
+  text-align: center;
+  padding: 2rem;
+}
+
+.empty-state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.empty-state-text-primary {
+  margin: 0;
+  font-size: 1rem;
+  color: #6b7280;
+}
+
+.empty-state-text-secondary {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+/* 제품명 오류 스타일 */
+.product-name-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: inherit;
+}
+
+.product-name-error .warning-icon {
+  color: #f59e0b; /* 주황색 경고 아이콘 */
+  flex-shrink: 0;
+}
+

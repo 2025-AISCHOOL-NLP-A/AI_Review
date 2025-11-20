@@ -1,0 +1,161 @@
+/* ========================================
+   Workplace Filters Styles
+   ======================================== */
+
+/* ===== 필터 섹션 ===== */
+.workplace-filters {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 1.5rem;
+}
+
+.filters-left {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-dropdown {
+  position: relative;
+}
+
+.product-filter {
+  padding: 0.5rem 2.5rem 0.5rem 1rem;
+  border: 1px solid var(--workplace-border);
+  border-radius: 8px;
+  background: white;
+  font-size: 0.875rem;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
+  color: var(--workplace-text);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23333333'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 1.25rem;
+  height: 2.5rem;
+  box-sizing: border-box;
+  line-height: 1.5;
+  transition: border-color var(--workplace-transition), box-shadow var(--workplace-transition);
+}
+
+.product-filter:focus {
+  outline: none;
+  border-color: var(--workplace-primary);
+  box-shadow: 0 0 0 3px rgba(91, 142, 255, 0.1);
+}
+
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--workplace-text-gray);
+  pointer-events: none;
+}
+
+.search-input {
+  padding: 0.5rem 1rem 0.5rem 2.5rem;
+  border: 1px solid var(--workplace-border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
+  color: var(--workplace-text);
+  width: 280px;
+  min-width: 200px;
+  height: 2.5rem;
+  box-sizing: border-box;
+  line-height: 1.5;
+  transition: border-color var(--workplace-transition), box-shadow var(--workplace-transition);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--workplace-primary);
+  box-shadow: 0 0 0 3px rgba(91, 142, 255, 0.1);
+}
+
+.search-input::placeholder {
+  color: #9CA3AF;
+}
+
+/* ===== 날짜 필터 ===== */
+.date-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.date-input {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--workplace-border);
+  border-radius: 8px;
+  background: white;
+  font-size: 0.875rem;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
+  color: var(--workplace-text);
+  cursor: pointer;
+  transition: all var(--workplace-transition);
+  height: 2.5rem;
+  box-sizing: border-box;
+  line-height: 1.5;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: var(--workplace-primary);
+  box-shadow: 0 0 0 3px rgba(91, 142, 255, 0.1);
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity var(--workplace-transition);
+}
+
+.date-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+.date-separator {
+  color: var(--workplace-text-gray);
+  font-size: 0.875rem;
+  font-weight: 500;
+  user-select: none;
+}
+
+.date-clear-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--workplace-text-gray);
+  transition: all var(--workplace-transition);
+  border-radius: 4px;
+}
+
+.date-clear-btn:hover {
+  color: var(--workplace-danger);
+  background: var(--workplace-danger-bg);
+}
+
+.clear-icon {
+  width: 1rem;
+  height: 1rem;
+}
+

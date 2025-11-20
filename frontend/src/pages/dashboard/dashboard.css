@@ -5,16 +5,16 @@
  */
 
 /* 기본 레이아웃 스타일 */
-@import "./dashboard-layout.css";
+@import "./styles/dashboard-layout.css";
 
 /* Tailwind 유틸리티 클래스 대체 */
-@import "./dashboard-utilities.css";
+@import "./styles/dashboard-utilities.css";
 
 /* 컴포넌트별 스타일 */
-@import "./dashboard-components.css";
+@import "./styles/dashboard-components.css";
 
 /* 반응형 미디어 쿼리 */
-@import "./dashboard-responsive.css";
+@import "./styles/dashboard-responsive.css";
 
 /* ===================== 추가: 가로 스크롤 & 차트 깨짐 방지 ===================== */
 

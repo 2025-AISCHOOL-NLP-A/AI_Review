@@ -5,6 +5,8 @@ from konlpy.tag import Okt
 from collections import Counter
 from wordcloud import WordCloud
 from dotenv import load_dotenv
+import base64
+from io import BytesIO
 
 # 경로 설정 (독립 실행 시)
 if __name__ == "__main__":
@@ -16,6 +18,47 @@ if __name__ == "__main__":
 from utils.db_connect import get_connection
 
 load_dotenv()
+
+# -------------------------
+# 폰트 경로 헬퍼 (OS별 기본 폰트 우선)
+# -------------------------
+def get_font_path():
+    """
+    한국어가 깨지지 않도록 사용할 폰트 경로를 반환한다.
+    우선순위:
+      1) 환경변수 WORCLOUD_FONT or WORDCLOUD_FONT
+      2) 프로젝트 루트/현재 위치에 포함된 ttf
+      3) 윈도우(맑은 고딕), 나눔고딕, macOS 기본 한글 폰트
+    """
+    candidates = []
+
+    env_font = os.environ.get("WORCLOUD_FONT") or os.environ.get("WORDCLOUD_FONT")
+    if env_font:
+        candidates.append(env_font)
+
+    cwd = os.getcwd()
+    candidates.extend(
+        [
+            os.path.join(cwd, "malgun.ttf"),
+            os.path.join(cwd, "NanumGothic.ttf"),
+            "malgun.ttf",
+            "NanumGothic.ttf",
+            r"C:\Windows\Fonts\malgun.ttf",
+            "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
+            "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+            "/System/Library/Fonts/AppleSDGothicNeo.ttc",
+        ]
+    )
+
+    for path in candidates:
+        if path and os.path.exists(path):
+            return path
+
+    print(
+        "[wordcloud] 경고: 한글 폰트를 찾지 못했습니다. "
+        "WORCLOUD_FONT 또는 WORDCLOUD_FONT 환경변수로 한글 지원 TTF 경로를 지정해주세요."
+    )
+    return None
 
 # ======================================
 # 🔹 model_server 디렉토리 경로 (절대 경로)
@@ -286,13 +329,23 @@ def generate_wordcloud_from_db(product_id: int, domain="steam", start_date: str 
     save_path = os.path.join(static_dir, f"product_{product_id}_wc{suffix}.png")
     public_path = f"/static/wordclouds/product_{product_id}_wc{suffix}.png"
 
-    wc = WordCloud(
-        font_path="malgun.ttf",
-        width=1000,
-        height=700,
-        background_color="white",
-        colormap="tab10",
-    ).generate_from_frequencies(freq)
+    font_path = get_font_path()
+    if not font_path:
+        conn.close()
+        return None
+
+    try:
+        wc = WordCloud(
+            font_path=font_path,
+            width=1000,
+            height=700,
+            background_color="white",
+            colormap="tab10",
+        ).generate_from_frequencies(freq)
+    except Exception as e:
+        print(f"[wordcloud] generate_wordcloud_from_db 실패: {e}, font_path={font_path}")
+        conn.close()
+        return None
 
     wc.to_file(save_path)
 
@@ -310,6 +363,134 @@ def generate_wordcloud_from_db(product_id: int, domain="steam", start_date: str 
         conn.commit()
     conn.close()
     return public_path
+
+
+def generate_wordcloud_base64(product_id: int, domain="steam", start_date: str = None, end_date: str = None):
+    """
+    파일 저장/DB 업데이트 없이 메모리에 워드클라우드를 생성해 base64 문자열을 반환합니다.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT product_name, brand FROM tb_product WHERE product_id = %s",
+        (product_id,),
+    )
+    product_info = cursor.fetchone()
+    product_name = product_info["product_name"] if product_info else None
+    brand = product_info["brand"] if product_info else None
+
+    where_clause = "WHERE product_id = %s"
+    params = [product_id]
+    if start_date:
+        where_clause += " AND DATE(review_date) >= %s"
+        params.append(start_date)
+    if end_date:
+        where_clause += " AND DATE(review_date) <= %s"
+        params.append(end_date)
+
+    cursor.execute(
+        f"SELECT review_text FROM tb_review {where_clause}",
+        tuple(params),
+    )
+    reviews = [r["review_text"] for r in cursor.fetchall() if r["review_text"]]
+
+    if not reviews:
+        conn.close()
+        return None
+
+    MAX_REVIEWS = 2000
+    if len(reviews) > MAX_REVIEWS:
+        import random
+        reviews = reviews[-MAX_REVIEWS:] if len(reviews) > MAX_REVIEWS * 2 else random.sample(reviews, MAX_REVIEWS)
+
+    okt = Okt()
+    REVIEW_BATCH_SIZE = 100
+    MAX_TEXT_LENGTH = 30000
+    all_tokens = []
+    for i in range(0, len(reviews), REVIEW_BATCH_SIZE):
+        batch_reviews = reviews[i:i + REVIEW_BATCH_SIZE]
+        batch_text = " ".join(batch_reviews)
+        batch_text = re.sub(r"[^가-힣A-Za-z0-9\\s]", " ", batch_text)
+        if len(batch_text) > MAX_TEXT_LENGTH:
+            text_parts = []
+            current_part = ""
+            for char in batch_text:
+                current_part += char
+                if len(current_part) >= MAX_TEXT_LENGTH:
+                    text_parts.append(current_part)
+                    current_part = ""
+            if current_part:
+                text_parts.append(current_part)
+            for text_part in text_parts:
+                try:
+                    part_tokens = [t for t, pos in okt.pos(text_part) if pos in ["Noun", "Adjective"] and len(t) > 1]
+                    all_tokens.extend(part_tokens)
+                except Exception:
+                    continue
+        else:
+            try:
+                batch_tokens = [t for t, pos in okt.pos(batch_text) if pos in ["Noun", "Adjective"] and len(t) > 1]
+                all_tokens.extend(batch_tokens)
+            except Exception:
+                continue
+
+    tokens = all_tokens
+    stopwords = load_stopwords(domain, debug=False)
+    if product_name:
+        for word in product_name.split():
+            word_clean = word.strip()
+            if word_clean and len(word_clean) > 1:
+                stopwords.add(word_clean)
+        product_name_clean = product_name.strip()
+        if product_name_clean:
+            stopwords.add(product_name_clean)
+    if brand:
+        brand_clean = brand.strip()
+        if brand_clean and len(brand_clean) > 1:
+            stopwords.add(brand_clean)
+
+    filtered_tokens = []
+    for token in tokens:
+        normalized_token = token.strip()
+        if not normalized_token:
+            continue
+        if normalized_token in stopwords:
+            continue
+        if any(sw in normalized_token for sw in stopwords if len(sw) > 1):
+            continue
+        filtered_tokens.append(normalized_token)
+
+    tokens = filtered_tokens
+    freq = dict(Counter(tokens).most_common(200))
+    if not freq:
+        conn.close()
+        return None
+
+    font_path = get_font_path()
+    if not font_path:
+        conn.close()
+        return None
+
+    try:
+        wc = WordCloud(
+            font_path=font_path,
+            width=1000,
+            height=700,
+            background_color="white",
+            colormap="tab10",
+        ).generate_from_frequencies(freq)
+    except Exception as e:
+        print(f"[wordcloud] generate_wordcloud_base64 실패: {e}, font_path={font_path}")
+        conn.close()
+        return None
+
+    buffer = BytesIO()
+    wc.to_image().save(buffer, format="PNG")
+    base64_img = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+    conn.close()
+    return f"data:image/png;base64,{base64_img}"
 
 
 # ======================================

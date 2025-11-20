@@ -7,7 +7,7 @@ from typing import List, Optional
 from app.domains.steam import pipeline as steam
 from app.domains.cosmetics import pipeline as cosmetics
 from app.domains.electronics import pipeline as electronics
-from utils.generate_wordcloud_from_db import generate_wordcloud_from_db
+from utils.generate_wordcloud_from_db import generate_wordcloud_from_db, generate_wordcloud_base64
 from utils.generate_insight import generate_insight_from_db
 from utils.db_connect import get_connection
 import os
@@ -347,9 +347,9 @@ async def analyze_product_reviews(product_id: int, domain: Optional[str] = None)
             # 8️⃣ 워드클라우드 생성
             yield send_progress("wordcloud", 90, "워드클라우드 생성 중...")
             print(f"🌈 워드클라우드 생성 시작...")
-            wc_path = generate_wordcloud_from_db(product_id, domain_name)
+            wc_base64 = generate_wordcloud_base64(product_id, domain_name)
             
-            if wc_path:
+            if wc_base64:
                 yield send_progress("wordcloud", 98, "워드클라우드 생성 완료")
             else:
                 yield send_progress("wordcloud", 98, "워드클라우드 생성 실패")
@@ -365,7 +365,7 @@ async def analyze_product_reviews(product_id: int, domain: Optional[str] = None)
                 "analyzed_count": len(analysis_results),
                 "inserted_count": insert_count,
                 "insight_id": insight_id,
-                "wordcloud_path": wc_path,
+                "wordcloud": wc_base64,
                 "message": "리뷰 분석, 인사이트 생성 및 대시보드 업데이트 완료"
             }
             
@@ -401,21 +401,21 @@ async def analyze_product_reviews(product_id: int, domain: Optional[str] = None)
 @router.post("/products/{product_id}/wordcloud")
 def create_wordcloud(product_id: int, domain: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None):
     """
-    기간별 워드클라우드 생성 후 경로를 반환합니다.
+    기간별 워드클라우드 생성 후 base64를 반환합니다.
     - start_date/end_date: YYYY-MM-DD 형식 (옵션)
     - domain: steam/cosmetics/electronics (옵션)
     리뷰가 없으면 200으로 success=false를 반환합니다(404 대신).
     """
     try:
         domain_name = domain or "steam"
-        wc_path = generate_wordcloud_from_db(product_id, domain_name, start_date, end_date)
-        if not wc_path:
+        wc_base64 = generate_wordcloud_base64(product_id, domain_name, start_date, end_date)
+        if not wc_base64:
             return {
                 "success": False,
-                "wordcloud_path": None,
+                "wordcloud": None,
                 "message": "워드클라우드 생성 대상 리뷰가 없습니다."
             }
-        return {"success": True, "wordcloud_path": wc_path}
+        return {"success": True, "wordcloud": wc_base64}
     except Exception as e:
         import traceback
         traceback.print_exc()

@@ -97,12 +97,12 @@ export async function analyzeProductReviews(product_id, domain = null) {
 }
 
 /**
- * 기간 필터를 적용한 워드클라우드 생성 요청
+ * 기간 필터를 적용한 워드클라우드 생성 요청 (base64 반환)
  * @param {number} product_id
  * @param {string|null} domain
  * @param {string|null} startDate - YYYY-MM-DD
  * @param {string|null} endDate - YYYY-MM-DD
- * @returns {object} - { success, wordcloud_path }
+ * @returns {object} - { success, wordcloud }
  */
 export async function generateWordcloud(product_id, domain = null, startDate = null, endDate = null) {
   try {

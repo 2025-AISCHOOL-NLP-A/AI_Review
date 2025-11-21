@@ -1,7 +1,8 @@
 /* Color constants */
 :root {
   --radar-primary-color: #5B8EFF;
-  --radar-negative-color: #D8B4FE; /* 매우 연한 보라색 - 파란색과 조화롭고 부드러운 느낌 */
+  --radar-negative-color: #D8B4FE;
+  /* 매우 연한 보라색 - 파란색과 조화롭고 부드러운 느낌 */
   --radar-font-color: #333333;
   --radar-grid-color: #E5E7EB;
   --radar-backdrop-color: rgba(255, 255, 255, 0.9);
@@ -9,13 +10,27 @@
 
 .radar-chart-container {
   position: relative;
-  height: 350px !important;
-  max-height: 350px !important;
-  min-height: 350px !important;
+  height: 380px !important;
+  max-height: 380px !important;
+  min-height: 380px !important;
   width: 100%;
   overflow: hidden;
   flex-shrink: 0;
   box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 0;
+}
+
+.radar-chart-wrapper {
+  width: 100%;
+  max-width: 400px;
+  height: 380px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .radar-chart-loading {
@@ -24,7 +39,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 350px;
+  min-height: 380px;
   width: 100%;
 }
 
@@ -34,7 +49,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 350px;
+  min-height: 380px;
   width: 100%;
 }
 
@@ -56,22 +71,21 @@
 .radar-chart-canvas {
   display: block !important;
   width: 100% !important;
-  height: 350px !important;
-  max-height: 350px !important;
-  min-height: 350px !important;
+  height: 380px !important;
+  max-height: 380px !important;
+  min-height: 380px !important;
   box-sizing: border-box;
 }
 
 /* Dashboard에서 오는 스타일 오버라이드 */
 .dashboard-content .radar-chart-container {
-  height: 350px !important;
-  max-height: 350px !important;
-  min-height: 350px !important;
+  height: 380px !important;
+  max-height: 380px !important;
+  min-height: 380px !important;
 }
 
 .dashboard-content .radar-chart-container .radar-chart-canvas {
-  height: 350px !important;
-  max-height: 350px !important;
-  min-height: 350px !important;
+  height: 380px !important;
+  max-height: 380px !important;
+  min-height: 380px !important;
 }
-

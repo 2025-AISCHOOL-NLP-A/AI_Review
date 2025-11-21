@@ -24,29 +24,29 @@ export const processSplitBarData = (keywords = []) => {
     return [];
   }
 
-  return keywords.slice(0, 5).map((kw) => {
+  return keywords.slice(0, 6).map((kw) => {
     const keyword = kw.keyword_text || kw.keyword || kw.keyword_id || "";
     const negativeCount = Number(kw.negative_count || kw.negativeCount || 0);
     const positiveCount = Number(kw.positive_count || kw.positiveCount || 0);
     const totalMentions = negativeCount + positiveCount;
-    
+
     // 비율 계산 (SplitBarChart.jsx는 0~1 사이의 값을 기대함)
     // transformKeywords에서 0-100으로 정규화된 값을 받을 수 있으므로 0-1로 변환
     let negativeRatio = 0;
     let positiveRatio = 0;
-    
+
     if (totalMentions > 0) {
       // 이미 비율이 있는 경우 사용, 없으면 계산
       const rawNegRatio = kw.negative_ratio || kw.negativeRatio;
       const rawPosRatio = kw.positive_ratio || kw.positiveRatio;
-      
+
       if (rawNegRatio !== undefined && rawNegRatio !== null) {
         // 0-100 사이 값이면 0-1로 변환, 이미 0-1이면 그대로 사용
         negativeRatio = rawNegRatio > 1 ? rawNegRatio / 100 : parseFloat(rawNegRatio);
       } else {
         negativeRatio = negativeCount / totalMentions;
       }
-      
+
       if (rawPosRatio !== undefined && rawPosRatio !== null) {
         // 0-100 사이 값이면 0-1로 변환, 이미 0-1이면 그대로 사용
         positiveRatio = rawPosRatio > 1 ? rawPosRatio / 100 : parseFloat(rawPosRatio);

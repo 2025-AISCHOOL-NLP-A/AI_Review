@@ -218,7 +218,7 @@ function Dashboard() {
 
               <div className="card">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold">💬 리뷰 원문 샘플</h2>
+                  <h2 className="text-xl font-semibold">리뷰 원문 하이라이트</h2>
                   <button
                     onClick={() => navigate(`/reviews?productId=${productId}`)}
                     className="review-page-btn"

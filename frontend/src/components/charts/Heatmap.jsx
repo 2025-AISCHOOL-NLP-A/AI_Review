@@ -1,7 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './Heatmap.css';
 
 const Heatmap = ({ labels, matrix, loading }) => {
+  // Tooltip state
+  const [tooltip, setTooltip] = useState({
+    visible: false,
+    content: '',
+    x: 0,
+    y: 0
+  });
+
   // Color constants
   const fontColor = "#333333";
 
@@ -16,13 +24,43 @@ const Heatmap = ({ labels, matrix, loading }) => {
     );
   }
 
+  // Tooltip event handlers
+  const handleMouseEnter = (e, rowLabel, colLabel, value) => {
+    if (value !== null && value !== undefined) {
+      const content = `${rowLabel} - ${colLabel}: ${value.toFixed(2)}`;
+      setTooltip({
+        visible: true,
+        content,
+        x: e.clientX,
+        y: e.clientY
+      });
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    setTooltip(prev => ({
+      ...prev,
+      x: e.clientX,
+      y: e.clientY
+    }));
+  };
+
+  const handleMouseLeave = () => {
+    setTooltip({
+      visible: false,
+      content: '',
+      x: 0,
+      y: 0
+    });
+  };
+
   // 상관관계 값 가져오기 함수
   // matrix는 2D 배열 형태: [[0.26, 0.01, 0.18, ...], [0.01, 0.02, ...], ...]
   const getCorrelationValue = (rowIndex, colIndex) => {
     if (rowIndex === colIndex) {
       return null; // 자기 자신과의 상관관계는 표시하지 않음
     }
-    
+
     // matrix가 2D 배열인 경우
     if (Array.isArray(matrix) && matrix.length > rowIndex) {
       const row = matrix[rowIndex];
@@ -34,7 +72,7 @@ const Heatmap = ({ labels, matrix, loading }) => {
         }
       }
     }
-    
+
     return null;
   };
 
@@ -42,7 +80,7 @@ const Heatmap = ({ labels, matrix, loading }) => {
     let html = [];
     labels.forEach((rowLabel, rowIndex) => {
       let rowCells = [];
-      
+
       // 행 레이블 추가
       // "/"를 기준으로 분할하여 각각을 줄바꿈으로 표시
       const rowLabelStr = String(rowLabel || '').trim();
@@ -50,7 +88,7 @@ const Heatmap = ({ labels, matrix, loading }) => {
       const rowLabelParts = hasSlash
         ? rowLabelStr.split('/').map(part => part.trim()).filter(part => part.length > 0)
         : [rowLabelStr];
-      
+
       rowCells.push(
         <div
           key={`label-${rowIndex}`}
@@ -58,8 +96,8 @@ const Heatmap = ({ labels, matrix, loading }) => {
           title={rowLabel}
         >
           {rowLabelParts.map((part, partIdx) => (
-            <span 
-              key={partIdx} 
+            <span
+              key={partIdx}
               className="heatmap-label-part"
               style={{ display: 'block', width: '100%' }}
             >
@@ -88,7 +126,7 @@ const Heatmap = ({ labels, matrix, loading }) => {
             5,
             Math.max(0, Math.round(normalized * 5))
           );
-          
+
           const bgClasses = [
             "heatmap-cell-blue-100",
             "heatmap-cell-blue-200",
@@ -115,7 +153,9 @@ const Heatmap = ({ labels, matrix, loading }) => {
           <div
             key={`cell-${rowIndex}-${colIndex}`}
             className={`heatmap-cell ${bgColor}`}
-            title={value !== null && value !== undefined ? `${rowLabel} - ${colLabel}: ${value.toFixed(2)}` : ''}
+            onMouseEnter={(e) => handleMouseEnter(e, rowLabel, colLabel, value)}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
           >
             {cellContent}
           </div>
@@ -147,12 +187,12 @@ const Heatmap = ({ labels, matrix, loading }) => {
           const labelParts = hasSlash
             ? labelStr.split('/').map(part => part.trim()).filter(part => part.length > 0)
             : [labelStr];
-          
+
           return (
             <div key={idx} className="heatmap-header-label" title={label}>
               {labelParts.map((part, partIdx) => (
-                <span 
-                  key={partIdx} 
+                <span
+                  key={partIdx}
                   className="heatmap-label-part"
                   style={{ display: 'block', width: '100%' }}
                 >
@@ -163,17 +203,30 @@ const Heatmap = ({ labels, matrix, loading }) => {
           );
         })}
       </div>
-      
+
       {/* 히트맵 본문 */}
       <div className="heatmap-body">
         {renderHeatmap()}
       </div>
-      
+
       {/* 범례 설명 */}
       <p className="heatmap-legend">
         <span className="heatmap-legend-icon">🔵</span> 진할수록 함께
         언급되는 빈도가 높음.
       </p>
+
+      {/* 커스텀 툴팁 */}
+      {tooltip.visible && (
+        <div
+          className="heatmap-tooltip"
+          style={{
+            left: `${tooltip.x + 10}px`,
+            top: `${tooltip.y + 10}px`
+          }}
+        >
+          {tooltip.content}
+        </div>
+      )}
     </div>
   );
 };

@@ -27,15 +27,15 @@ const DashboardHeader = ({
       <div className="mt-4 p-4 border-b border-gray-200 flex flex-col md:flex-row md:items-center justify-between bg-white rounded-xl shadow-sm">
         <div className="mb-3 md:mb-0">
           <span className="text-xs font-semibold uppercase text-gray-500 mr-2">
-            제품 명
+            제품명
           </span>
           <span className="text-2xl font-bold text-gray-900">
             {loading
               ? "로딩 중..."
               : productInfo?.product_name ||
-                dashboardData?.product?.product_name ||
-                dashboardData?.product_name ||
-                (dashboardData === null ? "로딩 중..." : "상품 정보 없음")}
+              dashboardData?.product?.product_name ||
+              dashboardData?.product_name ||
+              (dashboardData === null ? "로딩 중..." : "상품 정보 없음")}
           </span>
         </div>
         <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-3 text-sm">

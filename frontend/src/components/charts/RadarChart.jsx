@@ -133,6 +133,18 @@ const RadarChart = ({ data, loading }) => {
                     bodyFont: {
                       size: 12,
                     },
+                    callbacks: {
+                      label: function (context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                          label += ': ';
+                        }
+                        if (context.parsed.r !== null) {
+                          label += context.parsed.r.toFixed(1) + '%';
+                        }
+                        return label;
+                      }
+                    },
                   },
                 },
                 scales: {
@@ -159,13 +171,13 @@ const RadarChart = ({ data, loading }) => {
                     max: 100,
                     ticks: {
                       stepSize: 20,
-                      backdropColor: "rgba(255, 255, 255, 0.9)",
+                      backdropColor: "transparent",
                       color: colors.textColor,
                       font: {
                         size: 11,
                         family: "'Pretendard', 'Noto Sans KR', sans-serif",
                       },
-                      showLabelBackdrop: true,
+                      showLabelBackdrop: false,
                       z: 10,
                     },
                   },
@@ -216,10 +228,12 @@ const RadarChart = ({ data, loading }) => {
 
   return (
     <div ref={containerRef} className="radar-chart-container">
-      <canvas
-        ref={chartRef}
-        className="radar-chart-canvas"
-      ></canvas>
+      <div className="radar-chart-wrapper">
+        <canvas
+          ref={chartRef}
+          className="radar-chart-canvas"
+        ></canvas>
+      </div>
     </div>
   );
 };

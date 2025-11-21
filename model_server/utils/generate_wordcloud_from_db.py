@@ -1,14 +1,15 @@
+import base64
 import os
 import re
 import sys
-from konlpy.tag import Okt
 from collections import Counter
-from wordcloud import WordCloud
-from dotenv import load_dotenv
-import base64
 from io import BytesIO
 
-# 경로 설정 (독립 실행 시)
+from dotenv import load_dotenv
+from konlpy.tag import Okt
+from wordcloud import WordCloud
+
+# Local import when executed as a script
 if __name__ == "__main__":
     current_dir = os.path.dirname(os.path.abspath(__file__))
     model_server_dir = os.path.dirname(current_dir)
@@ -19,17 +20,12 @@ from utils.db_connect import get_connection
 
 load_dotenv()
 
-# -------------------------
-# 폰트 경로 헬퍼 (OS별 기본 폰트 우선)
-# -------------------------
+
+# ---------------------------------------------------------------------------
+# Path helpers
+# ---------------------------------------------------------------------------
 def get_font_path():
-    """
-    한국어가 깨지지 않도록 사용할 폰트 경로를 반환한다.
-    우선순위:
-      1) 환경변수 WORCLOUD_FONT or WORDCLOUD_FONT
-      2) 프로젝트 루트/현재 위치에 포함된 ttf
-      3) 윈도우(맑은 고딕), 나눔고딕, macOS 기본 한글 폰트
-    """
+    """Find a usable font path for wordcloud generation."""
     candidates = []
 
     env_font = os.environ.get("WORCLOUD_FONT") or os.environ.get("WORDCLOUD_FONT")
@@ -55,75 +51,30 @@ def get_font_path():
             return path
 
     print(
-        "[wordcloud] 경고: 한글 폰트를 찾지 못했습니다. "
-        "WORCLOUD_FONT 또는 WORDCLOUD_FONT 환경변수로 한글 지원 TTF 경로를 지정해주세요."
+        "[wordcloud] 경고: 사용할 글꼴을 찾지 못했습니다. "
+        "WORCLOUD_FONT 또는 WORDCLOUD_FONT 환경변수로 직접 TTF 경로를 지정해주세요."
     )
     return None
 
-# ======================================
-# 🔹 model_server 디렉토리 경로 (절대 경로)
-# ======================================
+
 def get_model_server_dir():
-    """현재 파일 기준으로 model_server 디렉토리 경로 반환"""
-    current_file = os.path.abspath(__file__)  # generate_wordcloud_from_db.py의 절대 경로
-    utils_dir = os.path.dirname(current_file)  # utils 디렉토리
-    model_server_dir = os.path.dirname(utils_dir)  # model_server 디렉토리
-    return model_server_dir
+    current_file = os.path.abspath(__file__)
+    utils_dir = os.path.dirname(current_file)
+    return os.path.dirname(utils_dir)
 
 
-# ======================================
-# 🔹 불용어 로드 함수 (절대경로 + 로그 포함)
-# ======================================
-def load_stopwords(domain="steam", debug=False):
-    stopwords = set()
-
-    # 🔹 현재 파일(app/utils/generate_wordcloud_from_db.py) 기준 경로
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    stopword_dir = os.path.join(current_dir, "stopwords")  # ✅ 같은 폴더
-    base_path = os.path.join(stopword_dir, "base.txt")
-    domain_path = os.path.join(stopword_dir, f"{domain}.txt")
-
-    loaded_count = 0
-    for path in [base_path, domain_path]:
-        if os.path.exists(path):
-            file_count = 0
-            with open(path, "r", encoding="utf-8-sig") as f:
-                for line in f:
-                    # 공백, 탭, 개행 문자 모두 제거하고 정제
-                    word = line.strip().replace("\ufeff", "").replace("\t", "").replace(" ", "")
-                    # 빈 문자열이 아니고 의미있는 단어만 추가
-                    if word and len(word) > 0:
-                        stopwords.add(word)
-                        file_count += 1
-            loaded_count += file_count
-            if debug:
-                print(f"📝 불용어 파일 로드: {os.path.basename(path)} - {file_count}개 단어")
-        else:
-            if debug:
-                print(f"⚠️ 불용어 파일 없음: {os.path.basename(path)}")
-    
-    if debug:
-        print(f"✅ 총 불용어 로드: {len(stopwords)}개 (domain={domain})")
-    
-    return stopwords
-
-
-# ======================================
-# 🔹 워드클라우드 생성 함수
-# ======================================
-def generate_wordcloud_from_db(product_id: int, domain="steam", start_date: str = None, end_date: str = None):
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    # 0️⃣ 제품 정보 조회 (제품명, 브랜드를 불용어에 추가하기 위해)
+# ---------------------------------------------------------------------------
+# DB helpers
+# ---------------------------------------------------------------------------
+def fetch_product_info(cursor, product_id: int):
     cursor.execute(
         "SELECT product_name, brand FROM tb_product WHERE product_id = %s", (product_id,)
     )
-    product_info = cursor.fetchone()
-    product_name = product_info["product_name"] if product_info else None
-    brand = product_info["brand"] if product_info else None
+    info = cursor.fetchone()
+    return (info["product_name"], info["brand"]) if info else (None, None)
 
-    # 1️⃣ 리뷰 불러오기 (기간 필터 적용)
+
+def fetch_reviews(cursor, product_id: int, start_date: str = None, end_date: str = None):
     where_clause = "WHERE product_id = %s"
     params = [product_id]
     if start_date:
@@ -137,187 +88,191 @@ def generate_wordcloud_from_db(product_id: int, domain="steam", start_date: str 
         f"SELECT review_text FROM tb_review {where_clause}",
         tuple(params),
     )
-    reviews = [r["review_text"] for r in cursor.fetchall() if r["review_text"]]
+    return [r["review_text"] for r in cursor.fetchall() if r["review_text"]]
+
+
+# ---------------------------------------------------------------------------
+# Stopword / token helpers
+# ---------------------------------------------------------------------------
+def load_stopwords(domain="steam", debug=False):
+    stopwords = set()
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    stopword_dir = os.path.join(current_dir, "stopwords")
+    base_path = os.path.join(stopword_dir, "base.txt")
+    domain_path = os.path.join(stopword_dir, f"{domain}.txt")
+
+    for path in [base_path, domain_path]:
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8-sig") as f:
+                for line in f:
+                    word = line.strip().replace("\ufeff", "").replace("\t", "").replace(" ", "")
+                    if word:
+                        stopwords.add(word)
+            if debug:
+                print(f"[wordcloud] 불용어 로드: {os.path.basename(path)}")
+        elif debug:
+            print(f"[wordcloud] 불용어 파일 없음: {os.path.basename(path)}")
+
+    if debug:
+        print(f"[wordcloud] 불용어 총 {len(stopwords)}개 (domain={domain})")
+
+    return stopwords
+
+
+def add_product_stopwords(stopwords, product_name: str, brand: str, debug: bool):
+    if product_name:
+        words = product_name.split()
+        for word in words:
+            if word.strip() and len(word.strip()) > 1:
+                stopwords.add(word.strip())
+        if product_name.strip():
+            stopwords.add(product_name.strip())
+        if debug:
+            print(f"[wordcloud] 상품명 불용어 추가: {product_name}")
+
+    if brand:
+        brand_clean = brand.strip()
+        if brand_clean and len(brand_clean) > 1:
+            stopwords.add(brand_clean)
+            if debug:
+                print(f"[wordcloud] 브랜드 불용어 추가: {brand}")
+
+
+def chunk_long_text(text: str, max_length: int):
+    parts = []
+    current = ""
+    for char in text:
+        current += char
+        if len(current) >= max_length:
+            parts.append(current)
+            current = ""
+    if current:
+        parts.append(current)
+    return parts
+
+
+def tokenize_batch(okt, batch_text: str, max_length: int, batch_index: int):
+    effective_texts = (
+        chunk_long_text(batch_text, max_length) if len(batch_text) > max_length else [batch_text]
+    )
+    tokens = []
+    for idx, text_part in enumerate(effective_texts):
+        try:
+            part_tokens = [
+                t for t, pos in okt.pos(text_part) if pos in ["Noun", "Adjective"] and len(t) > 1
+            ]
+            tokens.extend(part_tokens)
+        except Exception as e:
+            print(f"[wordcloud] ⚠️ 배치 {batch_index} 부분 {idx + 1} 처리 오류 (건너뜀): {e}")
+    return tokens
+
+
+def tokenize_reviews(reviews, batch_size=100, max_text_length=30000):
+    print("[wordcloud] 형태소 분석 시작...")
+    okt = Okt()
+    all_tokens = []
+    num_batches = (len(reviews) + batch_size - 1) // batch_size
+
+    for i in range(0, len(reviews), batch_size):
+        batch_num = i // batch_size + 1
+        batch_reviews = reviews[i : i + batch_size]
+        batch_text = " ".join(batch_reviews)
+        batch_text = re.sub(r"[^가-힣A-Za-z0-9\s]", " ", batch_text)
+
+        all_tokens.extend(tokenize_batch(okt, batch_text, max_text_length, batch_num))
+        print(f"   진행: {batch_num}/{num_batches} 배치 완료 ({len(all_tokens)}개 토큰)")
+
+    print(f"[wordcloud] 형태소 분석 완료: {len(all_tokens)}개 토큰 추출")
+    return all_tokens
+
+
+def filter_tokens(tokens, stopwords, product_name: str, brand: str, debug: bool):
+    filtered_tokens = []
+    removed = []
+
+    if debug:
+        print(f"[wordcloud] 불용어 갯수: {len(stopwords)}")
+
+    for token in tokens:
+        normalized = token.strip()
+        if not normalized:
+            continue
+
+        if normalized in stopwords:
+            removed.append(normalized)
+            continue
+        if any(sw in normalized for sw in stopwords if len(sw) > 1):
+            removed.append(normalized)
+            continue
+        if product_name and normalized in product_name:
+            removed.append(normalized)
+            continue
+        if brand and normalized in brand:
+            removed.append(normalized)
+            continue
+
+        filtered_tokens.append(normalized)
+
+    if debug:
+        tokens_before = len(tokens)
+        print(f"[wordcloud] 불용어 제거 통계: before={tokens_before}, after={len(filtered_tokens)}, removed={tokens_before - len(filtered_tokens)}")
+        if removed:
+            removed_counter = Counter(removed)
+            print(f"[wordcloud] 상위 제거 단어: {dict(removed_counter.most_common(10))}")
+
+    return filtered_tokens
+
+
+def limit_reviews(reviews, max_reviews=2000):
+    if len(reviews) <= max_reviews:
+        return reviews
+    import random
+
+    sampled = reviews[-max_reviews:] if len(reviews) > max_reviews * 2 else random.sample(reviews, max_reviews)
+    print(f"[wordcloud] 성능 최적화: {len(reviews)}개 → {len(sampled)}개 샘플링")
+    return sampled
+
+
+def build_wordcloud(freq, font_path):
+    return WordCloud(
+        font_path=font_path,
+        width=1000,
+        height=700,
+        background_color="white",
+        colormap="tab10",
+    ).generate_from_frequencies(freq)
+
+
+# ---------------------------------------------------------------------------
+# Public APIs
+# ---------------------------------------------------------------------------
+def generate_wordcloud_from_db(product_id: int, domain="steam", start_date: str = None, end_date: str = None):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    product_name, brand = fetch_product_info(cursor, product_id)
+    reviews = fetch_reviews(cursor, product_id, start_date, end_date)
 
     if not reviews:
         conn.close()
         return None
 
-    print(f"📊 총 리뷰 수: {len(reviews)}개")
-    
-    # 성능 최적화: 리뷰가 많을 경우 샘플링 (최대 2000개로 줄임 - 메모리 부족 방지)
-    MAX_REVIEWS = 2000
-    if len(reviews) > MAX_REVIEWS:
-        import random
-        # 최근 리뷰 우선 샘플링
-        reviews_sample = reviews[-MAX_REVIEWS:] if len(reviews) > MAX_REVIEWS * 2 else random.sample(reviews, MAX_REVIEWS)
-        print(f"⚡ 성능 최적화: {len(reviews)}개 중 {len(reviews_sample)}개 샘플링하여 처리")
-        reviews = reviews_sample
+    print(f"[wordcloud] 총 리뷰 수: {len(reviews)}")
+    reviews = limit_reviews(reviews)
 
-    # 2️⃣ 텍스트 정제 및 배치 처리
-    print("📝 텍스트 정제 및 형태소 분석 중... (시간이 걸릴 수 있습니다)")
-    okt = Okt()
-    
-    # 메모리 효율성을 위해 리뷰를 작은 배치로 나누어 처리
-    REVIEW_BATCH_SIZE = 100  # 한 번에 처리할 리뷰 수
-    MAX_TEXT_LENGTH = 30000  # 한 번에 처리할 최대 텍스트 길이 (문자)
-    
-    all_tokens = []
-    num_batches = (len(reviews) + REVIEW_BATCH_SIZE - 1) // REVIEW_BATCH_SIZE
-    
-    for i in range(0, len(reviews), REVIEW_BATCH_SIZE):
-        batch_reviews = reviews[i:i + REVIEW_BATCH_SIZE]
-        batch_text = " ".join(batch_reviews)
-        batch_text = re.sub(r"[^ㄱ-ㅎ가-힣a-zA-Z0-9\s]", " ", batch_text)
-        
-        # 텍스트가 너무 길면 더 작게 나누기
-        if len(batch_text) > MAX_TEXT_LENGTH:
-            # 텍스트를 여러 부분으로 나누기
-            text_parts = []
-            current_part = ""
-            for char in batch_text:
-                current_part += char
-                if len(current_part) >= MAX_TEXT_LENGTH:
-                    text_parts.append(current_part)
-                    current_part = ""
-            if current_part:
-                text_parts.append(current_part)
-            
-            for part_idx, text_part in enumerate(text_parts):
-                try:
-                    ## 원형 처리 x 버전
-                    part_tokens = [
-                        t for t, pos in okt.pos(text_part) 
-                        if pos in ["Noun", "Adjective"] and len(t) > 1
-                    ]
-                    all_tokens.extend(part_tokens)
-                    ## 원형 처리 버전
-                    # part_tokens = []
-                    # morphs = okt.pos(text_part, stem=True)
-                    # for t, pos in morphs:
-                    #     if pos in ["Noun", "Adjective"] and len(t) > 1: # ["Noun", "Adjective", "Verb"]
-                    #         part_tokens.append(t)
-                    all_tokens.extend(part_tokens)
-                except Exception as e:
-                    print(f"⚠️ 배치 {i//REVIEW_BATCH_SIZE + 1}의 부분 {part_idx + 1} 처리 중 오류 (건너뜀): {e}")
-                    continue
-        else:
-            try:
-                ## 원형 처리 x 버전
-                batch_tokens = [
-                    t for t, pos in okt.pos(batch_text) 
-                    if pos in ["Noun", "Adjective"] and len(t) > 1
-                ]
-                ## 원형 처리 버전
-                # batch_tokens = []
-                # morphs = okt.pos(batch_text, stem=True)
-                # for t, pos in morphs:
-                #     if pos in ["Noun", "Adjective"] and len(t) > 1: # ["Noun", "Adjective", "Verb"]
-                #         batch_tokens.append(t)
-                all_tokens.extend(batch_tokens)
-            except Exception as e:
-                print(f"⚠️ 배치 {i//REVIEW_BATCH_SIZE + 1} 처리 중 오류 (건너뜀): {e}")
-                continue
-        
-        # 진행 상황 출력
-        batch_num = i // REVIEW_BATCH_SIZE + 1
-        print(f"   진행: {batch_num}/{num_batches} 배치 완료 ({len(all_tokens)}개 토큰 수집)")
-    
-    tokens = all_tokens
-    print(f"✅ 형태소 분석 완료: {len(tokens)}개 토큰 추출")
-
-    # 4️⃣ 불용어 제거
+    tokens = tokenize_reviews(reviews)
     stopwords = load_stopwords(domain, debug=True)
-    
-    # 제품명과 브랜드를 불용어에 추가
-    if product_name:
-        # 제품명을 공백으로 분리하여 각 단어도 추가
-        product_words = product_name.split()
-        for word in product_words:
-            word_clean = word.strip()
-            if word_clean and len(word_clean) > 1:
-                stopwords.add(word_clean)
-        # 전체 제품명도 추가
-        product_name_clean = product_name.strip()
-        if product_name_clean:
-            stopwords.add(product_name_clean)
-        print(f"📝 제품명 불용어 추가: {product_name} (단어: {product_words})")
-    
-    if brand:
-        brand_clean = brand.strip()
-        if brand_clean and len(brand_clean) > 1:
-            stopwords.add(brand_clean)
-            print(f"📝 브랜드 불용어 추가: {brand}")
-    
-    # 토큰 정규화 및 불용어 제거
-    tokens_before = len(tokens)
-    filtered_tokens = []
-    removed_words = []
-    
-    # 불용어 확인용 디버깅
-    print(f"🔍 불용어 세트 크기: {len(stopwords)}개")
-    test_words = ["새끼", "병신", "씨발"]
-    for test_word in test_words:
-        if test_word in stopwords:
-            print(f"   ✅ '{test_word}' 불용어에 포함됨")
-        else:
-            print(f"   ❌ '{test_word}' 불용어에 없음!")
-    
-    for token in tokens:
-        # 토큰 정규화: 공백 제거
-        normalized_token = token.strip()
-        if not normalized_token:
-            continue
-            
-        # 불용어 체크: 정확히 일치하거나, 불용어가 토큰에 포함되거나, 토큰이 불용어에 포함되는 경우 제거
-        should_remove = False
-        remove_reason = None
-        
-        # 1. 정확히 일치하는 불용어 체크
-        if normalized_token in stopwords:
-            should_remove = True
-            remove_reason = "불용어 일치"
-        # 2. 불용어가 토큰에 포함되는 경우 (예: "개새끼" -> "새끼" 포함)
-        elif any(sw in normalized_token for sw in stopwords if len(sw) > 1):
-            should_remove = True
-            remove_reason = "불용어 포함"
-        # 3. 토큰이 불용어에 포함되는 경우 (예: "새" -> "새끼"에 포함, 하지만 이건 제외)
-        # 4. 제품명에 포함되는 경우 (부분 매칭)
-        elif product_name and normalized_token in product_name:
-            should_remove = True
-            remove_reason = "제품명 포함"
-        # 5. 브랜드에 포함되는 경우 (부분 매칭)
-        elif brand and normalized_token in brand:
-            should_remove = True
-            remove_reason = "브랜드 포함"
-        
-        if should_remove:
-            removed_words.append(normalized_token)
-        else:
-            filtered_tokens.append(normalized_token)
-    
-    tokens = filtered_tokens
-    tokens_after = len(tokens)
-    
-    # 디버깅 정보 출력
-    print(f"🔍 불용어 제거 통계:")
-    print(f"   - 제거 전 토큰 수: {tokens_before}")
-    print(f"   - 제거 후 토큰 수: {tokens_after}")
-    print(f"   - 제거된 토큰 수: {tokens_before - tokens_after}")
-    if removed_words:
-        removed_counter = Counter(removed_words)
-        print(f"   - 제거된 상위 10개 단어: {dict(removed_counter.most_common(10))}")
+    add_product_stopwords(stopwords, product_name, brand, debug=True)
+    tokens = filter_tokens(tokens, stopwords, product_name, brand, debug=True)
 
-    # 5️⃣ 빈도 계산
     freq = dict(Counter(tokens).most_common(200))
     if not freq:
         conn.close()
         return None
 
-    # 6️⃣ 워드클라우드 생성 및 저장 (절대 경로 사용)
     model_server_dir = get_model_server_dir()
     static_dir = os.path.join(model_server_dir, "static", "wordclouds")
-
     os.makedirs(static_dir, exist_ok=True)
 
     suffix = ""
@@ -335,13 +290,7 @@ def generate_wordcloud_from_db(product_id: int, domain="steam", start_date: str 
         return None
 
     try:
-        wc = WordCloud(
-            font_path=font_path,
-            width=1000,
-            height=700,
-            background_color="white",
-            colormap="tab10",
-        ).generate_from_frequencies(freq)
+        wc = build_wordcloud(freq, font_path)
     except Exception as e:
         print(f"[wordcloud] generate_wordcloud_from_db 실패: {e}, font_path={font_path}")
         conn.close()
@@ -349,8 +298,6 @@ def generate_wordcloud_from_db(product_id: int, domain="steam", start_date: str 
 
     wc.to_file(save_path)
 
-    # 7️⃣ DB 경로 업데이트
-    # 대시보드 테이블 업데이트는 전체 기간 기본 경로일 때만 수행 (기간 필터 시에는 파일만 생성)
     if not start_date and not end_date:
         cursor.execute(
             """
@@ -367,101 +314,25 @@ def generate_wordcloud_from_db(product_id: int, domain="steam", start_date: str 
 
 def generate_wordcloud_base64(product_id: int, domain="steam", start_date: str = None, end_date: str = None):
     """
-    파일 저장/DB 업데이트 없이 메모리에 워드클라우드를 생성해 base64 문자열을 반환합니다.
+    파일 저장 없이 메모리에서 워드클라우드를 생성해 base64 문자열을 반환합니다.
     """
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(
-        "SELECT product_name, brand FROM tb_product WHERE product_id = %s",
-        (product_id,),
-    )
-    product_info = cursor.fetchone()
-    product_name = product_info["product_name"] if product_info else None
-    brand = product_info["brand"] if product_info else None
-
-    where_clause = "WHERE product_id = %s"
-    params = [product_id]
-    if start_date:
-        where_clause += " AND DATE(review_date) >= %s"
-        params.append(start_date)
-    if end_date:
-        where_clause += " AND DATE(review_date) <= %s"
-        params.append(end_date)
-
-    cursor.execute(
-        f"SELECT review_text FROM tb_review {where_clause}",
-        tuple(params),
-    )
-    reviews = [r["review_text"] for r in cursor.fetchall() if r["review_text"]]
+    product_name, brand = fetch_product_info(cursor, product_id)
+    reviews = fetch_reviews(cursor, product_id, start_date, end_date)
 
     if not reviews:
         conn.close()
         return None
 
-    MAX_REVIEWS = 2000
-    if len(reviews) > MAX_REVIEWS:
-        import random
-        reviews = reviews[-MAX_REVIEWS:] if len(reviews) > MAX_REVIEWS * 2 else random.sample(reviews, MAX_REVIEWS)
+    reviews = limit_reviews(reviews)
+    tokens = tokenize_reviews(reviews)
 
-    okt = Okt()
-    REVIEW_BATCH_SIZE = 100
-    MAX_TEXT_LENGTH = 30000
-    all_tokens = []
-    for i in range(0, len(reviews), REVIEW_BATCH_SIZE):
-        batch_reviews = reviews[i:i + REVIEW_BATCH_SIZE]
-        batch_text = " ".join(batch_reviews)
-        batch_text = re.sub(r"[^가-힣A-Za-z0-9\\s]", " ", batch_text)
-        if len(batch_text) > MAX_TEXT_LENGTH:
-            text_parts = []
-            current_part = ""
-            for char in batch_text:
-                current_part += char
-                if len(current_part) >= MAX_TEXT_LENGTH:
-                    text_parts.append(current_part)
-                    current_part = ""
-            if current_part:
-                text_parts.append(current_part)
-            for text_part in text_parts:
-                try:
-                    part_tokens = [t for t, pos in okt.pos(text_part) if pos in ["Noun", "Adjective"] and len(t) > 1]
-                    all_tokens.extend(part_tokens)
-                except Exception:
-                    continue
-        else:
-            try:
-                batch_tokens = [t for t, pos in okt.pos(batch_text) if pos in ["Noun", "Adjective"] and len(t) > 1]
-                all_tokens.extend(batch_tokens)
-            except Exception:
-                continue
-
-    tokens = all_tokens
     stopwords = load_stopwords(domain, debug=False)
-    if product_name:
-        for word in product_name.split():
-            word_clean = word.strip()
-            if word_clean and len(word_clean) > 1:
-                stopwords.add(word_clean)
-        product_name_clean = product_name.strip()
-        if product_name_clean:
-            stopwords.add(product_name_clean)
-    if brand:
-        brand_clean = brand.strip()
-        if brand_clean and len(brand_clean) > 1:
-            stopwords.add(brand_clean)
+    add_product_stopwords(stopwords, product_name, brand, debug=False)
+    tokens = filter_tokens(tokens, stopwords, product_name, brand, debug=False)
 
-    filtered_tokens = []
-    for token in tokens:
-        normalized_token = token.strip()
-        if not normalized_token:
-            continue
-        if normalized_token in stopwords:
-            continue
-        if any(sw in normalized_token for sw in stopwords if len(sw) > 1):
-            continue
-        filtered_tokens.append(normalized_token)
-
-    tokens = filtered_tokens
     freq = dict(Counter(tokens).most_common(200))
     if not freq:
         conn.close()
@@ -473,13 +344,7 @@ def generate_wordcloud_base64(product_id: int, domain="steam", start_date: str =
         return None
 
     try:
-        wc = WordCloud(
-            font_path=font_path,
-            width=1000,
-            height=700,
-            background_color="white",
-            colormap="tab10",
-        ).generate_from_frequencies(freq)
+        wc = build_wordcloud(freq, font_path)
     except Exception as e:
         print(f"[wordcloud] generate_wordcloud_base64 실패: {e}, font_path={font_path}")
         conn.close()
@@ -493,33 +358,34 @@ def generate_wordcloud_base64(product_id: int, domain="steam", start_date: str =
     return f"data:image/png;base64,{base64_img}"
 
 
-# ======================================
-# 🔹 실행 (테스트)
-# ======================================
+# ---------------------------------------------------------------------------
+# CLI execution (manual test)
+# ---------------------------------------------------------------------------
 if __name__ == "__main__":
     from utils.db_connect import init_db_pool, close_db_pool
-    
-    # 테스트용 product_id
+
     product_id = int(sys.argv[1]) if len(sys.argv) > 1 else 1038
     domain = sys.argv[2] if len(sys.argv) > 2 else "electronics"
-    
+
     try:
-        print("🔧 DB Connection Pool 초기화 중...")
+        print("[wordcloud] DB Connection Pool 초기화")
         init_db_pool()
-        
-        print(f"\n🌈 워드클라우드 생성 시작 (product_id={product_id}, domain={domain})")
+
+        print(f"\n[wordcloud] 워드클라우드 생성 시작 (product_id={product_id}, domain={domain})")
         wc_path = generate_wordcloud_from_db(product_id, domain)
-        
+
         if wc_path:
-            print(f"\n✅ 테스트 성공! 워드클라우드 경로: {wc_path}")
+            print(f"\n[wordcloud] 생성 완료: {wc_path}")
         else:
-            print("\n❌ 테스트 실패")
-    
+            print("\n[wordcloud] 생성 실패")
+
     except Exception as e:
-        print(f"\n❌ 테스트 실패: {e}")
+        print(f"\n[wordcloud] 실패: {e}")
         import traceback
+
         traceback.print_exc()
-    
     finally:
-        print("\n🧹 DB Connection Pool 정리 중...")
-        close_db_pool()
+        try:
+            close_db_pool()
+        except Exception:
+            pass

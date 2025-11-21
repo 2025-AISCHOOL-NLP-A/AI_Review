@@ -114,7 +114,7 @@ header button.login-btn:hover {
 
 /* ===================== PREVIEW(시연 영상) 섹션 ===================== */
 .preview {
-  min-height: 100vh; /* ✅ 한 화면 꽉 채우기 */
+  min-height: 95vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -331,7 +331,7 @@ header button.login-btn:hover {
 .marketing-section {
   width: 100%;
   max-width: 1400px;
-  margin: 80px auto;
+  margin: 40px auto;
   display: flex;
   justify-content: center;
   gap: 32px;

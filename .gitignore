@@ -103,3 +103,8 @@ jspm_packages/
 model_server/.env
 model_server/.env
 model_server/.env
+
+# Generated files
+# Wordcloud images
+model_server/static/wordcloud/
+model_server/static/wordcloud/*.png

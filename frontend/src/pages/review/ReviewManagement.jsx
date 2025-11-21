@@ -103,15 +103,28 @@ function ReviewManagement() {
     setIsDateFilterInitialized(false);
   }, [selectedProductFilter, selectedSentimentFilter, searchQuery]);
 
+  // URL의 productId가 변경될 때도 날짜 범위를 다시 계산
+  useEffect(() => {
+    const productIdFromUrl = searchParams.get("productId");
+    if (productIdFromUrl) {
+      // URL에서 제품이 변경되면 날짜 범위를 다시 계산하도록 초기화
+      setIsDateFilterInitialized(false);
+    }
+  }, [searchParams]);
+
   // 전체 리뷰의 날짜 범위 계산 (날짜 필터 제외)
   useEffect(() => {
     if (isDateFilterInitialized) return; // 이미 초기화되었으면 실행하지 않음
 
     const fetchDateRange = async () => {
       try {
+        // URL의 productId를 우선 사용, 없으면 selectedProductFilter 사용
+        const productIdFromUrl = searchParams.get("productId");
+        const productIdToUse = productIdFromUrl || selectedProductFilter;
+        
         // 날짜 필터를 제외한 필터 조건으로 전체 리뷰의 날짜 범위 계산
         const filters = {
-          ...(selectedProductFilter && { product_id: parseInt(selectedProductFilter) }),
+          ...(productIdToUse && { product_id: parseInt(productIdToUse) }),
           ...(selectedSentimentFilter && { sentiment: selectedSentimentFilter }),
           ...(searchQuery.trim() && { search: searchQuery.trim() }),
           // 날짜 필터는 제외
@@ -198,6 +211,7 @@ function ReviewManagement() {
     selectedSentimentFilter,
     searchQuery,
     isDateFilterInitialized,
+    searchParams,
   ]);
 
   // 리뷰 목록 로드
@@ -358,39 +372,6 @@ function ReviewManagement() {
     }
   };
 
-  // 선택된 리뷰 다운로드
-  const handleDownload = async () => {
-    if (selectedReviews.length === 0) {
-      alert("다운로드할 리뷰를 선택해주세요.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const filters = {
-        // 선택된 리뷰만 다운로드하기 위한 필터
-        review_ids: selectedReviews,
-        ...(selectedProductFilter && { product_id: parseInt(selectedProductFilter) }),
-        ...(selectedSentimentFilter && { sentiment: selectedSentimentFilter }),
-        ...(searchQuery.trim() && { search: searchQuery.trim() }),
-        ...(startDate && { start_date: startDate }),
-        ...(endDate && { end_date: endDate }),
-      };
-
-      const result = await reviewService.exportReviews(filters, "csv");
-
-      if (result.success) {
-        // 다운로드 성공 메시지는 exportReviews 내부에서 파일 다운로드 처리
-      } else {
-        alert(result.message || "리뷰 다운로드에 실패했습니다.");
-      }
-    } catch (error) {
-      console.error("리뷰 다운로드 중 오류:", error);
-      alert("리뷰 다운로드 중 오류가 발생했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className={`dashboard-page ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
@@ -478,18 +459,6 @@ function ReviewManagement() {
                 onPageChange={handlePageChange}
               />
               <div className="action-buttons">
-                <button
-                  className="download-btn"
-                  onClick={handleDownload}
-                  disabled={selectedReviews.length === 0 || loading}
-                  title={
-                    selectedReviews.length === 0
-                      ? "다운로드할 리뷰를 선택해주세요"
-                      : `선택한 ${selectedReviews.length}개 리뷰 다운로드`
-                  }
-                >
-                  Download
-                </button>
                 <button
                   className="delete-btn"
                   onClick={handleDeleteSelected}

@@ -397,9 +397,114 @@ function Workplace() {
     }
   };
 
-  // 다운로드 버튼 클릭
-  const handleDownload = () => {
-    // 선택된 제품 다운로드 로직 구현
+  // 다운로드 버튼 클릭 - 각 제품의 대시보드 PDF 다운로드
+  const handleDownload = async () => {
+    if (selectedProducts.length === 0) {
+      alert("다운로드할 제품을 선택해주세요.");
+      return;
+    }
+
+    if (!window.confirm(`선택한 ${selectedProducts.length}개 제품의 대시보드 PDF를 다운로드하시겠습니까?\n\n각 제품의 대시보드 페이지가 새 창으로 열리고 PDF가 자동으로 다운로드됩니다.`)) {
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      // 각 제품에 대해 순차적으로 대시보드 PDF 다운로드
+      for (let i = 0; i < selectedProducts.length; i++) {
+        const productId = selectedProducts[i];
+        
+        // 제품 정보 찾기
+        const product = allProducts.find(p => p.product_id === productId);
+        const productName = product?.product_name || `제품_${productId}`;
+        
+        // 대시보드 페이지를 새 창으로 열기
+        const dashboardUrl = `${window.location.origin}/dashboard?productId=${productId}`;
+        const newWindow = window.open(dashboardUrl, `dashboard_${productId}`, 'width=1400,height=800');
+        
+        if (!newWindow) {
+          alert(`${productName}의 대시보드 창을 열 수 없습니다. 팝업 차단을 해제해주세요.`);
+          continue;
+        }
+        
+        // 새 창이 로드되고 대시보드가 완전히 렌더링될 때까지 대기
+        await new Promise((resolve) => {
+          let checkCount = 0;
+          const maxChecks = 100; // 최대 10초 대기
+          
+          const checkLoad = setInterval(() => {
+            checkCount++;
+            
+            try {
+              // 새 창이 닫혔는지 확인
+              if (newWindow.closed) {
+                clearInterval(checkLoad);
+                resolve();
+                return;
+              }
+              
+              // 대시보드 컨텐츠가 로드되었는지 확인
+              const dashboardContent = newWindow.document.getElementById('dashboard-content');
+              const downloadBtn = newWindow.document.querySelector('button[ref]');
+              
+              if (dashboardContent && downloadBtn && newWindow.document.readyState === 'complete') {
+                clearInterval(checkLoad);
+                
+                // 차트가 렌더링될 때까지 추가 대기
+                setTimeout(() => {
+                  // PDF 다운로드 버튼 클릭
+                  try {
+                    downloadBtn.click();
+                    
+                    // PDF 다운로드가 시작될 때까지 대기 후 창 닫기
+                    setTimeout(() => {
+                      if (!newWindow.closed) {
+                        newWindow.close();
+                      }
+                      resolve();
+                    }, 3000);
+                  } catch (err) {
+                    console.error('PDF 다운로드 버튼 클릭 오류:', err);
+                    if (!newWindow.closed) {
+                      newWindow.close();
+                    }
+                    resolve();
+                  }
+                }, 3000); // 차트 렌더링을 위한 3초 대기
+              } else if (checkCount >= maxChecks) {
+                // 최대 대기 시간 초과
+                clearInterval(checkLoad);
+                alert(`${productName}의 대시보드 로딩이 시간 초과되었습니다.`);
+                if (!newWindow.closed) {
+                  newWindow.close();
+                }
+                resolve();
+              }
+            } catch (err) {
+              // 크로스 오리진 오류 등 처리
+              if (checkCount >= maxChecks) {
+                clearInterval(checkLoad);
+                console.error('대시보드 로딩 확인 오류:', err);
+                resolve();
+              }
+            }
+          }, 100); // 100ms마다 확인
+        });
+        
+        // 다음 제품 다운로드 전에 잠시 대기 (브라우저가 파일 다운로드를 처리할 시간)
+        if (i < selectedProducts.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+      
+      alert(`선택한 ${selectedProducts.length}개 제품의 대시보드 PDF 다운로드가 완료되었습니다.`);
+    } catch (error) {
+      console.error("PDF 다운로드 중 오류:", error);
+      alert("PDF 다운로드 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Add 버튼 클릭 - Step 1 모달 열기

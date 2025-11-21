@@ -3,7 +3,6 @@ import {
   analyzeReviews,
   deleteReview,
   deleteReviewsBatch,
-  exportReviews,
   getReviews,
 } from "../controllers/reviewController.js";
 import { verifyAuth } from "../middlewares/authMiddleware.js";
@@ -15,9 +14,6 @@ router.use(verifyAuth);
 
 // List/filter/paginate reviews
 router.get("/", getReviews);
-
-// Export reviews
-router.get("/export", exportReviews);
 
 // Batch delete reviews (placed before single delete)
 router.delete("/batch", deleteReviewsBatch);

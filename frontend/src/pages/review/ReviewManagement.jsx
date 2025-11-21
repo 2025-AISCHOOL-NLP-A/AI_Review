@@ -6,7 +6,7 @@ import ReviewFilterBar from "../../components/review/ReviewFilterBar";
 import ReviewListTable from "../../components/review/ReviewListTable";
 import ProductPagination from "../../components/workplace/ProductPagination";
 import reviewService from "../../services/reviewService";
-import { useSidebar } from "../../hooks/useSidebar";
+import { useSidebar } from "../../hooks/ui/useSidebar";
 import { getTodayDate } from "../../utils/format/dateUtils";
 import { sanitizeInput } from "../../utils/format/inputSanitizer";
 import "../../styles/common.css";

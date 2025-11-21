@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import authService from "../../services/authService";
 import { useUser } from "../../contexts/UserContext";
-import { useEmailTimerUpdate } from "../../hooks/useEmailTimerUpdate";
+import { useEmailTimerUpdate } from "../../hooks/auth/useEmailTimerUpdate";
 import Sidebar from "../../components/layout/sidebar/Sidebar";
 import Footer from "../../components/layout/Footer/Footer";
 import { sanitizeInput, sanitizeEmail, sanitizeNumber } from "../../utils/format/inputSanitizer";

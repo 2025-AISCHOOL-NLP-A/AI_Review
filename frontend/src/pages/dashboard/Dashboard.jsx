@@ -9,9 +9,9 @@ import WordCloudSection from "../../components/dashboard/WordCloudSection";
 import ReviewTable from "../../components/dashboard/ReviewTable";
 import InsightsSection from "../../components/dashboard/InsightsSection";
 import AIInsightReport from "../../components/dashboard/AIInsightReport";
-import { usePDFDownload } from "../../hooks/usePDFDownload";
-import { useSidebar } from "../../hooks/useSidebar";
-import { useDashboardData } from "../../hooks/useDashboardData";
+import { usePDFDownload } from "../../hooks/dashboard/usePDFDownload";
+import { useSidebar } from "../../hooks/ui/useSidebar";
+import { useDashboardData } from "../../hooks/dashboard/useDashboardData";
 import {
   processDailyTrendData,
   processRadarData,
@@ -272,6 +272,7 @@ function Dashboard() {
               <button
                 ref={downloadBtnRef}
                 onClick={handlePDFDownload}
+                data-pdf-download="true"
                 className="bg-main text-white px-8 py-3 rounded-xl font-bold text-lg hover-opacity-90 transition shadow-lg flex items-center"
               >
                 <svg

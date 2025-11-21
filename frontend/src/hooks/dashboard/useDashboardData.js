@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import dashboardService from "../services/dashboardService";
-import { getTodayDate } from "../utils/data/dashboardDateFilter";
-import { findFirstReviewDate } from "../services/dashboardResponseProcessor";
+import dashboardService from "../../services/dashboardService";
+import { getTodayDate } from "../../utils/data/dashboardDateFilter";
+import { findFirstReviewDate } from "../../services/dashboardResponseProcessor";
 
 /**
  * 대시보드 데이터를 가져오는 커스텀 훅

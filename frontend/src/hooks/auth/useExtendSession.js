@@ -1,5 +1,5 @@
 import { useState } from "react";
-import authService from "../services/authService";
+import authService from "../../services/authService";
 
 export const useExtendSession = (refreshUser, isExpired) => {
   const [isExtending, setIsExtending] = useState(false);

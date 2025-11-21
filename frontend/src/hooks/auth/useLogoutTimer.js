@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getToken } from "../utils/auth/storage";
-import { getRemainingTime, formatRemainingTime, isTokenExpired } from "../utils/auth/tokenUtils";
-import { useUser } from "../contexts/UserContext";
+import { getToken } from "../../utils/auth/storage";
+import { getRemainingTime, formatRemainingTime, isTokenExpired } from "../../utils/auth/tokenUtils";
+import { useUser } from "../../contexts/UserContext";
 
 /**
  * 로그아웃까지 남은 시간을 실시간으로 추적하는 커스텀 훅

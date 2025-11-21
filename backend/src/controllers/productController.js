@@ -130,14 +130,14 @@ export const dashboard = async (req, res) => {
     const endDate = normalizeDate(req.query.end_date);
 
     if (startDate && endDate && startDate > endDate) {
-      return res.status(400).json({ message: "Start date cannot be after end date." });
+      return res.status(400).json({ message: "시작 날짜는 종료 날짜보다 이전이어야 합니다." });
     }
 
     if (!productId) {
-      return res.status(400).json({ message: "Product ID is required." });
+      return res.status(400).json({ message: "제품 ID가 필요합니다." });
     }
 
-    // 1. Dashboard data fetch (with retry)
+    // 1. 대시보드 테이블 전체 조회 (재시도 로직 포함)
     let dashboardData;
     try {
       const result = await executeQueryWithRetry(async () => {
@@ -163,17 +163,17 @@ export const dashboard = async (req, res) => {
     } catch (queryErr) {
       if (queryErr.code === 'ECONNRESET' || queryErr.code === 'PROTOCOL_CONNECTION_LOST') {
         return res.status(503).json({
-          message: "Database connection issue. Please try again later."
+          message: "데이터베이스 연결에 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
         });
       }
       throw queryErr;
     }
 
     if (!dashboardData) {
-      return res.status(404).json({ message: "Dashboard data not found." });
+      return res.status(404).json({ message: "대시보드 데이터를 찾을 수 없습니다." });
     }
 
-    // 2. Wordcloud image handling (base path, regenerate on date filter)
+    // 2. 워드클라우드 이미지 처리
     let wordcloudImage = null;
     let wordcloudPath = dashboardData.wordcloud_path || null;
     if (wordcloudPath) {
@@ -189,7 +189,7 @@ export const dashboard = async (req, res) => {
       }
     }
 
-    // 3. Insight fetch (with retry)
+    // 3. 인사이트 조회 (재시도 로직 포함)
     let insight = null;
     if (dashboardData.insight_id) {
       try {
@@ -213,12 +213,12 @@ export const dashboard = async (req, res) => {
         });
         insight = result || null;
       } catch (queryErr) {
-        console.error("Insight fetch failed (continue):", queryErr.message);
-        insight = null; // continue even if insight fetch fails
+        console.error("⚠️ 인사이트 조회 실패 (계속 진행):", queryErr.message);
+        insight = null; // 인사이트 조회 실패해도 계속 진행
       }
     }
 
-    // 4. Latest 10 reviews (with retry)
+    // 4. 최신 리뷰 10개 조회 (재시도 로직 포함)
     let recentReviews = [];
     try {
       const result = await executeQueryWithRetry(async () => {
@@ -240,11 +240,11 @@ export const dashboard = async (req, res) => {
       });
       recentReviews = result || [];
     } catch (queryErr) {
-      console.error("Latest reviews fetch failed (continue):", queryErr.message);
-      recentReviews = []; // continue even if reviews fetch fails
+      console.error("⚠️ 최신 리뷰 조회 실패 (계속 진행):", queryErr.message);
+      recentReviews = []; // 리뷰 조회 실패해도 계속 진행
     }
 
-    //5. Product name fetch (with retry)
+    //5. 상품 이름 조회 (재시도 로직 포함)
     let productInfo = null;
     try {
       const result = await executeQueryWithRetry(async () => {
@@ -260,11 +260,11 @@ export const dashboard = async (req, res) => {
       });
       productInfo = result;
     } catch (queryErr) {
-      console.error("Product info fetch failed (continue):", queryErr.message);
-      productInfo = null; // continue even if product info fetch fails
+      console.error("⚠️ 제품 정보 조회 실패 (계속 진행):", queryErr.message);
+      productInfo = null; // 제품 정보 조회 실패해도 계속 진행
     }
 
-    // 6. Real-time aggregation when date filter applied
+    // 6. 날짜 필터가 있으면 해당 기간 데이터만 집계
     const shouldApplyDateFilter = Boolean(startDate || endDate);
     let aggregatedDashboard = dashboardData;
     if (shouldApplyDateFilter) {
@@ -280,7 +280,7 @@ export const dashboard = async (req, res) => {
       }
       const whereSql = `WHERE ${whereParts.join(" AND ")}`;
 
-      // Stats
+      // 통계 조회
       const [[stats]] = await db.query(
         `
         SELECT
@@ -302,7 +302,7 @@ export const dashboard = async (req, res) => {
       const positiveRatio = totalReviews ? positiveCount / totalReviews : 0;
       const negativeRatio = totalReviews ? negativeCount / totalReviews : 0;
 
-      // Daily trend
+      // 일별 트렌드
       const [dailyTrend] = await db.query(
         `
         SELECT
@@ -329,7 +329,7 @@ export const dashboard = async (req, res) => {
         };
       });
 
-      // Keyword aggregation
+      // 키워드 요약
       const [keywordSummary] = await db.query(
         `
         SELECT
@@ -360,7 +360,7 @@ export const dashboard = async (req, res) => {
         };
       });
 
-      // Heatmap keywords & correlation matrix
+      // 히트맵용 상위 키워드 조회
       const [heatmapKeywordsRows] = await db.query(
         `
         SELECT
@@ -435,8 +435,7 @@ export const dashboard = async (req, res) => {
         };
       }
 
-      
-// Latest reviews (with date filter)
+      // 최신 리뷰 (기간 필터 적용)
       const [filteredRecent] = await db.query(
         `
         SELECT 
@@ -481,7 +480,7 @@ export const dashboard = async (req, res) => {
           wordcloudPath = wcResult.wordcloud_path;
         }
       } catch (err) {
-        console.error("Wordcloud generation failed (ignored):", err.message);
+        console.error("워드클라우드 생성 실패 (무시됨):", err.message);
       }
     }
 
@@ -499,9 +498,9 @@ export const dashboard = async (req, res) => {
       }
     }
 
-// 7. Build response payload
+    // 7. 최종 응답 반환
     res.json({
-      message: "Dashboard fetch success",
+      message: "대시보드 조회 성공",
       dashboard: {
         product_id: aggregatedDashboard.product_id,
         product_name: productInfo?.product_name,
@@ -519,17 +518,17 @@ export const dashboard = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Dashboard fetch error:", err);
+    console.error("❌ 대시보드 조회 오류:", err);
 
-    // DB connection errors
+    // DB 연결 관련 에러인 경우
     if (err.code === 'ECONNRESET' || err.code === 'PROTOCOL_CONNECTION_LOST') {
       return res.status(503).json({
-        message: "Database connection issue. Please try again later."
+        message: "데이터베이스 연결에 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
       });
     }
 
     res.status(500).json({
-      message: "Dashboard fetch server error occurred.",
+      message: "대시보드 조회 중 서버 오류가 발생했습니다.",
       error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }

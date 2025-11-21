@@ -5,8 +5,8 @@ import { getTodayDate } from "../utils/data/dashboardDateFilter";
 import { findFirstReviewDate } from "../services/dashboardResponseProcessor";
 
 /**
- * ???? ??? ?? ??? ?
- * AbortController? ??? ?? ?? ?? ? ??? ??
+ * 대시보드 데이터를 가져오는 커스텀 훅
+ * AbortController를 사용하여 요청 취소 및 중복 요청 방지
  */
 export const useDashboardData = (productId) => {
   const navigate = useNavigate();
@@ -25,12 +25,12 @@ export const useDashboardData = (productId) => {
 
   const fetchDashboardData = useCallback(
     async ({ startDate: rangeStart = null, endDate: rangeEnd = null } = {}) => {
-      // ?? ??? ?? ??? ?? ?? ??
+      // 이미 요청 중이면 중복 요청 방지
       if (isFetchingRef.current) {
         return;
       }
 
-      // ?? ??? ??? ??
+      // 이전 요청 취소
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -39,7 +39,7 @@ export const useDashboardData = (productId) => {
       abortControllerRef.current = abortController;
 
       if (!productId || isNaN(productId)) {
-        alert("???? ?? ?? ID???.");
+        alert("유효한 제품 ID가 필요합니다.");
         setLoading(false);
         abortControllerRef.current = null;
         isFetchingRef.current = false;
@@ -65,9 +65,9 @@ export const useDashboardData = (productId) => {
         }
 
         if (!result || !result.success) {
-          const errorMsg = result?.message || "???? ???? ???? ? ??????.";
+          const errorMsg = result?.message || "대시보드 데이터를 불러오는데 실패했습니다.";
 
-          console.error("???? ??? ?? ??:", {
+          console.error("대시보드 데이터 조회 실패:", {
             success: result?.success,
             message: result?.message,
             status: result?.status,
@@ -75,10 +75,10 @@ export const useDashboardData = (productId) => {
           });
 
           if (result?.status === 404) {
-            alert(`?? ??? ???? ???? ?? ???? ?????.\n\n??? ???? ??? ??? ? ?? ??????.`);
+            alert(`대시보드 데이터를 찾을 수 없습니다.\n\n먼저 리뷰 분석을 실행한 후 다시 시도해주세요.`);
             navigate("/wp");
           } else {
-            alert(`??: ${errorMsg}\n\n?? ??: ${result?.status || 'N/A'}`);
+            alert(`오류: ${errorMsg}\n\n상태 코드: ${result?.status || 'N/A'}`);
           }
 
           setLoading(false);
@@ -90,8 +90,8 @@ export const useDashboardData = (productId) => {
         const combinedData = result.data;
 
         if (!combinedData) {
-          console.error("?? ??? ???? ????:", result);
-          alert("???? ???? ???? ? ??????.");
+          console.error("대시보드 데이터가 없습니다:", result);
+          alert("대시보드 데이터를 불러오는데 실패했습니다.");
           setLoading(false);
           abortControllerRef.current = null;
           isFetchingRef.current = false;
@@ -106,7 +106,7 @@ export const useDashboardData = (productId) => {
         const hasReviews = (combinedData.reviews && combinedData.reviews.length > 0) || totalReviews > 0;
 
         if (!hasReviews) {
-          alert("?? ??? ???? ???? ?? ???? ?????.\n\n??? ???? ??? ??? ? ?? ??????.");
+          alert("대시보드 데이터를 찾을 수 없습니다.\n\n먼저 리뷰 분석을 실행한 후 다시 시도해주세요.");
           navigate("/wp");
         }
 
@@ -147,7 +147,7 @@ export const useDashboardData = (productId) => {
           return;
         }
 
-        console.error("???? ??? ?? ??:", {
+        console.error("대시보드 데이터 조회 오류:", {
           error,
           message: error.message,
           response: error.response,
@@ -157,9 +157,9 @@ export const useDashboardData = (productId) => {
 
         const errorMessage = error.response?.data?.message
           || error.message
-          || "???? ???? ???? ? ??????.";
+          || "대시보드 데이터를 불러오는데 실패했습니다.";
 
-        alert(`??: ${errorMessage}\n\n?? ??: ${error.response?.status || 'N/A'}`);
+        alert(`오류: ${errorMessage}\n\n상태 코드: ${error.response?.status || 'N/A'}`);
         setLoading(false);
         abortControllerRef.current = null;
         isFetchingRef.current = false;

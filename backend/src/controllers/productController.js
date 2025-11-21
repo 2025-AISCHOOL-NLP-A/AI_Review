@@ -1,5 +1,6 @@
 import db from "../models/db.js";
 import { getProductDashboardData as getProductDashboard } from "./dashboardController.js";
+import { generateWordcloud } from "../services/absaService.js";
 // dotenv는 app.js에서 이미 로드됨
 import fs from "fs";
 import path from "path";

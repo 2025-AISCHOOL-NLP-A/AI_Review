@@ -173,7 +173,7 @@ export const dashboard = async (req, res) => {
     let wordcloudPath = dashboardData.wordcloud_path || null;
     if (wordcloudPath) {
       try {
-        const staticPath = path.join(__dirname, "../../../model_server/static");
+        const staticPath = path.join(process.cwd(), "model_server/static");
         const imagePath = path.join(staticPath, wordcloudPath.replace("/static/", ""));
         if (fs.existsSync(imagePath)) {
           const imageBuffer = fs.readFileSync(imagePath);

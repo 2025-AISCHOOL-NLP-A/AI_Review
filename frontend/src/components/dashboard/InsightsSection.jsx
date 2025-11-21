@@ -10,17 +10,17 @@ const InsightsSection = ({ loading, dashboardData }) => {
   // Parse pos_top_keywords from tb_productInsight (VARCHAR(255), comma-separated)
   const posKeywords = dashboardData?.insight?.pos_top_keywords
     ? dashboardData.insight.pos_top_keywords
-        .split(/[|,]/)
-        .map((k) => k.trim())
-        .filter(Boolean)
+      .split(/[|,]/)
+      .map((k) => k.trim())
+      .filter(Boolean)
     : dashboardData?.analysis?.positiveKeywords || [];
 
   // Parse neg_top_keywords from tb_productInsight (VARCHAR(255), comma-separated)
   const negKeywords = dashboardData?.insight?.neg_top_keywords
     ? dashboardData.insight.neg_top_keywords
-        .split(/[|,]/)
-        .map((k) => k.trim())
-        .filter(Boolean)
+      .split(/[|,]/)
+      .map((k) => k.trim())
+      .filter(Boolean)
     : dashboardData?.analysis?.negativeKeywords || [];
 
   return (
@@ -31,21 +31,20 @@ const InsightsSection = ({ loading, dashboardData }) => {
           {loading
             ? "데이터 로딩 중..."
             : dashboardData?.insight?.insight_summary
-            ? dashboardData.insight.insight_summary
-            : dashboardData?.analysis
-            ? `👍 전체 긍정률 ${Math.round(dashboardData.analysis.positiveRatio || 0)}%${
-                dashboardData.analysis.positiveKeywords?.length > 0
+              ? dashboardData.insight.insight_summary
+              : dashboardData?.analysis
+                ? `👍 전체 긍정률 ${Math.round(dashboardData.analysis.positiveRatio || 0)}%${dashboardData.analysis.positiveKeywords?.length > 0
                   ? `, 주요 긍정 키워드: ${dashboardData.analysis.positiveKeywords
-                      .slice(0, 3)
-                      .map((k) =>
-                        typeof k === "string"
-                          ? k
-                          : k.keyword_text || k.keyword || k
-                      )
-                      .join(", ") || "없음"}`
+                    .slice(0, 3)
+                    .map((k) =>
+                      typeof k === "string"
+                        ? k
+                        : k.keyword_text || k.keyword || k
+                    )
+                    .join(", ") || "없음"}`
                   : ""
-              }`
-            : "인사이트 데이터가 없습니다."}
+                }`
+                : "인사이트 데이터가 없습니다."}
         </p>
       </div>
       <div className="card">
@@ -54,23 +53,22 @@ const InsightsSection = ({ loading, dashboardData }) => {
           {loading
             ? "데이터 로딩 중..."
             : dashboardData?.insight?.improvement_suggestion
-            ? dashboardData.insight.improvement_suggestion
-            : dashboardData?.analysis && dashboardData.analysis.negativeRatio > 0
-            ? `⚙️ 부정 비율 ${Math.round(dashboardData.analysis.negativeRatio || 0)}%${
-                dashboardData.analysis.negativeKeywords?.length > 0
+              ? dashboardData.insight.improvement_suggestion
+              : dashboardData?.analysis && dashboardData.analysis.negativeRatio > 0
+                ? `⚙️ 부정 비율 ${Math.round(dashboardData.analysis.negativeRatio || 0)}%${dashboardData.analysis.negativeKeywords?.length > 0
                   ? `, 주요 부정 키워드: ${dashboardData.analysis.negativeKeywords
-                      .slice(0, 2)
-                      .map((k) =>
-                        typeof k === "string"
-                          ? k
-                          : k.keyword_text || k.keyword || k
-                      )
-                      .join(", ") || "없음"}. 개선 필요`
+                    .slice(0, 2)
+                    .map((k) =>
+                      typeof k === "string"
+                        ? k
+                        : k.keyword_text || k.keyword || k
+                    )
+                    .join(", ") || "없음"}. 개선 필요`
                   : ""
-              }`
-            : dashboardData?.analysis
-            ? "개선이 필요한 영역이 없습니다."
-            : "인사이트 데이터가 없습니다."}
+                }`
+                : dashboardData?.analysis
+                  ? "개선이 필요한 영역이 없습니다."
+                  : "인사이트 데이터가 없습니다."}
         </p>
       </div>
       <div className="card">
@@ -92,9 +90,7 @@ const InsightsSection = ({ loading, dashboardData }) => {
                       return (
                         <span
                           key={idx}
-                          className={`wordcloud-positive wordcloud-size-${idx} ${
-                            idx === 0 ? "font-bold" : ""
-                          }`}
+                          className={`wordcloud-positive wordcloud-size-${idx} rank-${idx}`}
                         >
                           {keywordText}
                         </span>
@@ -118,9 +114,7 @@ const InsightsSection = ({ loading, dashboardData }) => {
                       return (
                         <span
                           key={idx}
-                          className={`wordcloud-negative wordcloud-size-${idx} ${
-                            idx === 0 ? "font-bold" : ""
-                          }`}
+                          className={`wordcloud-negative wordcloud-size-${idx} rank-${idx}`}
                         >
                           {keywordText}
                         </span>

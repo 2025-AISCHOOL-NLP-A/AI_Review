@@ -41,17 +41,12 @@ const DashboardHeader = ({
         <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-3 text-sm">
           <div className="flex flex-col space-y-2">
             <div className="flex items-center space-x-2">
-              <label
-                htmlFor="dashboard_start_date"
-                className="text-gray-600 font-medium whitespace-nowrap"
-              >
-                기간 필터:
-              </label>
+
               <input
                 id="dashboard_start_date"
                 name="start_date"
                 type="date"
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent"
+                className="date-filter-input px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent"
                 value={startDate}
                 onChange={onStartDateChange}
                 max={endDate || getTodayDate()}
@@ -61,7 +56,7 @@ const DashboardHeader = ({
                 id="dashboard_end_date"
                 name="end_date"
                 type="date"
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent"
+                className="date-filter-input px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent"
                 value={endDate}
                 onChange={onEndDateChange}
                 min={startDate || undefined}
@@ -70,7 +65,7 @@ const DashboardHeader = ({
               {(startDate || endDate) && (
                 <button
                   onClick={onResetFilter}
-                  className="p-2 text-gray-500 hover:text-gray-700 transition"
+                  className="date-filter-reset p-2 text-gray-500 hover:text-gray-700 transition"
                   title="필터 초기화"
                 >
                   <svg
@@ -90,24 +85,11 @@ const DashboardHeader = ({
                 </button>
               )}
             </div>
-            {(appliedStartDate || appliedEndDate) && (
-              <div className="flex items-center space-x-1 text-xs text-gray-600">
-                <span className="font-medium">현재 적용:</span>
-                <span className="text-main font-semibold">
-                  {appliedStartDate
-                    ? `${appliedStartDate.split("-")[0]}.${appliedStartDate.split("-")[1]}.${appliedStartDate.split("-")[2]}`
-                    : "전체"}{" "}
-                  ~{" "}
-                  {appliedEndDate
-                    ? `${appliedEndDate.split("-")[0]}.${appliedEndDate.split("-")[1]}.${appliedEndDate.split("-")[2]}`
-                    : "전체"}
-                </span>
-              </div>
-            )}
+
           </div>
           <button
             onClick={onApplyFilter}
-            className="bg-main text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition shadow-md flex items-center"
+            className="date-filter-apply bg-main text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition shadow-md flex items-center"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

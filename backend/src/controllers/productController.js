@@ -1,16 +1,10 @@
 import db from "../models/db.js";
 import { getProductDashboardData as getProductDashboard } from "./dashboardController.js";
-import { analyzeReviews } from "./reviewController.js"; // ✅ 실제 리뷰 분석 함수 import
-import { analyzeProductReviews, generateWordcloud } from "../services/absaService.js"; // Python 서버 직접 호출
-import { processReviewsInBackground } from "../utils/backgroundProcessor.js"; // 백그라운드 처리
 // dotenv는 app.js에서 이미 로드됨
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import multer from "multer";
-import XLSX from "xlsx";
-import csv from "csv-parser";
-import { Readable } from "stream";
+
 
 // 날짜 문자열을 안전하게 파싱하고 YYYY-MM-DD로 정규화
 const normalizeDate = (dateStr) => {
@@ -572,24 +566,6 @@ export const keywordReview = async (req, res) => {
   }
 };
 
-// ==============================
-// 4. 리뷰 분석 (내부 함수)
-// ==============================
-// 내부에서 사용할 리뷰 분석 함수 (응답 없이 분석만 수행)
-const performAnalysis = async (productId, domain = null) => {
-  try {
-    console.log(`📦 ${productId}번 제품 리뷰 분석 시작 (도메인: ${domain || "자동"})`);
-
-    // Python 서버 직접 호출
-    const result = await analyzeProductReviews(productId, domain);
-
-    console.log(`✅ 분석 완료:`, result);
-    return result;
-  } catch (err) {
-    console.error("❌ 분석 실행 오류:", err);
-    throw err;
-  }
-};
 
 // ==============================
 // 5. 제품 삭제
@@ -768,197 +744,6 @@ export const updateProduct = async (req, res) => {
 
 
 // ==============================
-// 7. 리뷰 파일 업로드 및 삽입
-// ==============================
-// Multer 설정 (메모리 스토리지)
-const storage = multer.memoryStorage();
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB 제한
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ['.csv', '.xlsx', '.xls'];
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (allowedTypes.includes(ext)) {
-      cb(null, true);
-    } else {
-      cb(new Error('CSV 또는 Excel 파일만 업로드할 수 있습니다.'), false);
-    }
-  }
-});
-
-// CSV 파일 파싱
-const parseCSV = async (buffer) => {
-  return new Promise((resolve, reject) => {
-    const results = [];
-    const stream = Readable.from(buffer);
-
-    stream
-      .pipe(csv())
-      .on('data', (data) => results.push(data))
-      .on('end', () => resolve(results))
-      .on('error', (error) => reject(error));
-  });
-};
-
-// Excel 파일 파싱
-const parseExcel = (buffer) => {
-  try {
-    const workbook = XLSX.read(buffer, { type: 'buffer' });
-    const firstSheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[firstSheetName];
-    const jsonData = XLSX.utils.sheet_to_json(worksheet);
-    return jsonData;
-  } catch (error) {
-    throw new Error(`Excel 파일 파싱 오류: ${error.message}`);
-  }
-};
-
-// 날짜 파싱 (다양한 형식 지원)
-const parseDate = (dateValue) => {
-  if (!dateValue) return null;
-
-  // 이미 Date 객체인 경우
-  if (dateValue instanceof Date) {
-    return dateValue;
-  }
-
-  // 문자열인 경우
-  if (typeof dateValue === 'string') {
-    // ISO 형식
-    if (dateValue.includes('T') || dateValue.includes('-')) {
-      const date = new Date(dateValue);
-      if (!isNaN(date.getTime())) return date;
-    }
-
-    // YYYY-MM-DD 형식
-    const dateMatch = dateValue.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
-    if (dateMatch) {
-      const date = new Date(dateMatch[1], dateMatch[2] - 1, dateMatch[3]);
-      if (!isNaN(date.getTime())) return date;
-    }
-  }
-
-  // 숫자 타임스탬프인 경우
-  if (typeof dateValue === 'number') {
-    // Excel 날짜 형식 (1900-01-01 기준 일수) 또는 Unix 타임스탬프
-    if (dateValue > 25569) { // Excel 날짜로 보이는 경우
-      const date = new Date((dateValue - 25569) * 86400 * 1000);
-      if (!isNaN(date.getTime())) return date;
-    } else {
-      // Unix 타임스탬프 (초 단위)
-      const date = new Date(dateValue * 1000);
-      if (!isNaN(date.getTime())) return date;
-    }
-  }
-
-  return null;
-};
-
-// 스팀 리뷰 평점 계산 (voted_up + weighted_vote_score)
-const calculateSteamRating = (votedUp, weightedScore) => {
-  const voted_up = votedUp === true || votedUp === 'True' || votedUp === 'true' || votedUp === 1 || votedUp === '1';
-  const score = parseFloat(weightedScore) || 0.5;
-
-  if (voted_up) {
-    return 3.0 + (score * 2.0);   // 긍정 리뷰 → 3.0~5.0점
-  } else {
-    return score * 2.0;           // 부정 리뷰 → 0.0~2.0점
-  }
-};
-
-// 중복 리뷰 체크
-const checkDuplicateReview = async (productId, reviewText, reviewDate) => {
-  try {
-    const [rows] = await db.query(
-      `SELECT review_id FROM tb_review 
-       WHERE product_id = ? AND review_text = ? AND DATE(review_date) = DATE(?)`,
-      [productId, reviewText, reviewDate]
-    );
-    return rows.length > 0;
-  } catch (error) {
-    console.error("❌ 중복 체크 오류:", error);
-    return false;
-  }
-};
-
-// 리뷰 업로드 메인 함수 (Task 기반 SSE)
-export const uploadReviews = async (req, res) => {
-  try {
-    const { id: productId } = req.params;
-    const userId = req.user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ message: "인증된 사용자 정보가 없습니다." });
-    }
-
-    if (!productId) {
-      return res.status(400).json({ message: "제품 ID가 필요합니다." });
-    }
-
-    // 제품 소유권 확인
-    const [productRows] = await db.query(
-      "SELECT product_id, user_id FROM tb_product WHERE product_id = ?",
-      [productId]
-    );
-
-    if (productRows.length === 0) {
-      return res.status(404).json({ message: "제품을 찾을 수 없습니다." });
-    }
-
-    if (productRows[0].user_id !== userId) {
-      return res.status(403).json({ message: "해당 제품에 대한 권한이 없습니다." });
-    }
-
-    // 파일 확인
-    const files = req.files || [];
-    const mappingsRaw = req.body.mappings || [];
-    const mappings = Array.isArray(mappingsRaw)
-      ? mappingsRaw.map(m => typeof m === 'string' ? JSON.parse(m) : m)
-      : [typeof mappingsRaw === 'string' ? JSON.parse(mappingsRaw) : mappingsRaw];
-
-    if (files.length === 0) {
-      return res.status(400).json({ message: "업로드할 파일이 없습니다." });
-    }
-
-    if (files.length !== mappings.length) {
-      return res.status(400).json({
-        message: `파일과 매핑 정보의 개수가 일치하지 않습니다. (파일: ${files.length}, 매핑: ${mappings.length})`
-      });
-    }
-
-    // Task 생성
-    const { createTask, scheduleTaskCleanup } = await import('../utils/taskManager.js');
-    const taskId = createTask(productId, userId);
-
-    // 즉시 taskId 반환
-    res.json({
-      success: true,
-      taskId: taskId,
-      data: {
-        message: "업로드가 시작되었습니다",
-        productId: productId,
-        fileCount: files.length
-      }
-    });
-
-    // 백그라운드에서 파일 처리 및 분석 실행
-    processReviewsInBackground(taskId, productId, files, mappings).catch(err => {
-      console.error(`❌ 백그라운드 처리 오류 (Task: ${taskId}):`, err);
-    });
-
-    // Task 자동 정리 스케줄 (30분 후)
-    scheduleTaskCleanup(taskId);
-
-  } catch (err) {
-    console.error("❌ 리뷰 업로드 오류:", err);
-    res.status(500).json({
-      message: "리뷰 업로드 중 서버 오류가 발생했습니다.",
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
-  }
-};
-
-// ==============================
 // 8. 제품 생성
 // ==============================
 export const createProductWithReviews = async (req, res) => {
@@ -1002,6 +787,3 @@ export const createProductWithReviews = async (req, res) => {
     });
   }
 };
-
-// Multer 미들웨어 export
-export { upload };

@@ -37,9 +37,51 @@ AI_Review/
 
 ## 🛠 설치 및 실행
 
-### 전체 서비스 실행
+### 방법 1: Docker로 실행 (권장)
 
-1. **각 서비스 의존성 설치**
+Docker를 사용하면 모든 서비스를 한 번에 쉽게 시작할 수 있습니다.
+
+#### 빠른 시작
+
+```bash
+# 1. 환경 변수 설정
+cp env.example .env
+# .env 파일을 열어 필요한 값 수정 (DB 비밀번호, JWT Secret 등)
+
+# 2. 전체 서비스 시작
+docker-compose up -d
+
+# 또는 시작 스크립트 사용 (Linux/Mac)
+chmod +x scripts/start.sh
+./scripts/start.sh
+```
+
+#### 접속 정보
+- Frontend (웹 인터페이스): http://localhost:80
+- Backend API: http://localhost:3001
+- Model Server API 문서: http://localhost:8000/docs
+
+#### 유용한 명령어
+```bash
+# 로그 확인
+docker-compose logs -f
+
+# 서비스 중지
+docker-compose down
+
+# 데이터베이스 백업
+./scripts/backup.sh
+
+# 자세한 내용은 DOCKER_SETUP.md 참고
+```
+
+📖 **자세한 Docker 설정은 [DOCKER_SETUP.md](./DOCKER_SETUP.md)를 참고하세요.**
+
+---
+
+### 방법 2: 로컬 개발 환경
+
+#### 1. 각 서비스 의존성 설치
 ```bash
 # Backend
 cd backend
@@ -54,7 +96,7 @@ cd ../model_server
 pip install -r requirements.txt
 ```
 
-2. **서비스 실행**
+#### 2. 서비스 실행
 ```bash
 # Backend API (터미널 1)
 cd backend
@@ -62,7 +104,6 @@ npm run dev
 
 # Frontend Web (터미널 2)
 cd frontend
-npm install
 npm run dev
 
 # AI Analysis (터미널 3)
@@ -70,7 +111,7 @@ cd model_server
 python main.py
 ```
 
-3. **접속**
+#### 3. 접속
 - Frontend (React) : http://localhost:5173
 - Backend (Express) : http://localhost:3001
 - AI API 문서: http://localhost:8000/docs

@@ -70,7 +70,10 @@ app.use("/products", verifyAuth, productRoutes);
 // 리뷰 단독 분석 API (FastAPI 연동 테스트용)
 app.use("/reviews", verifyAuth, reviewRoutes);
 
-
+// Health check 엔드포인트 (Docker healthcheck용)
+app.get("/health", (_req, res) => {
+  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+});
 
 // 서버 시작
 const PORT = process.env.PORT || 3001;

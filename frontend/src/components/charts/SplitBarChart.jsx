@@ -113,7 +113,7 @@ const SplitBarChart = ({ data, loading }) => {
                         const ratio = isNegative
                           ? entry.negative_ratio
                           : entry.positive_ratio;
-                        const percentage = Math.round(ratio * 100);
+                        const percentage = (ratio * 100).toFixed(1);
                         return `${context.dataset.label}: ${count}개 (${percentage}%)`;
                       },
                       footer: function (tooltipItems) {

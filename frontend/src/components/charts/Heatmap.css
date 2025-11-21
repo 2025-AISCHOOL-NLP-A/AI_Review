@@ -263,3 +263,18 @@
   font-weight: 700;
 }
 
+/* 커스텀 툴팁 스타일 - Chart.js 툴팁 디자인과 일치 */
+.heatmap-tooltip {
+  position: fixed;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: normal;
+  pointer-events: none;
+  z-index: 10000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+  transition: opacity 0.2s ease;
+}

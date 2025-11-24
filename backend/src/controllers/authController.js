@@ -56,7 +56,6 @@ export const loginUser = async (req, res) => {
 
     if (users.length === 0)
       return res.status(401).json({ message: "아이디 또는 비밀번호가 올바르지 않습니다." });
-    const hashed = await bcrypt.hash(password, 10);
     const user = users[0];
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)

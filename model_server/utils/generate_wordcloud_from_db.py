@@ -37,6 +37,7 @@ def get_font_path():
         [
             os.path.join(cwd, "malgun.ttf"),
             os.path.join(cwd, "NanumGothic.ttf"),
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
             "malgun.ttf",
             "NanumGothic.ttf",
             r"C:\Windows\Fonts\malgun.ttf",

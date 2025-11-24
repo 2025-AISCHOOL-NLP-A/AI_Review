@@ -20,17 +20,17 @@ function SidebarNavigation({ sidebarOpen, settingsOpen, setSettingsOpen }) {
         />
       ),
     },
-    {
-      path: null,
-      label: "분석 리포트",
-      icon: (
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2"
-        />
-      ),
-    },
+    // {
+    //   path: null,
+    //   label: "분석 리포트",
+    //   icon: (
+    //     <path
+    //       strokeLinecap="round"
+    //       strokeLinejoin="round"
+    //       d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2"
+    //     />
+    //   ),
+    // },
     {
       path: "/reviews",
       label: "리뷰 관리",

@@ -33,7 +33,7 @@ const DashboardCharts = ({
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">
-              월별 리뷰 수와 긍/부정 평가 변화 추이
+              월별 리뷰 수와 긍·부정 평가 변화 추이
             </h2>
           </div>
           <DailyTrendChart data={dailyTrendData} loading={loading} />
@@ -43,8 +43,8 @@ const DashboardCharts = ({
               {loading
                 ? "데이터 로딩 중..."
                 : dashboardData?.analysis
-                ? `긍정 비율: ${Math.round(dashboardData.analysis.positiveRatio || 0)}%, 부정 비율: ${Math.round(dashboardData.analysis.negativeRatio || 0)}%. 총 리뷰 수: ${dashboardData?.stats?.totalReviews || 0}건.`
-                : "분석 데이터가 없습니다."}
+                  ? `긍정 비율: ${Math.round(dashboardData.analysis.positiveRatio || 0)}%, 부정 비율: ${Math.round(dashboardData.analysis.negativeRatio || 0)}%. 총 리뷰 수: ${dashboardData?.stats?.totalReviews || 0}건.`
+                  : "분석 데이터가 없습니다."}
             </p>
           </div>
         </div>
@@ -58,12 +58,12 @@ const DashboardCharts = ({
               {loading
                 ? "데이터 로딩 중..."
                 : dashboardData?.analysis
-                ? `긍정 비율: ${Math.round(dashboardData.analysis.positiveRatio || 0)}%, 부정 비율: ${Math.round(dashboardData.analysis.negativeRatio || 0)}%. 평균 평점: ${parseFloat(
+                  ? `긍정 비율: ${Math.round(dashboardData.analysis.positiveRatio || 0)}%, 부정 비율: ${Math.round(dashboardData.analysis.negativeRatio || 0)}%. 평균 평점: ${parseFloat(
                     dashboardData?.insight?.avg_rating ||
-                      dashboardData.analysis.avgRating ||
-                      0
+                    dashboardData.analysis.avgRating ||
+                    0
                   ).toFixed(1)}/5.0`
-                : "분석 데이터가 없습니다."}
+                  : "분석 데이터가 없습니다."}
             </p>
           </div>
         </div>
@@ -76,7 +76,7 @@ const DashboardCharts = ({
       >
         <div className="card lg:col-span-2" id="split-bar-chart-card">
           <h2 className="text-xl font-semibold mb-4">
-            속성별 언급 비중과 긍/부정 평가
+            속성별 언급 비중과 긍·부정 평가
           </h2>
           <SplitBarChart data={splitBarRawData} loading={loading} />
         </div>

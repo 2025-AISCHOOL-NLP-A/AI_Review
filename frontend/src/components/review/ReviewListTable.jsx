@@ -190,7 +190,7 @@ export default function ReviewListTable({
                             e.stopPropagation();
                             handleToggleExpand(reviewId);
                           }}
-                          className="expand-btn"
+                          className="review-more-btn"
                         >
                           {isExpanded ? "접기" : "더보기"}
                         </button>

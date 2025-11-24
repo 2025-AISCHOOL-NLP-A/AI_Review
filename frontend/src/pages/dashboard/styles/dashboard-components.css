@@ -214,21 +214,22 @@
 
 /* AI 인사이트 리포트 마크다운 스타일링 - 글 사이 간격 조정 */
 .dashboard-content #ai-insight-report-section .prose {
-  line-height: 1.8 !important;
-}
-
-.dashboard-content #ai-insight-report-section .prose h1 {
-  margin-top: 0 !important;
-  margin-bottom: 1.5rem !important;
-  font-size: clamp(1.5rem, 2.5vw, 1.875rem) !important;
-  font-weight: 700 !important;
-  line-height: 1.4 !important;
+  line-height: 1.5 !important;
+  font-size: 14px !important;
 }
 
 .dashboard-content #ai-insight-report-section .prose h2 {
   margin-top: 2rem !important;
   margin-bottom: 1rem !important;
-  font-size: clamp(1.25rem, 2vw, 1.5rem) !important;
+  font-size: 22px !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+}
+
+.dashboard-content #ai-insight-report-section .prose h3 {
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.75rem !important;
+  font-size: 16px !important;
   font-weight: 600 !important;
   line-height: 1.5 !important;
 }
@@ -236,19 +237,23 @@
 .dashboard-content #ai-insight-report-section .prose p {
   margin-top: 0.75rem !important;
   margin-bottom: 0.75rem !important;
-  line-height: 1.8 !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
 }
 
 .dashboard-content #ai-insight-report-section .prose ul {
   margin-top: 1rem !important;
   margin-bottom: 1rem !important;
   padding-left: 1.5rem !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
 }
 
 .dashboard-content #ai-insight-report-section .prose li {
   margin-top: 0.5rem !important;
   margin-bottom: 0.5rem !important;
-  line-height: 1.8 !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
 }
 
 .dashboard-content #ai-insight-report-section .prose hr {
@@ -340,6 +345,13 @@
 
 .dashboard-content #wordcloud-review-section .card table tbody tr {
   position: relative;
+}
+
+.dashboard-content #wordcloud-review-section .card table th:nth-child(3),
+.dashboard-content #wordcloud-review-section .card table td:nth-child(3) {
+  min-width: 100px;
+  white-space: nowrap;
+  text-align: center;
 }
 
 /* ===================== Date Filter Styles ===================== */

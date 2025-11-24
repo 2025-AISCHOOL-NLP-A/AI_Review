@@ -242,11 +242,11 @@ function Dashboard() {
                 <div className="review-table-container">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead>
-                      <tr className="text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                        <th className="px-3 py-3 text-left">날짜</th>
-                        <th className="px-3 py-3 text-left">리뷰 내용</th>
-                        <th className="px-3 py-3 text-left">감정 요약</th>
-                      </tr>
+                        <tr className="text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                          <th className="px-3 py-3 text-center">날짜</th>
+                          <th className="px-3 py-3 text-center">리뷰 내용</th>
+                          <th className="px-3 py-3 text-center">감정 요약</th>
+                        </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200 text-sm">
                       <ReviewTable

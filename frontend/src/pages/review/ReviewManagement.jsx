@@ -121,7 +121,7 @@ function ReviewManagement() {
       try {
         // URL의 productId를 우선 사용, 없으면 selectedProductFilter 사용
         const productIdFromUrl = searchParams.get("productId");
-        const productIdToUse = productIdFromUrl || selectedProductFilter;
+        const productIdToUse = selectedProductFilter || productIdFromUrl;
         
         // 날짜 필터를 제외한 필터 조건으로 전체 리뷰의 날짜 범위 계산
         const filters = {

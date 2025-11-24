@@ -117,7 +117,7 @@ const Heatmap = ({ labels, matrix, loading }) => {
           // 대각선 (자기 자신과의 상관관계)
           cellContent = "-";
           bgColor = "heatmap-cell-empty";
-        } else if (value !== null && value !== undefined && value > 0) {
+        } else if (value !== null && value !== undefined && value >= 0) {
           // 상관관계 값이 있는 경우
           // 값 범위: 0 ~ 1
           // 정규화: 0 ~ 1 범위를 0 ~ 5로 매핑

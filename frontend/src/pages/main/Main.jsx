@@ -20,6 +20,8 @@ function Main() {
   const [showControls, setShowControls] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const controlsTimeoutRef = useRef(null);
+  const [activeSection, setActiveSection] = useState("home");
+
   // 재생/정지 토글
   const togglePlay = () => {
     const video = videoRef.current;
@@ -179,20 +181,68 @@ function Main() {
     const y = el.getBoundingClientRect().top + window.scrollY - headerH;
     window.scrollTo({ top: y, behavior: "smooth" });
   };
+  useEffect(() => {
+    const sections = [
+      { id: "home", ref: heroRef },
+      { id: "marketing", ref: marketingRef },
+      { id: "preview", ref: previewRef },
+      { id: "price", ref: priceRef },
+    ];
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const sectionId = entry.target.getAttribute("data-section");
+            setActiveSection(sectionId);
+          }
+        });
+      },
+      {
+        threshold: 0.6, // 60% 화면에 보이면 해당 영역으로 판단
+      }
+    );
+
+    sections.forEach((sec) => {
+      if (sec.ref.current) {
+        sec.ref.current.setAttribute("data-section", sec.id);
+        observer.observe(sec.ref.current);
+      }
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="main-page">
       {/* ===================== HEADER ===================== */}
       <header className="main-header">
         <nav className="nav-buttons">
-          <button onClick={() => smoothScrollTo(heroRef.current)}>홈</button>
-          <button onClick={() => smoothScrollTo(marketingRef.current)}>
+          <button
+            className={activeSection === "home" ? "active-nav" : ""}
+            onClick={() => smoothScrollTo(heroRef.current)}
+          >
+            홈
+          </button>
+
+          <button
+            className={activeSection === "marketing" ? "active-nav" : ""}
+            onClick={() => smoothScrollTo(marketingRef.current)}
+          >
             기능 소개
           </button>
-          <button onClick={() => smoothScrollTo(previewRef.current)}>
+
+          <button
+            className={activeSection === "preview" ? "active-nav" : ""}
+            onClick={() => smoothScrollTo(previewRef.current)}
+          >
             시연영상
           </button>
-          <button onClick={() => smoothScrollTo(priceRef.current)}>
+
+          <button
+            className={activeSection === "price" ? "active-nav" : ""}
+            onClick={() => smoothScrollTo(priceRef.current)}
+          >
             요금제
           </button>
           <span className="nav-divider"></span>

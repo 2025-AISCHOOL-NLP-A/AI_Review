@@ -6,7 +6,7 @@ import ReviewFilterBar from "../../components/review/ReviewFilterBar";
 import ReviewListTable from "../../components/review/ReviewListTable";
 import ProductPagination from "../../components/workplace/ProductPagination";
 import reviewService from "../../services/reviewService";
-import { useSidebar } from "../../hooks/useSidebar";
+import { useSidebar } from "../../hooks/ui/useSidebar";
 import { getTodayDate } from "../../utils/format/dateUtils";
 import { sanitizeInput } from "../../utils/format/inputSanitizer";
 import "../../styles/common.css";
@@ -377,8 +377,8 @@ function ReviewManagement() {
     <div className={`dashboard-page ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
       <Sidebar />
       <div className="dashboard-wrapper">
-        <div className="dashboard-content">
-          <div className="dashboard-inner">
+        <div className="dashboard-inner mx-auto max-w-[1400px] px-6">
+          <div className="dashboard-content">
             <div className="review-management-container">
             {/* Header Section */}
             <div className="review-management-header">
@@ -488,10 +488,10 @@ function ReviewManagement() {
               </div>
             </div>
             </div>
-
-            {/* Footer */}
-            <Footer />
           </div>
+        
+        {/* ===================== FOOTER ===================== */}
+        <Footer />
         </div>
       </div>
     </div>

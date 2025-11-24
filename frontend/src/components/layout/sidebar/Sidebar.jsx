@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useUser } from "../../../contexts/UserContext";
-import { useLogoutTimer } from "../../../hooks/useLogoutTimer";
-import { useExtendSession } from "../../../hooks/useExtendSession";
+import { useLogoutTimer } from "../../../hooks/auth/useLogoutTimer";
+import { useExtendSession } from "../../../hooks/auth/useExtendSession";
 import SidebarHeader from "./SidebarHeader";
 import SidebarUserProfile from "./SidebarUserProfile";
 import SidebarNavigation from "./SidebarNavigation";

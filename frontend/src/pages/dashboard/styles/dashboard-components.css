@@ -22,7 +22,7 @@
 }
 
 /* Main Chart Section - 같은 높이 정렬 */
-.dashboard-content .grid.items-stretch > .card.flex.flex-col {
+.dashboard-content .grid.items-stretch>.card.flex.flex-col {
   display: flex !important;
   flex-direction: column !important;
   height: 100% !important;
@@ -44,10 +44,7 @@
   margin-bottom: 3rem;
 }
 
-.dashboard-content
-  .grid[class*="grid-cols-1"]:not(.kpi-cards-container):not(
-    #main-chart-section
-  ) {
+.dashboard-content .grid[class*="grid-cols-1"]:not(.kpi-cards-container):not(#main-chart-section) {
   margin-top: 0;
   margin-bottom: 3rem;
 }
@@ -85,36 +82,69 @@
 
 /* ===================== Word Cloud Styles ===================== */
 .dashboard-content .wordcloud-positive {
-  color: var(--main-color);
+  color: var(--chart-primary-color);
 }
 
 .dashboard-content .wordcloud-negative {
-  color: var(--neutral-color);
+  color: var(--chart-neutral-color);
 }
 
 /* Word cloud font sizes - dynamic sizing based on index (responsive) */
+/* Word cloud font sizes - fixed sizing based on index */
 .dashboard-content .wordcloud-size-0 {
-  font-size: clamp(1.5rem, 2.25vw, 2.25rem);
+  font-size: 1.25rem !important;
 }
 
 .dashboard-content .wordcloud-size-1 {
-  font-size: clamp(1.25rem, 2vw, 2rem);
+  font-size: 1.15rem !important;
 }
 
 .dashboard-content .wordcloud-size-2 {
-  font-size: clamp(1.125rem, 1.75vw, 1.75rem);
+  font-size: 1.05rem !important;
 }
 
 .dashboard-content .wordcloud-size-3 {
-  font-size: clamp(1rem, 1.5vw, 1.5rem);
+  font-size: 0.95rem !important;
 }
 
 .dashboard-content .wordcloud-size-4 {
-  font-size: clamp(0.875rem, 1.25vw, 1.25rem);
+  font-size: 0.9rem !important;
 }
 
 .dashboard-content .wordcloud-size-5 {
-  font-size: clamp(0.75rem, 1vw, 1rem);
+  font-size: 0.85rem !important;
+}
+
+/* Word cloud opacity based on rank */
+.dashboard-content .rank-0 {
+  opacity: 1.0;
+}
+
+.dashboard-content .rank-1 {
+  opacity: 0.85;
+}
+
+.dashboard-content .rank-2 {
+  opacity: 0.7;
+}
+
+.dashboard-content .rank-3 {
+  opacity: 0.55;
+}
+
+.dashboard-content .rank-4 {
+  opacity: 0.45;
+}
+
+.dashboard-content .rank-5 {
+  opacity: 0.35;
+}
+
+/* Word cloud spacing */
+.dashboard-content .wordcloud-positive,
+.dashboard-content .wordcloud-negative {
+  margin-right: 0.5rem;
+  display: inline-block;
 }
 
 /* 워드클라우드 이미지 컨테이너 */
@@ -310,4 +340,44 @@
 
 .dashboard-content #wordcloud-review-section .card table tbody tr {
   position: relative;
+}
+
+/* ===================== Date Filter Styles ===================== */
+.date-filter-input {
+  height: 38px !important;
+  line-height: 38px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  border: 1px solid #d1d5db !important;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.date-filter-input:hover,
+.date-filter-input:focus {
+  border-color: #9ca3af !important;
+}
+
+/* Calendar icon opacity */
+.date-filter-input::-webkit-calendar-picker-indicator {
+  opacity: 0.6;
+  cursor: pointer;
+}
+
+.date-filter-reset {
+  height: 38px !important;
+  width: 38px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+}
+
+.date-filter-apply {
+  height: 38px !important;
+  line-height: 38px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
 }

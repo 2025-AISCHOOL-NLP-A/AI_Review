@@ -1,5 +1,5 @@
 import React from "react";
-import { useEmailTimer } from "../../hooks/useEmailTimer";
+import { useEmailTimer } from "../../hooks/auth/useEmailTimer";
 
 /**
  * 이메일 인증 컴포넌트 (이메일 입력 + 인증 코드 입력 + 타이머)

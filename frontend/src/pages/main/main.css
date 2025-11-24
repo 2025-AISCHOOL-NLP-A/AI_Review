@@ -42,6 +42,10 @@ header button {
   transition: background 0.2s ease;
   font-family: "Pretendard", "Noto Sans KR", sans-serif;
 }
+header button.active-nav {
+  background: #84a7ff;
+  color: white;
+}
 
 /* 로그인 버튼(우측) - 진한 파란 버튼 */
 header button.login-btn {
@@ -59,6 +63,7 @@ header button.login-btn {
 
 header button:hover {
   background: #e5e7eb;
+  color: black;
 }
 
 header button.login-btn:hover {

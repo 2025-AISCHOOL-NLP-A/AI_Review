@@ -114,7 +114,7 @@ export default function ReviewListTable({
               </div>
             </th>
             <th style={{ textAlign: "center" }}>제품명</th>
-            <th>리뷰 내용</th>
+            <th style={{ textAlign: "center" }}>리뷰 내용</th>
             <th style={{ textAlign: "center" }}>감정 분석</th>
           </tr>
         </thead>
@@ -190,7 +190,7 @@ export default function ReviewListTable({
                             e.stopPropagation();
                             handleToggleExpand(reviewId);
                           }}
-                          className="expand-btn"
+                          className="review-more-btn"
                         >
                           {isExpanded ? "접기" : "더보기"}
                         </button>

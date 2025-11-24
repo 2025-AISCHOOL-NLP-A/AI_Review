@@ -240,8 +240,8 @@
 /* 리뷰 내용 칸 - 나머지 공간 차지 */
 .review-table th:nth-child(4),
 .review-table td:nth-child(4) {
-  width: auto;
-  min-width: 200px;
+  width: 50%;
+  min-width: 320px;
 }
 
 .review-table thead {
@@ -262,32 +262,32 @@
 .review-table th:nth-child(2),
 .review-table td:nth-child(2),
 .review-table th.sortable-header:nth-child(2) {
-  width: 80px !important;
+  width: 10% !important;
   min-width: 80px !important;
-  max-width: 80px !important;
+  max-width: 130px !important;
   padding: 0.5rem 0.5rem !important;
 }
 
 /* 감정분석 칸 - 작게 */
 .review-table th:nth-child(5),
 .review-table td:nth-child(5) {
-  width: 85px !important;
-  min-width: 85px !important;
-  max-width: 85px !important;
+  width: 10% !important;
+  min-width: 80px !important;
+  max-width: 130px !important;
   padding: 0.5rem 0.5rem !important;
 }
 
 /* 제품명 칸 */
 .review-table th:nth-child(3),
 .review-table td:nth-child(3) {
-  width: 150px;
-  min-width: 150px;
+  width: 25%;
+  min-width: 200px;
 }
 
 .review-table th.checkbox-column {
-  width: 3rem;
-  min-width: 3rem;
-  max-width: 3rem;
+  width: 4%;
+  min-width: 40px;
+  max-width: 56px;
   text-align: center;
   padding: 0.5rem 0.5rem;
 }
@@ -311,9 +311,9 @@
 }
 
 .review-table td.checkbox-column {
-  width: 3rem;
-  min-width: 3rem;
-  max-width: 3rem;
+  width: 4%;
+  min-width: 40px;
+  max-width: 56px;
   text-align: center;
   padding: 0.5rem 0.5rem;
   vertical-align: middle;
@@ -500,7 +500,7 @@
     align-items: stretch;
   }
 
-  .review-filters > * {
+  .review-filters>* {
     width: 100%;
   }
 
@@ -548,4 +548,3 @@
     justify-self: center;
   }
 }
-

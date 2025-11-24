@@ -54,6 +54,8 @@ React와 Vite를 기반으로 구축된 대시보드 및 제품 관리 웹 애�
 - 리뷰 목록 조회 및 필터링
 - 리뷰 상세 정보 확인
 - 리뷰 데이터 분석
+- 리뷰 일괄 삭제
+- 리뷰 데이터 내보내기 (CSV/Excel)
 
 ## 프로젝트 구조
 
@@ -61,48 +63,125 @@ React와 Vite를 기반으로 구축된 대시보드 및 제품 관리 웹 애�
 src/
 ├── components/          # 재사용 가능한 컴포넌트
 │   ├── auth/           # 인증 관련 컴포넌트
+│   │   ├── AgreementSection.jsx
+│   │   ├── EmailVerification.jsx
+│   │   ├── PasswordInput.jsx
+│   │   └── UserIdInput.jsx
 │   ├── charts/         # 차트 컴포넌트
+│   │   ├── DailyTrendChart.jsx
+│   │   ├── Heatmap.jsx
+│   │   ├── RadarChart.jsx
+│   │   └── SplitBarChart.jsx
 │   ├── common/         # 공통 컴포넌트
+│   │   ├── FileList.jsx
+│   │   ├── FileUploadForm.jsx
+│   │   ├── PreviewModal.jsx
+│   │   └── ProtectedRoute.jsx
 │   ├── dashboard/      # 대시보드 컴포넌트
+│   │   ├── AIInsightReport.jsx
+│   │   ├── DashboardCharts.jsx
+│   │   ├── DashboardHeader.jsx
+│   │   ├── InsightsSection.jsx
+│   │   ├── KPICards.jsx
+│   │   ├── ReviewTable.jsx
+│   │   └── WordCloudSection.jsx
 │   ├── layout/         # 레이아웃 컴포넌트
+│   │   ├── Footer/     # 푸터 컴포넌트
+│   │   └── sidebar/    # 사이드바 컴포넌트
 │   ├── product/        # 제품 관련 컴포넌트
-│   └── user/           # 사용자 관련 컴포넌트
+│   │   ├── AddReviewForm.jsx
+│   │   ├── ProductInfoForm.jsx
+│   │   ├── ProductModal.jsx
+│   │   └── ProductUploadForm.jsx
+│   ├── review/         # 리뷰 관련 컴포넌트
+│   │   ├── ReviewFilterBar.jsx
+│   │   └── ReviewListTable.jsx
+│   ├── user/           # 사용자 관련 컴포넌트
+│   │   ├── EmailVerificationUpdate.jsx
+│   │   └── ProfileUpdateForm.jsx
+│   └── workplace/      # 워크플레이스 컴포넌트
+│       ├── ProductActionMenu.jsx
+│       ├── ProductFilterBar.jsx
+│       ├── ProductListTable.jsx
+│       └── ProductPagination.jsx
+├── constants/          # 상수 정의
+│   ├── index.js
+│   └── terms.js
 ├── contexts/           # React Context
+│   └── UserContext.jsx
 ├── hooks/              # 커스텀 훅
+│   ├── auth/           # 인증 관련 훅
+│   │   ├── useEmailTimer.js
+│   │   ├── useEmailTimerUpdate.js
+│   │   ├── useExtendSession.js
+│   │   └── useLogoutTimer.js
+│   ├── dashboard/      # 대시보드 관련 훅
+│   │   ├── useDashboardData.js
+│   │   └── usePDFDownload.js
+│   ├── product/        # 제품 관련 훅
+│   │   ├── useDateFilter.js
+│   │   ├── useDropdownMenu.js
+│   │   ├── useProductActions.js
+│   │   ├── useProductData.js
+│   │   ├── useProductFilter.js
+│   │   ├── useProductModal.js
+│   │   └── useProductSort.js
+│   └── ui/             # UI 관련 훅
+│       ├── useSidebar.js
+│       └── useViewport.js
 ├── pages/              # 페이지 컴포넌트
 │   ├── auth/           # 인증 페이지
+│   │   ├── Login.jsx
+│   │   ├── LoginJoin.jsx
+│   │   └── LoginFind.jsx
 │   ├── dashboard/      # 대시보드 페이지
+│   │   ├── Dashboard.jsx
+│   │   ├── PricingSystem.jsx
+│   │   └── Workplace.jsx
 │   ├── main/           # 메인 페이지
+│   │   └── Main.jsx
+│   ├── review/         # 리뷰 관리 페이지
+│   │   └── ReviewManagement.jsx
 │   └── user/           # 사용자 페이지
+│       ├── Memberdrop.jsx
+│       └── Memberupdate.jsx
 ├── services/           # API 서비스
 │   ├── api.js          # Axios 인스턴스 및 인터셉터
 │   ├── authService.js  # 인증 관련 API
+│   ├── dashboardDataTransformers.js
+│   ├── dashboardResponseProcessor.js
 │   ├── dashboardService.js
-│   ├── reviewService.js
-│   └── insightService.js
+│   ├── insightService.js
+│   └── reviewService.js
 ├── styles/             # 전역 스타일
+│   ├── common.css
+│   ├── modal.css
+│   └── variables.css
 └── utils/              # 유틸리티 함수
-    ├── auth/           # 인증 관련
-    │   ├── tokenUtils.js   # JWT 토큰 관련 유틸리티
-    │   └── storage.js      # 세션 스토리지 관리
     ├── api/            # API 관련
     │   ├── apiHelpers.js   # API 요청 헬퍼
     │   └── errorHandler.js # 에러 처리
+    ├── auth/           # 인증 관련
+    │   ├── tokenUtils.js   # JWT 토큰 관련 유틸리티
+    │   └── storage.js      # 세션 스토리지 관리
+    ├── data/           # 데이터 처리
+    │   ├── dashboardDateFilter.js # 대시보드 날짜 필터
+    │   ├── dataParsing.js   # 데이터 파싱
+    │   ├── processDailyTrendData.js
+    │   ├── processHeatmapData.js
+    │   ├── processRadarData.js
+    │   ├── processSplitBarData.js
+    │   └── productFilters.js # 제품 필터링
     ├── file/           # 파일 처리
     │   ├── fileParser.js   # 파일 파싱 (CSV, Excel)
     │   └── fileValidation.js # 파일 검증
     ├── format/         # 포맷팅 관련
     │   ├── chartColors.js   # 차트 색상
     │   ├── dateUtils.js     # 날짜 유틸리티
-    │   ├── numberUtils.js   # 숫자 유틸리티
-    │   └── inputSanitizer.js # 입력 정리 (XSS 방지)
-    ├── ui/             # UI 관련
-    │   └── viewportUtils.js  # 뷰포트 유틸리티 (PDF 등)
-    └── data/           # 데이터 처리
-        ├── dataParsing.js   # 데이터 파싱
-        ├── dashboardDateFilter.js # 대시보드 날짜 필터
-        ├── productFilters.js # 제품 필터링
-        └── [차트 데이터 처리 파일들]
+    │   ├── inputSanitizer.js # 입력 정리 (XSS 방지)
+    │   └── numberUtils.js   # 숫자 유틸리티
+    └── ui/             # UI 관련
+        └── viewportUtils.js  # 뷰포트 유틸리티 (PDF 등)
 ```
 
 ## 시작하기
@@ -171,6 +250,7 @@ npm run preview
 - `WordCloudSection` - 워드 클라우드
 - `ReviewTable` - 리뷰 테이블
 - `AIInsightReport` - AI 인사이트 리포트
+- `InsightsSection` - 인사이트 섹션
 
 ### 차트 컴포넌트
 - `DailyTrendChart` - 일일 트렌드 차트
@@ -178,18 +258,64 @@ npm run preview
 - `RadarChart` - 레이더 차트
 - `SplitBarChart` - 분할 바 차트
 
+### 레이아웃 컴포넌트
+- `Sidebar` - 메인 사이드바 (네비게이션, 사용자 프로필, 세션 관리)
+- `SidebarHeader` - 사이드바 헤더
+- `SidebarNavigation` - 사이드바 네비게이션 메뉴
+- `SidebarUserProfile` - 사용자 프로필 섹션
+- `SidebarSettings` - 설정 섹션
+- `SidebarFooter` - 사이드바 푸터 (세션 타이머)
+- `Footer` - 페이지 푸터
+
+### 제품 관리 컴포넌트
+- `ProductInfoForm` - 제품 정보 입력 폼
+- `ProductUploadForm` - 제품 업로드 폼
+- `ProductModal` - 제품 모달
+- `AddReviewForm` - 리뷰 추가 폼
+
+### 워크플레이스 컴포넌트
+- `ProductListTable` - 제품 목록 테이블
+- `ProductFilterBar` - 제품 필터 바
+- `ProductActionMenu` - 제품 액션 메뉴
+- `ProductPagination` - 제품 페이지네이션
+
+### 리뷰 관리 컴포넌트
+- `ReviewListTable` - 리뷰 목록 테이블
+- `ReviewFilterBar` - 리뷰 필터 바
+
+### 공통 컴포넌트
+- `ProtectedRoute` - 인증이 필요한 라우트 보호
+- `FileUploadForm` - 파일 업로드 폼
+- `FileList` - 업로드된 파일 목록
+- `PreviewModal` - 파일 미리보기 모달
+
 ## 커스텀 훅
 
-- `useDashboardData` - 대시보드 데이터 관리
-- `usePDFDownload` - PDF 다운로드 기능
-- `useSidebar` - 사이드바 상태 관리
-- `useProductFilter` - 제품 필터링
-- `useProductSort` - 제품 정렬
+### 인증 관련 훅
 - `useEmailTimer` - 이메일 인증 타이머
+- `useEmailTimerUpdate` - 이메일 인증 타이머 업데이트 (회원정보 수정용)
+- `useExtendSession` - 세션 시간 연장
 - **`useLogoutTimer`** - 세션 만료 시간 실시간 추적 및 자동 로그아웃 처리
   - 1초마다 토큰 만료 여부 확인
   - 만료 시 자동 로그아웃 및 리다이렉트
   - 남은 시간 포맷팅 (HH:MM:SS)
+
+### 대시보드 관련 훅
+- `useDashboardData` - 대시보드 데이터 관리
+- `usePDFDownload` - PDF 다운로드 기능
+
+### 제품 관련 훅
+- `useProductData` - 제품 데이터 관리
+- `useProductFilter` - 제품 필터링
+- `useProductSort` - 제품 정렬
+- `useProductModal` - 제품 모달 상태 관리
+- `useProductActions` - 제품 액션 (추가, 수정, 삭제)
+- `useDateFilter` - 날짜 필터링
+- `useDropdownMenu` - 드롭다운 메뉴 관리
+
+### UI 관련 훅
+- `useSidebar` - 사이드바 상태 관리
+- `useViewport` - 뷰포트 크기 및 반응형 관리
 
 ## 주요 기능 상세
 

@@ -92,6 +92,23 @@ button {
   transition: all var(--transition-base);
 }
 
+.review-more-btn {
+  margin-left: 0.5rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #5B8EFF;
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.review-more-btn:hover {
+  opacity: 0.8;
+}
+
 /* ===== 공통 섹션 타이틀 ===== */
 .section-title {
   text-align: center;

@@ -34,6 +34,7 @@ function ReviewManagement() {
   const [totalCount, setTotalCount] = useState(0);
   const [sortField, setSortField] = useState("review_date");
   const [sortDirection, setSortDirection] = useState("desc");
+  const [refreshKey, setRefreshKey] = useState(0); // 리뷰 목록 강제 새로고침용
   
   const reviewsPerPage = 10;
   const abortControllerRef = useRef(null);
@@ -120,7 +121,7 @@ function ReviewManagement() {
       try {
         // URL의 productId를 우선 사용, 없으면 selectedProductFilter 사용
         const productIdFromUrl = searchParams.get("productId");
-        const productIdToUse = productIdFromUrl || selectedProductFilter;
+        const productIdToUse = selectedProductFilter || productIdFromUrl;
         
         // 날짜 필터를 제외한 필터 조건으로 전체 리뷰의 날짜 범위 계산
         const filters = {
@@ -294,6 +295,7 @@ function ReviewManagement() {
     sortDirection,
     reviewsPerPage,
     isDateFilterInitialized, // 날짜 필터 초기화 상태를 의존성에 추가
+    refreshKey, // 리뷰 목록 강제 새로고침용
   ]);
 
   // 체크박스 전체 선택/해제
@@ -353,12 +355,10 @@ function ReviewManagement() {
       if (result.success) {
         alert("리뷰가 성공적으로 삭제되었습니다.");
         setSelectedReviews([]);
-        // 리뷰 목록 새로고침 (currentPage 변경으로 useEffect 트리거)
-        if (currentPage === 1) {
-          // 첫 페이지면 강제 새로고침
-          setCurrentPage(0);
-          setTimeout(() => setCurrentPage(1), 0);
-        } else {
+        // 리뷰 목록 새로고침 (refreshKey 증가로 useEffect 트리거)
+        setRefreshKey(prev => prev + 1);
+        // 페이지가 1이 아니면 1로 이동
+        if (currentPage !== 1) {
           setCurrentPage(1);
         }
       } else {

@@ -306,16 +306,26 @@ export default function FileUploadForm({
             <span className="upload-progress-percent">{uploadProgress}%</span>
           </div>
           <div className="upload-progress-bar">
-            <div
-              className="upload-progress-fill"
-              style={{ width: `${uploadProgress}%` }}
-            ></div>
-          </div>
-          <div className="upload-loading-spinner">
-            <div className="spinner"></div>
-          </div>
+          <div
+            className="upload-progress-fill"
+            style={{ width: `${uploadProgress}%` }}
+          ></div>
         </div>
-      )}
+          <div className="upload-loading-text">
+            <p className="text-sm text-gray-700 font-medium leading-tight text-center">
+              리뷰 데이터를 분석 중입니다.
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5 leading-normal flex items-center text-center">
+              잠시만 기다려 주세요
+              <span className="loading-dots ml-1">
+                <span>.</span>
+                <span>.</span>
+                <span>.</span>
+              </span>
+            </p>
+          </div>
+      </div>
+    )}
 
       {/* 매핑 완료된 파일 목록 */}
       <FileList

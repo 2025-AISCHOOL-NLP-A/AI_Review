@@ -1,11 +1,3 @@
-/* Color constants - 전역에서도 접근 가능하도록 :root에도 정의 */
-:root {
-  --chart-primary-color: #5B8EFF;
-  --chart-neutral-color: #D8B4FE; /* 부정 비율 (매우 연한 보라색) - 모든 차트와 일관성 유지 */
-  --chart-new-review-color: #111827;
-  --chart-font-color: #333333;
-}
-
 .daily-trend-chart-container {
   position: relative;
   flex: 1;

@@ -105,18 +105,6 @@ const dashboardService = {
     }
   },
 
-  /** 🔍 제품 인사이트 데이터 조회 */
-  async getProductInsights(productId) {
-    try {
-      const res = await api.get(`/products/${productId}/insights`);
-      return { success: true, data: res.data };
-    } catch (err) {
-      return handleApiError(err, "제품 인사이트를 불러오는데 실패했습니다.", null) || {
-        success: false,
-        message: getErrorMessage(err, "제품 인사이트를 불러오는데 실패했습니다."),
-      };
-    }
-  },
 
   /** 📦 제품 목록 조회 */
   async getProducts(page = 1, limit = 10, search = "", categoryId = null, signal = null) {
@@ -221,7 +209,7 @@ const dashboardService = {
   async uploadReviewFiles(productId, files, onProgress = null) {
     try {
       const formData = new FormData();
-      
+
       // 각 파일과 매핑 정보를 FormData에 추가
       files.forEach((fileData) => {
         formData.append(`files`, fileData.file);
@@ -248,7 +236,7 @@ const dashboardService = {
       // SSE로 진행도 추적 시작
       const taskId = res.data?.taskId || res.data?.uploadId || res.data?.data?.taskId;
       console.log("받은 taskId:", taskId, "응답 데이터:", res.data);
-      
+
       if (taskId && onProgress) {
         // SSE 추적이 완료될 때까지 대기 (분석이 완전히 끝날 때까지)
         try {
@@ -289,7 +277,7 @@ const dashboardService = {
       // URL 끝의 슬래시 제거
       API_BASE_URL = API_BASE_URL.replace(/\/+$/, "");
       const token = getToken(); // sessionStorage에서 토큰 가져오기
-      
+
       if (!token) {
         console.warn("토큰이 없어 SSE 연결을 할 수 없습니다.");
         // 토큰이 없어도 진행도는 계속 표시
@@ -299,15 +287,15 @@ const dashboardService = {
         resolve({ progress: 50, message: "진행도 추적 불가" });
         return;
       }
-      
+
       // SSE 엔드포인트 URL 구성 (슬래시 정규화)
       const sseUrl = `${API_BASE_URL}/products/${productId}/reviews/upload/progress/${taskId}`;
-      
+
       // EventSource 생성 (토큰은 쿼리 파라미터로 전달)
       const eventSource = new EventSource(`${sseUrl}?token=${encodeURIComponent(token)}`);
-      
+
       let hasReceivedData = false;
-      
+
       eventSource.onopen = () => {
         console.log("SSE 연결 성공");
         // 연결 성공 시 초기 진행도 표시
@@ -315,20 +303,20 @@ const dashboardService = {
           onProgress(20, "처리 중...");
         }
       };
-      
+
       eventSource.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
           hasReceivedData = true;
-          
+
           console.log("SSE 메시지 수신:", data);
-          
+
           if (data.progress !== undefined) {
             // 진행도 업데이트 (최소 20%부터 시작)
             const progress = Math.max(20, data.progress);
             onProgress(progress, data.message || "처리 중...");
           }
-          
+
           // 완료 또는 에러 처리 (status 우선 체크)
           if (data.status === "completed") {
             console.log("✅ Task 완료 감지:", data);
@@ -360,10 +348,10 @@ const dashboardService = {
           console.error("SSE 데이터 파싱 오류:", parseError);
         }
       };
-      
+
       eventSource.onerror = (error) => {
         console.error("SSE 연결 오류:", error);
-        
+
         // 연결이 닫힌 상태가 아니면 재시도하지 않고 진행도 유지
         if (eventSource.readyState === EventSource.CLOSED) {
           eventSource.close();
@@ -374,7 +362,7 @@ const dashboardService = {
           resolve({ progress: hasReceivedData ? undefined : 50, message: "진행도 추적을 완료할 수 없습니다." });
         }
       };
-      
+
       // 타임아웃 설정 (30분)
       setTimeout(() => {
         if (eventSource.readyState !== EventSource.CLOSED) {

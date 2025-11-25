@@ -1,6 +1,5 @@
 import express from "express";
 import {
-  analyzeReviews,
   deleteReview,
   deleteReviewsBatch,
   getReviews,

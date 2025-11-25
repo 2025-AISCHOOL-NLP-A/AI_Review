@@ -250,7 +250,7 @@ CREATE DATABASE ai_review CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 # 스키마 적용
 USE ai_review;
-SOURCE AireviewDB.sql;
+SOURCE schema.sql;
 ```
 
 ---

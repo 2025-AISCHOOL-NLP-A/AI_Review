@@ -528,44 +528,6 @@ export const dashboard = async (req, res) => {
     });
   }
 };
-export const keywordReview = async (req, res) => {
-  try {
-    const { id: productId } = req.params;
-    const { keyword, page = 1, limit = 20 } = req.query;
-
-    if (!productId) {
-      return res.status(400).json({ message: "제품 ID가 필요합니다." });
-    }
-
-    const offset = (page - 1) * limit;
-
-    const [rows] = await db.query(`
-      SELECT 
-        r.review_id,
-        r.review_text,
-        ra.sentiment,
-        k.keyword_text
-      FROM tb_review r
-      JOIN tb_reviewAnalysis ra ON r.review_id = ra.review_id
-      JOIN tb_keyword k ON ra.keyword_id = k.keyword_id
-      WHERE r.product_id = ? AND k.keyword_text = ?
-      ORDER BY r.review_id DESC
-      LIMIT ?, ?
-    `, [productId, keyword, offset, parseInt(limit)]);
-
-    res.json({
-      message: "키워드별 리뷰 조회 성공",
-      productId,
-      keyword,
-      count: rows.length,
-      reviews: rows,
-      pagination: { page: parseInt(page), limit: parseInt(limit) }
-    });
-  } catch (err) {
-    console.error("❌ 키워드별 리뷰 조회 오류:", err);
-    res.status(500).json({ message: "키워드별 리뷰 조회 중 서버 오류가 발생했습니다." });
-  }
-};
 
 
 // ==============================

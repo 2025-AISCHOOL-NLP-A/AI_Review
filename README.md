@@ -301,9 +301,7 @@ python main.py
 | PUT | `/products/:id` | 제품 정보 수정 |
 | DELETE | `/products/:id` | 제품 삭제 |
 | GET | `/products/:id/dashboard` | 제품 대시보드 데이터 |
-| GET | `/products/:id/reviews` | 제품별 리뷰 조회 |
 | POST | `/products/:id/reviews/upload` | 리뷰 파일 업로드 |
-| POST | `/products/:id/reviews/analysis` | 리뷰 분석 요청 |
 
 ### 리뷰 API (`/reviews`)
 

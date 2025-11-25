@@ -5,12 +5,8 @@ import {
   deleteReviewsBatch,
   getReviews,
 } from "../controllers/reviewController.js";
-import { verifyAuth } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
-
-// Protect all review routes
-router.use(verifyAuth);
 
 // List/filter/paginate reviews
 router.get("/", getReviews);

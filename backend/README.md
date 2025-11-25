@@ -180,12 +180,6 @@ npm run dev
 | DELETE | `/reviews/:id` | 단일 리뷰 삭제 | ✅ |
 | DELETE | `/reviews/batch` | 여러 리뷰 일괄 삭제 | ✅ |
 
-### 인사이트 API (`/insights`)
-
-| 메서드 | 엔드포인트 | 설명 | 인증 필요 |
-|--------|-----------|------|----------|
-| GET | `/insights/:productId` | 제품 인사이트 조회 | ✅ |
-
 ## 주요 기능 상세
 
 ### 인증 플로우

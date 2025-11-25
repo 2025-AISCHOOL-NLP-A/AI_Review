@@ -1,0 +1,57 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - ./backend/.env
+    environment:
+      PORT: 3001
+      PYTHON_ABSA_URL: http://model_server:8000
+      MODEL_SERVER_URL: http://model_server:8000
+      CORS_ORIGIN: http://223.130.154.189:5173
+      NODE_ENV: production
+    ports:
+      - "3001:3001"
+    depends_on:
+      - model_server
+    volumes:
+      # 모델 서버의 static 파일(워드클라우드 PNG)을 백엔드에서도 읽을 수 있게 공유
+      - ./model_server/static:/app/model_server/static
+    restart: unless-stopped
+
+  model_server:
+    build:
+      context: ./model_server
+      dockerfile: Dockerfile
+    env_file:
+      - ./model_server/.env
+    environment:
+      PORT: 8000
+      DB_HOST: project-db-campus.smhrd.com
+      DB_PORT: 3312
+      DB_USER: Insa6_aiNLP_p3_1
+      DB_PASSWORD: aischool1
+      DB_NAME: Insa6_aiNLP_p3_1
+      # 폰트 경로를 강제로 지정 (컨테이너에 설치된 나눔/노토/데자뷰)
+      WORDCLOUD_FONT: /usr/share/fonts/truetype/nanum/NanumGothic.ttf
+    ports:
+      - "8000:8000"
+    volumes:
+      # 워드클라우드 이미지와 정적 파일을 호스트에 보존/공유
+      - ./model_server/static:/app/static
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    env_file:
+      - ./frontend/.env
+    environment:
+      VITE_API_BASE_URL: http://223.130.154.189:3001
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

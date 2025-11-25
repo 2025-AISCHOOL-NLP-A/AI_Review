@@ -25,7 +25,9 @@ export default function FileUploadForm({
   onUploadComplete,
   onUploadStart,
   autoUpload = false,
-  disabled = false
+  disabled = false,
+  autoAnalyze = true,
+  uploadTriggerRef = null
 }) {
   const [mappedFiles, setMappedFiles] = useState([]); // [{ id, file, mapping, previewData }]
   const [previewFile, setPreviewFile] = useState(null);
@@ -47,6 +49,17 @@ export default function FileUploadForm({
       executeUpload(filesToUpload);
     }
   }, [productId]); // productId 변경 시에만 실행
+  React.useEffect(() => {
+    if (!uploadTriggerRef) return;
+    uploadTriggerRef.current = () => {
+      const filesToUpload = mappedFiles.map((mf) => ({
+        file: mf.file,
+        mapping: mf.mapping,
+      }));
+      return executeUpload(filesToUpload);
+    };
+  }, [mappedFiles, uploadTriggerRef, isUploading, productId]);
+
 
   // 파일 읽기 및 Preview 표시
   const handleFileSelect = async (files) => {
@@ -143,7 +156,8 @@ export default function FileUploadForm({
       const uploadResult = await dashboardService.uploadReviewFiles(
         productId,
         filesToUpload,
-        progressCallback
+        progressCallback,
+        autoAnalyze
       );
 
       // 진행도가 100%가 아니면 최대 5초 대기
@@ -325,5 +339,4 @@ export default function FileUploadForm({
 
 // 외부에서 사용할 수 있도록 유틸리티 함수 export
 export { FileUploadForm };
-
 

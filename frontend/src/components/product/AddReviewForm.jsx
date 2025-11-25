@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import FileUploadForm from "../common/FileUploadForm";
 import "../../styles/modal.css";
 
@@ -13,6 +13,7 @@ import "../../styles/modal.css";
 export default function AddReviewForm({ onClose, productId, onSuccess, onSubmittingChange }) {
   const [mappedFiles, setMappedFiles] = useState([]); // [{ file, mapping }]
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const uploadTriggerRef = useRef(null);
 
   // isSubmitting 상태 변경 시 부모에게 알림
   React.useEffect(() => {
@@ -49,6 +50,18 @@ export default function AddReviewForm({ onClose, productId, onSuccess, onSubmitt
     }
   };
 
+  const handleAnalyze = async () => {
+    if (!uploadTriggerRef.current) return;
+    setIsSubmitting(true);
+    try {
+      await uploadTriggerRef.current();
+    } catch (err) {
+      console.error("??? ?? ??:", err);
+      setIsSubmitting(false);
+    }
+  };
+
+
   // 모든 파일이 매핑되었는지 확인
   const allFilesMapped = mappedFiles.length > 0 && mappedFiles.every((f) => {
     return f.mapping && f.mapping.reviewColumn && f.mapping.dateColumn;
@@ -64,7 +77,9 @@ export default function AddReviewForm({ onClose, productId, onSuccess, onSubmitt
         productId={productId}
         onUploadStart={handleUploadStart}
         onUploadComplete={handleUploadComplete}
-        autoUpload={true}
+        autoUpload={false}
+        autoAnalyze={false}
+        uploadTriggerRef={uploadTriggerRef}
         disabled={isSubmitting}
       />
 
@@ -78,7 +93,7 @@ export default function AddReviewForm({ onClose, productId, onSuccess, onSubmitt
         </button>
         <button
           className="next"
-          onClick={() => { }}
+          onClick={handleAnalyze}
           disabled={isSubmitting || !allFilesMapped}
         >
           {isSubmitting ? "처리 중..." : "Analyze"}

@@ -390,6 +390,9 @@ export const uploadReviews = async (req, res) => {
     const mappings = Array.isArray(mappingsRaw)
       ? mappingsRaw.map(m => typeof m === 'string' ? JSON.parse(m) : m)
       : [typeof mappingsRaw === 'string' ? JSON.parse(mappingsRaw) : mappingsRaw];
+    const autoAnalyzeRaw = req.body.auto_analyze ?? req.body.autoAnalyze;
+    const autoAnalyze = String(autoAnalyzeRaw ?? "true").toLowerCase() !== "false";
+
 
     if (files.length === 0) {
       return res.status(400).json({ message: "업로드할 파일이 없습니다." });
@@ -417,7 +420,7 @@ export const uploadReviews = async (req, res) => {
     });
 
     // 백그라운드에서 파일 처리 및 분석 실행
-    processReviewsInBackground(taskId, productId, files, mappings).catch(err => {
+    processReviewsInBackground(taskId, productId, files, mappings, autoAnalyze).catch(err => {
       console.error(`❌ 백그라운드 처리 오류 (Task: ${taskId}):`, err);
     });
 

@@ -206,7 +206,7 @@ const dashboardService = {
   },
 
   /** 📤 리뷰 파일 업로드 및 매핑 정보 전송 (SSE 방식 진행도 추적) */
-  async uploadReviewFiles(productId, files, onProgress = null) {
+  async uploadReviewFiles(productId, files, onProgress = null, autoAnalyze = true) {
     try {
       const formData = new FormData();
 

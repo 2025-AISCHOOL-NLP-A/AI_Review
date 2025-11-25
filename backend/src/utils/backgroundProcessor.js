@@ -1,4 +1,4 @@
-import db from "../models/db.js";
+﻿import db from "../models/db.js";
 import path from "path";
 import { updateTask, completeTask, errorTask } from "../utils/taskManager.js";
 import { analyzeProductReviews } from "../services/absaService.js";
@@ -95,7 +95,7 @@ const checkDuplicateReview = async (productId, reviewText, reviewDate) => {
 };
 
 // 백그라운드 리뷰 처리 함수
-export const processReviewsInBackground = async (taskId, productId, files, mappings) => {
+export const processReviewsInBackground = async (taskId, productId, files, mappings, autoAnalyze = false) => {
     try {
         updateTask(taskId, 5, "파일 처리 시작...", "processing");
 
@@ -201,7 +201,7 @@ export const processReviewsInBackground = async (taskId, productId, files, mappi
         updateTask(taskId, 30, `파일 처리 완료 (${totalInserted}개 삽입)`, "processing");
 
         // 리뷰 분석 실행
-        if (totalInserted > 0) {
+        if (autoAnalyze && totalInserted > 0) {
             updateTask(taskId, 35, "AI 분석 시작...", "processing");
 
             try {

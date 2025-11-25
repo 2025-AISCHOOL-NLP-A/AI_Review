@@ -26,6 +26,7 @@ export function useProductActions(
   // Add Review 완료 후 콜백
   const handleAddReviewSuccess = () => {
     setRefreshTrigger(prev => prev + 1);
+    handleCloseModal();
   };
 
   // 다운로드 버튼 클릭 - 각 제품의 대시보드 PDF 다운로드

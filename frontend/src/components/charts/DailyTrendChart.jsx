@@ -149,15 +149,15 @@ const DailyTrendChart = ({ data, loading }) => {
                 borderColor: lineColor,
                 borderWidth: 3, // 선 두께 증가로 더 잘 보이게
                 pointBackgroundColor: lineColor,
-                pointRadius: 4, // 포인트 크기 증가
-                pointHoverRadius: 6, // 호버 시 포인트 크기 증가
-                pointBorderWidth: 2, // 포인트 테두리 두께
+                pointRadius: 2, // 포인트 크기 증가
+                pointHoverRadius: 4, // 호버 시 포인트 크기 증가
+                pointBorderWidth: 1, // 포인트 테두리 두께
                 pointBorderColor: lineColor, // 포인트 테두리도 원본 색상 사용
                 yAxisID: "y1",
                 fill: false,
                 tension: 0.3,
                 order: 1, // 선은 위쪽 (작은 order 값) - order가 작을수록 위에 표시됨
-                pointStyle: 'line', // 범례 아이콘을 선으로 표시
+                pointStyle: 'circle', // 범례 아이콘을 선으로 표시
                 // 애니메이션용 원본 색상 저장
                 _originalColor: lineColor,
                 // 현재 선의 투명도 (0~1)

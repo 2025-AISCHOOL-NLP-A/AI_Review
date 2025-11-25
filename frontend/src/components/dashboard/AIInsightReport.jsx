@@ -172,7 +172,12 @@ const AIInsightReport = ({ loading, dashboardData }) => {
   return (
     <div className="grid grid-cols-1 gap-6" id="ai-insight-report-section">
       <div className="card w-full">
-        <h2 className="text-xl font-semibold mb-4">🤖 AI Insights Report</h2>
+        <h2 className="ai-insight-title text-2xl font-semibold leading-snug mb-2">
+          🤖 AI Insights Report
+        </h2>
+        <p className="ai-insight-subtitle text-sm">
+          최신 리뷰 200개를 기반으로 분석한 요약 리포트입니다.
+        </p>
         <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-gray-800 min-h-[100px] prose prose-sm max-w-none">
           {reportContent ? (
             <ReactMarkdown>{reportContent}</ReactMarkdown>

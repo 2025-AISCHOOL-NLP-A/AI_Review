@@ -5,220 +5,18 @@
  */
 
 /* 기본 레이아웃 스타일 */
-@import "./styles/dashboard-layout.css";
+@import "./styles/dashboardlayout.css";
 
 /* Tailwind 유틸리티 클래스 대체 */
-@import "./styles/dashboard-utilities.css";
+@import "./styles/dashboardutilities.css";
 
 /* 컴포넌트별 스타일 */
-@import "./styles/dashboard-components.css";
+@import "./styles/dashboardcomponents.css";
 
 /* 반응형 미디어 쿼리 */
-@import "./styles/dashboard-responsive.css";
+@import "./styles/dashboardresponsive.css";
 
-/* ===================== 추가: 가로 스크롤 & 차트 깨짐 방지 ===================== */
-
-/* 📌 대시보드 전체가 브라우저 화면을 넘지 않도록 강제 */
-.dashboard-page {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-  box-sizing: border-box;
-}
-
-/* 사이드바 열림/닫힘과 관계없이 메인 영역이 화면 안에 들어오도록 */
-.dashboard-wrapper {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-  box-sizing: border-box;
-}
-
-/* 실제 PDF 캡처 대상이 되는 컨테이너 */
-.dashboard-content {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden !important;
-  box-sizing: border-box;
-  transform-origin: top left;
-}
-
-/* 📌 모든 grid / card 가 화면 밖으로 안 나가도록 제한 */
-.card,
-.grid,
-.grid>div {
-  max-width: 100% !important;
-  box-sizing: border-box;
-  overflow: hidden !important;
-}
-
-/* 2열 레이아웃이어도 전체 너비를 넘지 않도록 */
-.grid.grid-cols-2,
-.grid.grid-cols-3,
-.grid.grid-cols-4 {
-  width: 100%;
-  max-width: 100%;
-}
-
-/* gap 과 padding 때문에 미묘하게 넘치는 것 방지 */
-.grid {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* 📌 테이블 영역도 가로 스크롤 없이 영역 안에서만 보이도록 */
-.review-table-container {
-  max-width: 100% !important;
-  overflow-x: hidden !important;
-}
-
-/* ===================== 차트 / 히트맵 / 육각형 그래프 영역 ===================== */
-
-/* 공통 차트 래퍼가 있다면 여기에 묶이는 경우가 많음 */
-.chart-container,
-.chart-wrapper,
-.main-chart-section,
-.sub-chart-section {
-  width: 100%;
-  max-width: 100% !important;
-  box-sizing: border-box;
-  overflow: hidden !important;
-}
-
-/* 모든 차트 캔버스를 “부모 width에 맞춰 축소” */
-.chart-container canvas,
-.chart-wrapper canvas,
-.card canvas,
-canvas {
-  max-width: 100% !important;
-  width: 100% !important;
-  height: auto !important;
-}
-
-/* 히트맵 영역(상관관계 매트릭스)이 있다면 여기서도 강제 */
-.heatmap-wrapper,
-.heatmap-container {
-  width: 100%;
-  max-width: 100% !important;
-  overflow: hidden !important;
-  box-sizing: border-box;
-}
-
-/* 워드클라우드 캔버스도 동일하게 */
-.wordcloud-canvas,
-.wordcloud-container canvas {
-  max-width: 100% !important;
-  width: 100% !important;
-  height: auto !important;
-}
-
-/* 육각형(레이더) 그래프도 캔버스 기반일 가능성이 높아서 같은 룰로 정리됨 */
-
-/* ===================== PDF 다운로드 시 레이아웃 안정화 도움용 ===================== */
-
-/* PDF 캡처 시 margin/padding 때문에 미묘하게 넘치는 것 방지 */
-#dashboard-content {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  overflow-x: hidden;
-}
-
-/* ===================== 대시보드 전체 폭 / 오버플로우 제어 ===================== */
-
-/* PDF 캡처 대상인 메인 컨테이너가 화면 밖으로 안 나가게 */
-#dashboard-content,
-.dashboard-content {
-  width: 100% !important;
-  max-width: 100% !important;
-  overflow-x: hidden !important;
-  box-sizing: border-box;
-}
-
-/* 📌 내부 모든 요소가 부모 폭을 넘지 않도록 강제 */
-#dashboard-content *,
-.dashboard-content * {
-  max-width: 100% !important;
-  box-sizing: border-box;
-}
-
-/* ===================== 카드 / 그리드 기본 ===================== */
-
-.card {
-  max-width: 100% !important;
-  overflow: hidden !important;
-}
-
-/* 2~3열 그리드가 폭을 넘지 않도록 */
-.grid,
-.grid.grid-cols-2,
-.grid.grid-cols-3,
-.grid.grid-cols-4 {
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
-/* 테이블 영역도 가로 스크롤 없이 영역 안에서만 보이도록 */
-.review-table-container {
-  max-width: 100% !important;
-  overflow-x: hidden !important;
-}
-
-/* ===================== 문제됐던 3개 그래프 영역 강제 ===================== */
-/* 월별 긍·부정 포함 리뷰 비율 그래프 / 육각형(레이더) 그래프 / 분기형 막대 그래프가
-   들어가는 래퍼들을 넓어지지 않게 */
-.monthly-ratio-chart-wrapper,
-.radar-chart-wrapper,
-.split-bar-chart-wrapper,
-.main-chart-section,
-.sub-chart-section,
-.chart-container,
-.chart-wrapper {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  /* ❗ min-width 때문에 튀어나오는 것 방지 */
-  overflow: hidden !important;
-  box-sizing: border-box;
-}
-
-/* ===================== 모든 차트 캔버스 공통 규칙 ===================== */
-
-/* Chart.js / 레이더 / 분기형 막대 / 히트맵 등 모든 캔버스에 적용 */
-#dashboard-content canvas,
-.dashboard-content canvas {
-  display: block;
-  max-width: 100% !important;
-  /* 부모 기준으로만 그리기 */
-  width: 100% !important;
-  /* 영역 안에 꽉 채우되, 넘지 않게 */
-  height: auto !important;
-  /* 비율 유지하면서 줄이기 */
-}
-
-/* 히트맵/워드클라우드 래퍼가 따로 있을 경우 대비 */
-.heatmap-wrapper,
-.heatmap-container,
-.wordcloud-container {
-  width: 100% !important;
-  max-width: 100% !important;
-  overflow: hidden !important;
-  box-sizing: border-box;
-}
-
-#dashboard-content {
-  transform-origin: top left;
-}
-
-/* 사이드바가 열렸을 때 사용자 아바타 크기 축소 */
-.dashboard-sidebar.sidebar-open .sidebar-user-avatar {
-  width: 2rem !important;
-  /* 기존 2.5rem → 2rem */
-  height: 2rem !important;
-}
+/* ===================== 대시보드 레이아웃 & 오버플로우 제어 ===================== */
 
 /* 📌 대시보드 전체가 브라우저 화면을 넘지 않도록 강제 */
 .dashboard-page {
@@ -237,105 +35,13 @@ canvas {
 }
 
 /* 실제 PDF 캡처 대상이 되는 컨테이너 */
-.dashboard-content {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden !important;
-  box-sizing: border-box;
-  transform-origin: top left;
-}
-
-/* 📌 모든 grid / card 가 화면 밖으로 안 나가도록 제한 */
-.card,
-.grid,
-.grid>div {
-  max-width: 100% !important;
-  box-sizing: border-box;
-  overflow: hidden !important;
-}
-
-/* 2열 레이아웃이어도 전체 너비를 넘지 않도록 */
-.grid.grid-cols-2,
-.grid.grid-cols-3,
-.grid.grid-cols-4 {
-  width: 100%;
-  max-width: 100%;
-}
-
-/* gap 과 padding 때문에 미묘하게 넘치는 것 방지 */
-.grid {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* 📌 테이블 영역도 가로 스크롤 없이 영역 안에서만 보이도록 */
-.review-table-container {
-  max-width: 100% !important;
-  overflow-x: hidden !important;
-}
-
-/* ===================== 차트 / 히트맵 / 육각형 그래프 영역 ===================== */
-
-/* 공통 차트 래퍼가 있다면 여기에 묶이는 경우가 많음 */
-.chart-container,
-.chart-wrapper,
-.main-chart-section,
-.sub-chart-section {
-  width: 100%;
-  max-width: 100% !important;
-  box-sizing: border-box;
-  overflow: hidden !important;
-}
-
-/* 모든 차트 캔버스를 “부모 width에 맞춰 축소” */
-.chart-container canvas,
-.chart-wrapper canvas,
-.card canvas,
-canvas {
-  max-width: 100% !important;
-  width: 100% !important;
-  height: auto !important;
-}
-
-/* 히트맵 영역(상관관계 매트릭스)이 있다면 여기서도 강제 */
-.heatmap-wrapper,
-.heatmap-container {
-  width: 100%;
-  max-width: 100% !important;
-  overflow: hidden !important;
-  box-sizing: border-box;
-}
-
-/* 워드클라우드 캔버스도 동일하게 */
-.wordcloud-canvas,
-.wordcloud-container canvas {
-  max-width: 100% !important;
-  width: 100% !important;
-  height: auto !important;
-}
-
-/* 육각형(레이더) 그래프도 캔버스 기반일 가능성이 높아서 같은 룰로 정리됨 */
-
-/* ===================== PDF 다운로드 시 레이아웃 안정화 도움용 ===================== */
-
-/* PDF 캡처 시 margin/padding 때문에 미묘하게 넘치는 것 방지 */
-#dashboard-content {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  overflow-x: hidden;
-}
-
-/* ===================== 대시보드 전체 폭 / 오버플로우 제어 ===================== */
-
-/* PDF 캡처 대상인 메인 컨테이너가 화면 밖으로 안 나가게 */
 #dashboard-content,
 .dashboard-content {
   width: 100% !important;
   max-width: 100% !important;
   overflow-x: hidden !important;
   box-sizing: border-box;
+  transform-origin: top left;
 }
 
 /* 📌 내부 모든 요소가 부모 폭을 넘지 않도록 강제 */
@@ -347,12 +53,14 @@ canvas {
 
 /* ===================== 카드 / 그리드 기본 ===================== */
 
-.card {
+.card,
+.grid,
+.grid>div {
   max-width: 100% !important;
+  box-sizing: border-box;
   overflow: hidden !important;
 }
 
-/* 2~3열 그리드가 폭을 넘지 않도록 */
 .grid,
 .grid.grid-cols-2,
 .grid.grid-cols-3,
@@ -363,62 +71,57 @@ canvas {
   overflow: hidden;
 }
 
-/* 테이블 영역도 가로 스크롤 없이 영역 안에서만 보이도록 */
+/* 테이블 영역 */
 .review-table-container {
   max-width: 100% !important;
   overflow-x: hidden !important;
 }
 
-/* ===================== 문제됐던 3개 그래프 영역 강제 ===================== */
-/* 월별 긍·부정 포함 리뷰 비율 그래프 / 육각형(레이더) 그래프 / 분기형 막대 그래프가
-   들어가는 래퍼들을 넓어지지 않게 */
-.monthly-ratio-chart-wrapper,
-.radar-chart-wrapper,
-.split-bar-chart-wrapper,
+/* ===================== 차트 영역 ===================== */
+
+.chart-container,
+.chart-wrapper,
 .main-chart-section,
 .sub-chart-section,
-.chart-container,
-.chart-wrapper {
+.monthly-ratio-chart-wrapper,
+.radar-chart-wrapper,
+.split-bar-chart-wrapper {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
-  /* ❗ min-width 때문에 튀어나오는 것 방지 */
   overflow: hidden !important;
   box-sizing: border-box;
 }
 
-/* ===================== 모든 차트 캔버스 공통 규칙 ===================== */
-
-/* Chart.js / 레이더 / 분기형 막대 / 히트맵 등 모든 캔버스에 적용 */
+/* 모든 차트 캔버스 */
 #dashboard-content canvas,
-.dashboard-content canvas {
+.dashboard-content canvas,
+.chart-container canvas,
+.chart-wrapper canvas,
+.card canvas,
+canvas {
   display: block;
   max-width: 100% !important;
-  /* 부모 기준으로만 그리기 */
   width: 100% !important;
-  /* 영역 안에 꽉 채우되, 넘지 않게 */
   height: auto !important;
-  /* 비율 유지하면서 줄이기 */
 }
 
-/* 히트맵/워드클라우드 래퍼가 따로 있을 경우 대비 */
+/* 히트맵/워드클라우드 */
 .heatmap-wrapper,
 .heatmap-container,
-.wordcloud-container {
+.wordcloud-container,
+.wordcloud-canvas,
+.wordcloud-container canvas {
   width: 100% !important;
   max-width: 100% !important;
   overflow: hidden !important;
   box-sizing: border-box;
 }
 
-#dashboard-content {
-  transform-origin: top left;
-}
+/* ===================== 사이드바 아바타 ===================== */
 
-/* 사이드바가 열렸을 때 사용자 아바타 크기 축소 */
 .dashboard-sidebar.sidebar-open .sidebar-user-avatar {
   width: 2rem !important;
-  /* 기존 2.5rem → 2rem */
   height: 2rem !important;
 }
 

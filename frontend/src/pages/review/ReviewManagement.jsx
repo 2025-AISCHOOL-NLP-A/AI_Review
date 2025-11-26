@@ -13,7 +13,7 @@ import "../../styles/common.css";
 import "../../styles/modal.css";
 import "../dashboard/dashboard.css";
 import "../../components/layout/sidebar/sidebar.css";
-import "./review-management.css";
+import "./reviewmanagement.css";
 
 function ReviewManagement() {
   const [searchParams] = useSearchParams();

@@ -3,11 +3,11 @@
    ======================================== */
 
 /* Import 분할된 스타일 파일들 */
-@import "./styles/workplace-variables.css";
-@import "./styles/workplace-filters.css";
-@import "./styles/workplace-table.css";
-@import "./styles/workplace-actions.css";
-@import "./styles/workplace-responsive.css";
+@import "./styles/workplacevariables.css";
+@import "./styles/workplacefilters.css";
+@import "./styles/workplacetable.css";
+@import "./styles/workplaceactions.css";
+@import "./styles/workplaceresponsive.css";
 
 /* ===== 기본 컨테이너 ===== */
 /* dashboard-content 내부에 위치하므로 사이드바 반응형을 상속받음 */

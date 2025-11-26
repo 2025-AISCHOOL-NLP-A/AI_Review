@@ -16,7 +16,7 @@ const AIInsightReport = ({ loading, dashboardData }) => {
 
     // 객체인 경우 구조화된 마크다운 형식으로 변환
     if (typeof content === 'object' && content !== null) {
-      let result = "# 리뷰 분석 보고서\n\n";
+      let result = "";
 
       // 감정 비율
       let positiveRatio = null;
@@ -92,7 +92,7 @@ const AIInsightReport = ({ loading, dashboardData }) => {
       if (content.summary || content.conclusion || content.overall_summary) {
         const summary = content.summary || content.conclusion || content.overall_summary || "";
         if (summary) {
-          result += "## ✔ 최종 분석 요약 보고\n\n";
+          result += "## ✔ 최종 분석 보고\n\n";
           result += `${summary}\n\n`;
         }
       }
@@ -178,9 +178,13 @@ const AIInsightReport = ({ loading, dashboardData }) => {
         <p className="ai-insight-subtitle text-sm">
           최신 리뷰 200개를 기반으로 분석한 요약 리포트입니다.
         </p>
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-gray-800 min-h-[100px] prose prose-sm max-w-none">
+        <div className="ai-insight-report-card p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-gray-800 min-h-[100px]">
           {reportContent ? (
-            <ReactMarkdown>{reportContent}</ReactMarkdown>
+            <div className="ai-insight-content-wrapper">
+              <article className="prose prose-sm text-gray-800 ai-insight-prose max-w-none">
+                <ReactMarkdown>{reportContent}</ReactMarkdown>
+              </article>
+            </div>
           ) : (
             "인사이트 데이터가 없습니다."
           )}

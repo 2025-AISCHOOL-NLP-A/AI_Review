@@ -273,23 +273,23 @@
 .dashboard-content #ai-insight-report-section .prose p {
   margin-top: 0.75rem !important;
   margin-bottom: 0.75rem !important;
-  font-size: 14px !important;
-  line-height: 1.5 !important;
+  font-size: 15px !important;
+  line-height: 1.6 !important;
 }
 
 .dashboard-content #ai-insight-report-section .prose ul {
   margin-top: 1rem !important;
   margin-bottom: 1rem !important;
   padding-left: 1.5rem !important;
-  font-size: 14px !important;
-  line-height: 1.5 !important;
+  font-size: 15px !important;
+  line-height: 1.6 !important;
 }
 
 .dashboard-content #ai-insight-report-section .prose li {
   margin-top: 0.5rem !important;
   margin-bottom: 0.5rem !important;
-  font-size: 14px !important;
-  line-height: 1.5 !important;
+  font-size: 15px !important;
+  line-height: 1.6 !important;
 }
 
 .dashboard-content #ai-insight-report-section .prose hr {
@@ -441,4 +441,45 @@
   align-items: center !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+}
+
+/* ===================== AI Insight Report Spacing Fix ===================== */
+/* AI Insight Report Card - 하단 여백 확보 */
+.ai-insight-report-card {
+  padding-bottom: 2.5rem;
+}
+
+/* AI Insight Content Wrapper - 하단 여백 강제 적용 (우선순위 우회) */
+.ai-insight-content-wrapper {
+  padding-bottom: 2.5rem !important;
+}
+
+/* AI Insight Prose - 좌우 여백 및 간격 정상화 */
+.ai-insight-prose {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+/* 카드 상단 첫 요소 여백 복구 */
+.ai-insight-report-card .ai-insight-prose>*:first-child {
+  margin-top: 1rem !important;
+}
+
+/* h2/h3 소제목 위쪽 간격 복구 */
+.ai-insight-prose h2,
+.ai-insight-prose h3 {
+  margin-top: 1.25rem !important;
+}
+
+/* 본문 문단과 목록 간격 */
+.ai-insight-prose p,
+.ai-insight-prose ul,
+.ai-insight-prose li {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* 마지막 요소(최종 분석 요약 보고) 하단 여백 추가 */
+.ai-insight-prose>*:last-child {
+  margin-bottom: 2rem !important;
 }

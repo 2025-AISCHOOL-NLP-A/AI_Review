@@ -11,7 +11,7 @@
 @import "./styles/dashboardutilities.css";
 
 /* 컴포넌트별 스타일 */
-@import "./styles/dashboardcomponents.css";
+@import "./styles/dashboardcomponents.css";     
 
 /* 반응형 미디어 쿼리 */
 @import "./styles/dashboardresponsive.css";

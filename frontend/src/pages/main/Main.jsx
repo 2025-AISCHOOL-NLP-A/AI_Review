@@ -254,13 +254,12 @@ function Main() {
 
       {/* ===================== HERO SECTION ===================== */}
       <section className="hero" ref={heroRef}>
-        <img src="/images/logo.png" alt="서비스 로고" className="hero-logo" />
-        <h1 className="hero-title">
-          AI가 고객 리뷰 속 <br />
-          숨은 인사이트를 찾아드립니다!
-        </h1>
+        <div className="hero-top">
+          <img src="/images/logo.png" alt="서비스 로고" className="hero-logo" />
+          <h1 className="hero-title">꿰뚫어뷰</h1>
+        </div>
         <p className="hero-subtitle">
-          리뷰 분석 자동화 플랫폼, <strong>꿰뚫어뷰</strong>와 함께하세요.
+          AI가 고객 리뷰 속 숨은 인사이트를 찾아드립니다!
         </p>
         <p className="hero-description">
           AI 리뷰 분석은 고객이 진짜로 원하는 것을 찾아내는 가장 빠른

@@ -1,7 +1,8 @@
+/* 구글폰트 */
+@import url("https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap");
 /* ========================================
    메인 페이지 스타일 (Main Page Styles)
    ======================================== */
-
 .main-page {
   background: linear-gradient(225deg, #c8e3ff 0%, #f0f4ff 100%);
   background-attachment: fixed;
@@ -71,27 +72,43 @@ header button.login-btn:hover {
 }
 
 /* Hero Section */
+/* 로고 + 제목을 가로 배치 */
+.hero-top {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 24px; /* 로고-제목 간격 */
+  margin-bottom: 24px; /* 아래 subtitle과 간격 */
+}
+
+/* 기존 hero는 column 그대로 유지 */
 .hero {
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* 유지 */
   justify-content: center;
   align-items: center;
   padding-top: 72px;
   padding-bottom: 60px;
   box-sizing: border-box;
 }
+
+/* Hero 주제글(로고글)*/
+.hero .hero-title {
+  font-size: 9rem;
+  font-weight: 700;
+  font-family: "Gowun Dodum", sans-serif, serif;
+}
 /* Hero 로고 */
 .hero-logo {
-  display: block; /* inline 이미지의 여백/정렬 이슈 방지 */
-  margin: 0 auto 8px; /* 안전한 중앙 정렬 */
-  max-width: 160px; /* 필요 시 크기 제한 */
+  max-width: 120px;
   height: auto;
-  float: none; /* 혹시 전역 float 규칙이 있다면 무력화 */
+  margin: 0;
 }
 .hero img {
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   margin-bottom: 16px;
 }
 

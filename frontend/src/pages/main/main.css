@@ -43,7 +43,7 @@ header button {
   font-family: "Pretendard", "Noto Sans KR", sans-serif;
 }
 header button.active-nav {
-  background: #84a7ff;
+  background: #6cb1ff;
   color: white;
 }
 
